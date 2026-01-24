@@ -1,6 +1,6 @@
 name: Epic
 description: Epic template for this project
-title: ""
+title: "[EPIC]: "
 labels: ["epic"]
 
 body:
