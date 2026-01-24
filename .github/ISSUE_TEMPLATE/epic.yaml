@@ -1,0 +1,26 @@
+name: Epic
+description: Epic template for this project
+title: "[EPIC]: "
+labels: ["epic"]
+
+body:
+  - type: dropdown
+    id: issue_type
+    attributes:
+      label: Type
+      description: Tipo de issue
+      options:
+        - Epic
+        - Feature
+        - Bug
+    validations:
+      required: true
+
+  - type: textarea
+    id: epic_description
+    attributes:
+      label: Epic Description
+      description: Describe the epic
+      placeholder: What is this epic about?
+    validations:
+      required: true
