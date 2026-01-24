@@ -5,18 +5,6 @@ labels: ["epic"]
 projects: ["Proyecto Grupo 005"]
 
 body:
-  - type: dropdown
-    id: issue_type
-    attributes:
-      label: Type
-      description: Tipo de issue
-      options:
-        - Epic
-        - Feature
-        - Bug
-    validations:
-      required: true
-
   - type: textarea
     id: epic_description
     attributes:
