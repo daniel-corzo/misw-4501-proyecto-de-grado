@@ -2,7 +2,7 @@ name: Epic
 description: Epic template for this project
 title: "[EPIC]: "
 labels: ["epic"]
-project: "Proyecto Grupo 005"
+projects: ["Proyecto Grupo 005"]
 
 body:
   - type: dropdown
