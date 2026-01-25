@@ -1,0 +1,14 @@
+name: Feature
+description: Detalle de la feature
+title: "[FEAT]: "
+labels: ["feature"]
+
+body:
+  - type: textarea
+    id: feat_description
+    attributes:
+      label: Feature Description
+      description: Describe the feature
+      placeholder: What is this feature about?
+    validations:
+      required: true
