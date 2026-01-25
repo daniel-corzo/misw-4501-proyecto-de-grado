@@ -1,0 +1,14 @@
+name: Task
+description: Detalle de la task
+title: "[TASK]: "
+labels: ["task"]
+
+body:
+  - type: textarea
+    id: task_description
+    attributes:
+      label: Task Description
+      description: Describe the task
+      placeholder: What is this task about?
+    validations:
+      required: true
