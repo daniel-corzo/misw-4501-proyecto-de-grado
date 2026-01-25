@@ -1,0 +1,14 @@
+name: Story
+description: Detalle de la story
+title: "[STORY]: "
+labels: ["story"]
+
+body:
+  - type: textarea
+    id: story_description
+    attributes:
+      label: Story Description
+      description: Describe the story
+      placeholder: What is this story about?
+    validations:
+      required: true
