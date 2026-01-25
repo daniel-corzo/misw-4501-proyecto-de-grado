@@ -1,8 +1,7 @@
 name: Epic
-description: Epic template for this project
+description: Epic template
 title: "[EPIC]: "
 labels: ["epic"]
-projects: ["Proyecto Grupo 005"]
 
 body:
   - type: textarea
