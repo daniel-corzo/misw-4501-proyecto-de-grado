@@ -1,0 +1,84 @@
+name: Bug
+description: Reportar un error o comportamiento incorrecto
+title: "[BUG]: "
+labels: ["bug"]
+
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Descripción del bug
+      description: Describe claramente qué está fallando.
+      placeholder: El sistema falla cuando...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Pasos para reproducir
+      description: Pasos claros y numerados.
+      placeholder: |
+        1. Ir a...
+        2. Hacer clic en...
+        3. Ocurre el error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Resultado esperado
+      placeholder: Debería ocurrir...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Resultado actual
+      placeholder: Ocurre actualmente...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severidad
+      description: Impacto del bug
+      options:
+        - Critical (bloquea funcionalidad)
+        - High
+        - Medium
+        - Low
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Ambiente
+      options:
+        - Local
+        - Dev
+        - QA
+        - Prod
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Versión / Commit / Tag
+      placeholder: v1.2.3 o commit SHA
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Evidencia
+      description: Pega logs, errores o screenshots (si aplica).
+      render: shell
+    validations:
+      required: false
