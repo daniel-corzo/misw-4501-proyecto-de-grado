@@ -3,4 +3,5 @@
 STACKS=(
   network
   ecr
+  ecs
 )
