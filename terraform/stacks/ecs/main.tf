@@ -10,4 +10,6 @@ module "ecs" {
   subnet_ids = data.terraform_remote_state.network.outputs.public_subnet_ids
 
   security_group_id = data.terraform_remote_state.network.outputs.ecs_security_group_id
+
+  target_group_arn = data.terraform_remote_state.alb.outputs.target_group_arn
 }

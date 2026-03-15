@@ -96,6 +96,12 @@ resource "aws_ecs_service" "service" {
   desired_count = 1
   launch_type   = "FARGATE"
 
+  load_balancer {
+    target_group_arn = var.target_group_arn
+    container_name   = "${var.project_name}-container"
+    container_port   = 3000
+  }
+
   network_configuration {
     subnets          = var.subnet_ids
     assign_public_ip = true

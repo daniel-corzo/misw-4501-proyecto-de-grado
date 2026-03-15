@@ -3,5 +3,6 @@
 STACKS=(
   network
   ecr
+  alb
   ecs
 )
