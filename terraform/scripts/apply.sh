@@ -44,7 +44,7 @@ for STACK in "${STACKS[@]}"; do
   ENV_DIR="$PROJECT_ROOT/terraform/environments/$ENV/$STACK"
 
   print_step "Initializing Terraform"
-  terraform -chdir="$TF_DIR" init \
+  terraform -chdir="$TF_DIR" init -upgrade \
     -backend-config="$ENV_DIR/backend.tfvars"
 
   print_step "Validating configuration"
@@ -56,7 +56,7 @@ for STACK in "${STACKS[@]}"; do
     -out=.tfplan
 
   print_step "Applying infrastructure"
-  terraform -chdir="$TF_DIR" apply .tfplan
+  terraform -chdir="$TF_DIR" apply -refresh-only .tfplan
 
   print_success "Stack $STACK deployed"
 
