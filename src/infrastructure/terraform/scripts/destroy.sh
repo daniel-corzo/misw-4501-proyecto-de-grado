@@ -8,7 +8,7 @@ set -e
 PROJECT_ROOT=$(pwd)
 ENV="travelhub"
 
-source "$PROJECT_ROOT/terraform/scripts/stacks.sh"
+source "$PROJECT_ROOT/infrastructure/terraform/scripts/stacks.sh"
 
 # Colors
 GREEN='\033[0;32m'
@@ -47,8 +47,8 @@ for (( idx=${#STACKS[@]}-1 ; idx>=0 ; idx-- )) ; do
 
   print_stack_header "$STACK"
 
-  TF_DIR="$PROJECT_ROOT/terraform/stacks/$STACK"
-  ENV_DIR="$PROJECT_ROOT/terraform/environments/$ENV/$STACK"
+  TF_DIR="$PROJECT_ROOT/infrastructure/terraform/stacks/$STACK"
+  ENV_DIR="$PROJECT_ROOT/infrastructure/terraform/environments/$ENV/$STACK"
 
   printf "%bDestroying stack %d/%d (%s)...%b\n" "${CYAN}" "$current" "$TOTAL_STACKS" "$STACK" "${NC}"
   print_step "Destroying infrastructure"

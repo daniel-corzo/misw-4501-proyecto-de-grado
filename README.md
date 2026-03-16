@@ -14,11 +14,11 @@ aws configure --profile travelhub
 Luego, se pueden correr los scripts de Terraform.
 
 ```bash
-./terraform/scripts/apply.sh
+./infrastructure/terraform/scripts/apply.sh
 ```
 
 Para destruir la infraestructura, se puede correr el siguiente script.
 
 ```bash
-./terraform/scripts/destroy.sh
+./infrastructure/terraform/scripts/destroy.sh
 ```
