@@ -50,3 +50,5 @@ dist/
 
 # Egg info de paquetes locales
 *.egg-info/
+
+.claude/
