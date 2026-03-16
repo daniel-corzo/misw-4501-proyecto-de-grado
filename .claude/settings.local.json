@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(for dir:*)",
+      "Bash(do)",
+      "Bash(echo \"=== $dir app folder ===\")",
+      "Read(//c/uniandes/miso/s4/misw4502-proyecto-final-2/misw-4501-proyecto-de-grado/src/backend/$dir/**)",
+      "Bash(done)",
+      "Bash(echo \"=== $dir routers ===\")",
+      "Read(//c/uniandes/miso/s4/misw4502-proyecto-final-2/misw-4501-proyecto-de-grado/src/backend/$dir/app/**)",
+      "Bash(find /c/uniandes/miso/s4/misw4502-proyecto-final-2/misw-4501-proyecto-de-grado/src/backend -type f -name \".env.example\" | head -3 | xargs -I {} cat {})",
+      "Bash(echo \"=== $dir models ===\")",
+      "Bash(echo \"=== $dir schemas ===\")",
+      "Bash(echo \"=== $dir services ===\")",
+      "Bash(find /c/uniandes/miso/s4/misw4502-proyecto-final-2/misw-4501-proyecto-de-grado -maxdepth 2 -type f \\\\\\( -name \"README*\" -o -name \"*.md\" \\\\\\) 2>/dev/null | head -5)",
+      "Bash(for svc:*)",
+      "Bash(echo \"=== $svc ===\")",
+      "Read(//c/uniandes/miso/s4/misw4502-proyecto-final-2/misw-4501-proyecto-de-grado/src/backend/$svc/**)"
+    ]
+  }
+}
