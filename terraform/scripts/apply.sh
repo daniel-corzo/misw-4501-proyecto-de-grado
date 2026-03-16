@@ -34,9 +34,15 @@ print_success() {
   printf "%b✔ %s%b\n\n" "${GREEN}" "$1" "${NC}"
 }
 
+TOTAL_STACKS=${#STACKS[@]}
+current=0
+
 printf "%b\n" "${YELLOW}🚀 Starting Terraform deployment${NC}"
+printf "%bProgress: 0/%d stacks%b\n\n" "${CYAN}" "$TOTAL_STACKS" "${NC}"
 
 for STACK in "${STACKS[@]}"; do
+  ((current++))
+  printf "%bProgress: [%d/%d] %s%b\n" "${CYAN}" "$current" "$TOTAL_STACKS" "$STACK" "${NC}"
 
   print_stack_header "$STACK"
 
@@ -50,14 +56,17 @@ for STACK in "${STACKS[@]}"; do
   print_step "Validating configuration"
   terraform -chdir="$TF_DIR" validate
 
+  printf "%bPlanning stack %d/%d (%s)...%b\n" "${CYAN}" "$current" "$TOTAL_STACKS" "$STACK" "${NC}"
   print_step "Generating execution plan"
   terraform -chdir="$TF_DIR" plan \
     -var-file="$ENV_DIR/terraform.tfvars" \
     -out=.tfplan
 
+  printf "%bApplying stack %d/%d (%s)...%b\n" "${CYAN}" "$current" "$TOTAL_STACKS" "$STACK" "${NC}"
   print_step "Applying infrastructure"
   terraform -chdir="$TF_DIR" apply .tfplan
 
+  printf "%bProgress: [%d/%d] %s ✔%b\n" "${GREEN}" "$current" "$TOTAL_STACKS" "$STACK" "${NC}"
   print_success "Stack $STACK deployed"
 
 done

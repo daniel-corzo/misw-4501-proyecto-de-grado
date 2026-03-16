@@ -5,4 +5,6 @@ STACKS=(
   ecr
   alb
   ecs
+  static-frontend
+  cloudfront
 )

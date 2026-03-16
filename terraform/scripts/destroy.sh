@@ -30,26 +30,33 @@ print_step() {
   printf "%b➜ %s%b\n" "${CYAN}" "$1" "${NC}"
 }
 
-print_success() {  
+print_success() {
   printf "%b✔ %s%b\n\n" "${GREEN}" "$1" "${NC}"
 }
 
+TOTAL_STACKS=${#STACKS[@]}
+current=0
+
 printf "%b\n" "${YELLOW}⚠️  Destroying Terraform infrastructure${NC}"
+printf "%bProgress: 0/%d stacks%b\n\n" "${CYAN}" "$TOTAL_STACKS" "${NC}"
 
 for (( idx=${#STACKS[@]}-1 ; idx>=0 ; idx-- )) ; do
-
+  ((current++))
   STACK=${STACKS[idx]}
+  printf "%bProgress: [%d/%d] %s%b\n" "${CYAN}" "$current" "$TOTAL_STACKS" "$STACK" "${NC}"
 
   print_stack_header "$STACK"
 
   TF_DIR="$PROJECT_ROOT/terraform/stacks/$STACK"
   ENV_DIR="$PROJECT_ROOT/terraform/environments/$ENV/$STACK"
 
+  printf "%bDestroying stack %d/%d (%s)...%b\n" "${CYAN}" "$current" "$TOTAL_STACKS" "$STACK" "${NC}"
   print_step "Destroying infrastructure"
   terraform -chdir="$TF_DIR" destroy \
     -var-file="$ENV_DIR/terraform.tfvars" \
     -auto-approve
 
+  printf "%bProgress: [%d/%d] %s ✔%b\n" "${GREEN}" "$current" "$TOTAL_STACKS" "$STACK" "${NC}"
   print_success "Stack $STACK destroyed"
 
 done
