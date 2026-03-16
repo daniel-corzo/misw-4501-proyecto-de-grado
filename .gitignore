@@ -34,3 +34,11 @@ override.tf.json
 
 # Sensitive logs
 *.log
+
+# Node
+node_modules/
+
+# Angular
+dist/
+.angular/
+.vscode/
