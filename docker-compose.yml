@@ -1,0 +1,198 @@
+version: "3.9"
+
+services:
+
+  # ── Infraestructura local ────────────────────────────────────────────────────
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 5
+
+  localstack:
+    image: localstack/localstack
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: sqs
+      DEFAULT_REGION: ${AWS_REGION}
+    volumes:
+      - localstack_data:/var/lib/localstack
+
+  # ── Microservicios ───────────────────────────────────────────────────────────
+
+  autenticacion:
+    build:
+      context: ./src/backend
+      dockerfile: autenticacion/Dockerfile
+    ports:
+      - "8001:8000"
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT}
+      SERVICE_NAME: autenticacion
+      DB_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET}
+      AWS_REGION: ${AWS_REGION}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./src/backend/autenticacion/app:/app/app
+
+  usuarios:
+    build:
+      context: ./src/backend
+      dockerfile: usuarios/Dockerfile
+    ports:
+      - "8002:8000"
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT}
+      SERVICE_NAME: usuarios
+      DB_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET}
+      AWS_REGION: ${AWS_REGION}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./src/backend/usuarios/app:/app/app
+
+  busqueda:
+    build:
+      context: ./src/backend
+      dockerfile: busqueda/Dockerfile
+    ports:
+      - "8003:8000"
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT}
+      SERVICE_NAME: busqueda
+      DB_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
+      REDIS_URL: ${REDIS_URL}
+      AWS_REGION: ${AWS_REGION}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src/backend/busqueda/app:/app/app
+
+  hoteles:
+    build:
+      context: ./src/backend
+      dockerfile: hoteles/Dockerfile
+    ports:
+      - "8004:8000"
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT}
+      SERVICE_NAME: hoteles
+      DB_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
+      AWS_REGION: ${AWS_REGION}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./src/backend/hoteles/app:/app/app
+
+  inventario:
+    build:
+      context: ./src/backend
+      dockerfile: inventario/Dockerfile
+    ports:
+      - "8005:8000"
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT}
+      SERVICE_NAME: inventario
+      DB_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
+      REDIS_URL: ${REDIS_URL}
+      AWS_REGION: ${AWS_REGION}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src/backend/inventario/app:/app/app
+
+  reservas:
+    build:
+      context: ./src/backend
+      dockerfile: reservas/Dockerfile
+    ports:
+      - "8006:8000"
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT}
+      SERVICE_NAME: reservas
+      DB_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
+      SQS_ENDPOINT: ${SQS_ENDPOINT}
+      SQS_QUEUE_URL: ${SQS_QUEUE_URL}
+      AWS_REGION: ${AWS_REGION}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+    volumes:
+      - ./src/backend/reservas/app:/app/app
+
+  pagos:
+    build:
+      context: ./src/backend
+      dockerfile: pagos/Dockerfile
+    ports:
+      - "8007:8000"
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT}
+      SERVICE_NAME: pagos
+      DB_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
+      SQS_ENDPOINT: ${SQS_ENDPOINT}
+      SQS_QUEUE_URL: ${SQS_QUEUE_URL}
+      STRIPE_KEY: ${STRIPE_KEY}
+      AWS_REGION: ${AWS_REGION}
+    depends_on:
+      localstack:
+        condition: service_started
+    volumes:
+      - ./src/backend/pagos/app:/app/app
+
+  notificaciones:
+    build:
+      context: ./src/backend
+      dockerfile: notificaciones/Dockerfile
+    ports:
+      - "8008:8000"
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT}
+      SERVICE_NAME: notificaciones
+      SQS_ENDPOINT: ${SQS_ENDPOINT}
+      SQS_QUEUE_URL: ${SQS_QUEUE_URL}
+      AWS_REGION: ${AWS_REGION}
+    depends_on:
+      localstack:
+        condition: service_started
+    volumes:
+      - ./src/backend/notificaciones/app:/app/app
+
+volumes:
+  postgres_data:
+  localstack_data:

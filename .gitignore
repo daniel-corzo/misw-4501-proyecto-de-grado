@@ -42,3 +42,13 @@ node_modules/
 dist/
 .angular/
 .vscode/
+
+.env
+
+# Virtual environments
+*.venv/
+
+# Egg info de paquetes locales
+*.egg-info/
+
+.claude/
