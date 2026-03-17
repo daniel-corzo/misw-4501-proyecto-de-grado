@@ -10,10 +10,10 @@ import { HealthService, ServiceHealth } from '../../core/services/health.service
   styleUrl: './health-dashboard.component.scss',
 })
 export class HealthDashboardComponent implements OnInit {
-  // 1. Inyección del servicio con la función inject() (Angular 14+)
+  // 1. Inyección del servicio con inject()
   private readonly healthService = inject(HealthService);
 
-  // 2. Estado del componente con signals (Angular 16+)
+  // 2. Estado del componente con signals
   services = signal<ServiceHealth[]>([]);
   loading = signal(false);
   lastChecked = signal<Date | null>(null);
@@ -25,7 +25,7 @@ export class HealthDashboardComponent implements OnInit {
   verificar(): void {
     this.loading.set(true);
 
-    // Estado inicial: todos en 'loading'
+    // Estado inicial: todos en 'loading' mientras llegan las respuestas
     this.services.set(
       ['autenticacion', 'usuarios', 'busqueda', 'hoteles',
        'inventario', 'reservas', 'pagos', 'notificaciones'].map((name) => ({
@@ -35,7 +35,7 @@ export class HealthDashboardComponent implements OnInit {
       }))
     );
 
-    // 3. Consumo del servicio: suscripción al Observable
+    // 3. Suscripción al Observable que devuelve el servicio
     this.healthService.checkAll().subscribe({
       next: (results) => {
         this.services.set(results);
