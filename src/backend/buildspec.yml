@@ -1,0 +1,28 @@
+version: 0.2
+
+# Buildspec para UN microservicio. La variable SERVICE la inyecta
+# el modulo codebuild de Terraform para cada pipeline individual.
+# Ejemplo: SERVICE=hoteles → construye y sube travelhub-hoteles a ECR.
+
+phases:
+  pre_build:
+    commands:
+      - echo "Autenticando en ECR para el servicio $SERVICE..."
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+
+  build:
+    commands:
+      - echo "Construyendo imagen Docker de $SERVICE..."
+      - |
+        docker build \
+          --file src/backend/$SERVICE/Dockerfile \
+          --tag  $ECR_REGISTRY/travelhub-$SERVICE:$CODEBUILD_RESOLVED_SOURCE_VERSION \
+          --tag  $ECR_REGISTRY/travelhub-$SERVICE:latest \
+          src/backend
+
+  post_build:
+    commands:
+      - echo "Subiendo imagen a ECR..."
+      - docker push $ECR_REGISTRY/travelhub-$SERVICE:$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - docker push $ECR_REGISTRY/travelhub-$SERVICE:latest
+      - echo "Deploy de $SERVICE completado."

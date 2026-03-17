@@ -7,4 +7,6 @@ STACKS=(
   ecs
   static-frontend
   cloudfront
+  cicd-backend
+  cicd-frontend
 )

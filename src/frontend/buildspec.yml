@@ -1,0 +1,29 @@
+version: 0.2
+
+# CodeBuild ejecuta este archivo cuando el pipeline de frontend se activa.
+# Instala dependencias, compila Angular en modo produccion, sincroniza con S3
+# e invalida el cache de CloudFront.
+# Las variables S3_BUCKET_NAME y CLOUDFRONT_DISTRIBUTION_ID las inyecta
+# el modulo de Terraform al crear el proyecto CodeBuild.
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+
+  pre_build:
+    commands:
+      - echo Instalando dependencias...
+      - cd src/frontend && npm ci
+
+  build:
+    commands:
+      - echo Compilando Angular...
+      - npm run build -- --configuration production
+
+  post_build:
+    commands:
+      - echo Subiendo archivos a S3...
+      - aws s3 sync dist/travelhub-web/browser/ s3://$S3_BUCKET_NAME --delete
+      - echo Invalidando cache CloudFront...
+      - aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
