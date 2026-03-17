@@ -1,0 +1,30 @@
+<div class="dashboard">
+  <header class="dashboard__header">
+    <h1>Estado de Microservicios</h1>
+    <p class="dashboard__subtitle" *ngIf="lastChecked()">
+      Última verificación: {{ lastChecked() | date:'HH:mm:ss' }}
+    </p>
+  </header>
+
+  <div class="dashboard__summary">
+    <span [class.all-healthy]="healthyCount === totalCount">
+      {{ healthyCount }} / {{ totalCount }} servicios operativos
+    </span>
+    <button class="btn-refresh" (click)="verificar()" [disabled]="loading()">
+      {{ loading() ? 'Verificando...' : 'Verificar' }}
+    </button>
+  </div>
+
+  <ul class="service-list">
+    <li *ngFor="let svc of services()" class="service-item">
+      <span class="service-item__indicator" [ngClass]="svc.status"></span>
+      <span class="service-item__name">{{ svc.name }}</span>
+      <span class="service-item__status" [ngClass]="svc.status">
+        {{ svc.status }}
+      </span>
+      <span class="service-item__time" *ngIf="svc.responseTime !== null">
+        {{ svc.responseTime }} ms
+      </span>
+    </li>
+  </ul>
+</div>

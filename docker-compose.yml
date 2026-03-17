@@ -39,6 +39,24 @@ services:
     volumes:
       - localstack_data:/var/lib/localstack
 
+  # ── API Gateway local (equivalente al AWS API Gateway en producción) ─────────
+
+  gateway:
+    image: nginx:alpine
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./nginx/gateway.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - autenticacion
+      - usuarios
+      - busqueda
+      - hoteles
+      - inventario
+      - reservas
+      - pagos
+      - notificaciones
+
   # ── Microservicios ───────────────────────────────────────────────────────────
 
   autenticacion:

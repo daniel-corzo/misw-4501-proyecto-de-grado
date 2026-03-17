@@ -1,6 +1,6 @@
 # TravelHub
 > Transformación Digital de la Plataforma de Reservas Hoteleras  
-> Universidad de Los Andes — MISO — MISW4501/4502
+> Universidad de Los Andes — MISO
 
 ## Descripción
 
@@ -68,13 +68,6 @@ STRIPE_KEY=sk_test_placeholder
 docker-compose up --build
 ```
 
-#### 3. Verificar que todos los servicios estén activos
-
-```powershell
-# PowerShell — health check de todos los microservicios
-@{8001="autenticacion";8002="usuarios";8003="busqueda";8004="hoteles";8005="inventario";8006="reservas";8007="pagos";8008="notificaciones"}.GetEnumerator() | ForEach-Object { Write-Host "$($_.Value): " -NoNewline; Invoke-RestMethod "http://localhost:$($_.Key)/health" | ConvertTo-Json -Compress }
-```
-
 #### Puertos de los microservicios
 
 | Servicio | Puerto | Swagger UI |
@@ -87,6 +80,8 @@ docker-compose up --build
 | reservas | 8006 | http://localhost:8006/docs |
 | pagos | 8007 | http://localhost:8007/docs |
 | notificaciones | 8008 | http://localhost:8008/docs |
+|---|---|---|
+| api gateway | 8080 | http://localhost:8080/api/{microservicio} |
 
 #### Comandos útiles
 
