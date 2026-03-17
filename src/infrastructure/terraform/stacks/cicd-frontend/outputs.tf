@@ -3,6 +3,6 @@ output "pipeline_name" {
 }
 
 output "connection_arn" {
-  description = "Activa esta conexion en la consola AWS antes del primer push"
-  value       = aws_codestarconnections_connection.github.arn
+  description = "ARN de la conexion CodeStar usada por los pipelines"
+  value       = var.codestar_connection_arn
 }

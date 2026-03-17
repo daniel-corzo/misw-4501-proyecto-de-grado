@@ -95,18 +95,10 @@ resource "aws_iam_role_policy" "codepipeline" {
       {
         Effect   = "Allow"
         Action   = ["codestar-connections:UseConnection"]
-        Resource = aws_codestarconnections_connection.github.arn
+        Resource = var.codestar_connection_arn
       },
     ]
   })
-}
-
-# ── Conexion GitHub ───────────────────────────────────────────────────────────
-
-resource "aws_codestarconnections_connection" "github" {
-  name          = "${var.project_name}-frontend-github"
-  provider_type = "GitHub"
-  tags          = { Project = var.project_name }
 }
 
 # ── CodeBuild + CodePipeline ──────────────────────────────────────────────────
@@ -133,6 +125,6 @@ module "pipeline" {
   artifact_bucket_id      = aws_s3_bucket.artifacts.id
   github_repo             = var.github_repo
   github_branch           = var.github_branch
-  codestar_connection_arn = aws_codestarconnections_connection.github.arn
+  codestar_connection_arn = var.codestar_connection_arn
   codebuild_project_name  = module.build.project_name
 }
