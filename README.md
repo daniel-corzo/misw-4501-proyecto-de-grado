@@ -1,6 +1,6 @@
 # TravelHub
 > Transformación Digital de la Plataforma de Reservas Hoteleras  
-> Universidad de Los Andes — MISO — MISW4501/4502
+> Universidad de Los Andes — MISO
 
 ## Descripción
 
