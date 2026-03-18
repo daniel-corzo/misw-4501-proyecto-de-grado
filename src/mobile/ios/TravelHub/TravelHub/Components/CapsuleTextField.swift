@@ -15,6 +15,8 @@ struct CapsuleTextField: View {
 
     @Binding var text: String
 
+    @State private var isHidingSecureText: Bool = true
+
     init(
         icon: String,
         placeholder: LocalizedStringResource,
@@ -33,15 +35,22 @@ struct CapsuleTextField: View {
     var body: some View {
         HStack {
             Image(systemName: icon)
-                .foregroundColor(.gray)
+                .foregroundStyle(.neutral)
 
-            if isSecuredField {
+            if isSecuredField && isHidingSecureText {
                 SecureField(placeholder, text: $text)
             } else {
                 TextField(placeholder, text: $text)
                     .textInputAutocapitalization(textInputAutocapitalization)
             }
 
+            if isSecuredField {
+                Image(systemName: isHidingSecureText ? "eye" : "eye.slash")
+                    .foregroundStyle(.neutral)
+                    .onTapGesture {
+                        isHidingSecureText.toggle()
+                    }
+            }
         }
         .padding()
         .background(Color.white)
