@@ -1,6 +1,7 @@
 resource "aws_codepipeline" "this" {
-  name     = var.project_name
-  role_arn = var.role_arn
+  name          = var.project_name
+  role_arn      = var.role_arn
+  pipeline_type = "V2"
 
   artifact_store {
     type     = "S3"
@@ -22,7 +23,7 @@ resource "aws_codepipeline" "this" {
         ConnectionArn    = var.codestar_connection_arn
         FullRepositoryId = var.github_repo
         BranchName       = var.github_branch
-        DetectChanges    = "true"
+        DetectChanges    = "false"
       }
     }
   }
@@ -41,6 +42,28 @@ resource "aws_codepipeline" "this" {
 
       configuration = {
         ProjectName = var.codebuild_project_name
+      }
+    }
+  }
+
+  dynamic "trigger" {
+    for_each = var.file_path_filter != null ? [1] : []
+
+    content {
+      provider_type = "CodeStarSourceConnection"
+
+      git_configuration {
+        source_action_name = "GitHub"
+
+        push {
+          branches {
+            includes = [var.github_branch]
+          }
+
+          file_paths {
+            includes = [var.file_path_filter]
+          }
+        }
       }
     }
   }

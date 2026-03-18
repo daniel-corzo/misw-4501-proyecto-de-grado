@@ -1,4 +1,4 @@
-output "repository_url" {
-  description = "ECR repository URL"
-  value       = module.ecr.repository_url
+output "repository_urls" {
+  description = "URLs de los repositorios ECR por servicio"
+  value       = module.ecr.repository_urls
 }

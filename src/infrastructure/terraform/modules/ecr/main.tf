@@ -1,5 +1,7 @@
 resource "aws_ecr_repository" "repository" {
-  name = "${local.prefix}-ecr"
+  for_each = var.services
+
+  name = "${local.prefix}-${each.key}"
 
   image_tag_mutability = "MUTABLE"
 

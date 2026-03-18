@@ -28,3 +28,9 @@ variable "codebuild_project_name" {
 variable "codestar_connection_arn" {
   type = string
 }
+
+variable "file_path_filter" {
+  description = "Patron de ruta para filtrar triggers (ej: 'src/backend/reservas/**'). Si es null, el pipeline se dispara con cualquier cambio."
+  type        = string
+  default     = null
+}

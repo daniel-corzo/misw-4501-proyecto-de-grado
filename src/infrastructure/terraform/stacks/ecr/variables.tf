@@ -9,3 +9,8 @@ variable "region" {
 variable "owner" {
   type = string
 }
+
+variable "services" {
+  description = "Lista de microservicios para crear repositorios ECR"
+  type        = set(string)
+}
