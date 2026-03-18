@@ -3,8 +3,8 @@ from travelhub_common.config import BaseAppSettings, load_secrets
 
 
 class Settings(BaseAppSettings):
-    # Agrega aqui settings especificos de autenticacion
-    service_name: str = "autenticacion"
+    # Agrega aqui settings especificos de auth
+    service_name: str = "auth"
 
 
 @lru_cache

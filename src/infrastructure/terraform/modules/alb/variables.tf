@@ -23,6 +23,6 @@ variable "health_check_path" {
 }
 
 variable "services" {
-  description = "Lista ordenada de servicios. El índice determina la prioridad de la listener rule."
-  type        = list(string)
+  description = "Mapa de nombre de servicio a prefijo del router (ej. auth = /auth). El orden en el mapa determina la prioridad."
+  type        = map(string)
 }

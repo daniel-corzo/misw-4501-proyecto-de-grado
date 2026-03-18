@@ -5,10 +5,10 @@ WORKDIR /app
 COPY common /common
 RUN pip install --no-cache-dir -e /common
 
-COPY autenticacion/requirements.txt .
+COPY auth/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY autenticacion/app/ ./app/
+COPY auth/app/ ./app/
 
 EXPOSE 8000
 

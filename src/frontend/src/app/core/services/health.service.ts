@@ -10,7 +10,7 @@ export interface ServiceHealth {
 }
 
 const SERVICES: string[] = [
-  'autenticacion',
+  'auth',
   'usuarios',
   'busqueda',
   'hoteles',

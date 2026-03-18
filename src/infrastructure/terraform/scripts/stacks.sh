@@ -6,6 +6,7 @@ STACKS=(
   rds
   alb
   ecs
+  apigw
   static-frontend
   cloudfront
   cicd-backend

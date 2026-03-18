@@ -1,7 +1,7 @@
 locals {
-  # Asigna prioridad a cada servicio según su posición en la lista (10, 20, 30, ...)
+  # Asigna prioridad según posición en el mapa (10, 20, 30, ...)
   services_with_priority = {
-    for idx, svc in var.services : svc => (idx + 1) * 10
+    for idx, svc in keys(var.services) : svc => (idx + 1) * 10
   }
 }
 
@@ -58,7 +58,7 @@ resource "aws_lb" "this" {
 # ===============================
 
 resource "aws_lb_target_group" "ecs" {
-  for_each = toset(var.services)
+  for_each = var.services
 
   name        = "${var.project_name}-${each.key}-tg"
   port        = var.target_port
@@ -101,7 +101,7 @@ resource "aws_lb_listener" "http" {
 }
 
 # ===============================
-# Listener Rules (path-based por servicio)
+# Listener Rules (path-based por prefijo de router)
 # ===============================
 
 resource "aws_lb_listener_rule" "service" {
@@ -117,7 +117,8 @@ resource "aws_lb_listener_rule" "service" {
 
   condition {
     path_pattern {
-      values = ["/${each.key}", "/${each.key}/*"]
+      # var.services[each.key] es el prefijo del router (ej. "auth" para auth)
+      values = ["/${var.services[each.key]}", "/${var.services[each.key]}/*"]
     }
   }
 }

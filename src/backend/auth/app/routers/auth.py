@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, status
 from app.schemas.auth import LoginRequest, LoginResponse, RefreshRequest
 
-router = APIRouter(prefix="/auth", tags=["autenticacion"])
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/login", response_model=LoginResponse, status_code=status.HTTP_200_OK)

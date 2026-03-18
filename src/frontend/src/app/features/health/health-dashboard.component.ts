@@ -27,7 +27,7 @@ export class HealthDashboardComponent implements OnInit {
 
     // Estado inicial: todos en 'loading' mientras llegan las respuestas
     this.services.set(
-      ['autenticacion', 'usuarios', 'busqueda', 'hoteles',
+      ['auth', 'usuarios', 'busqueda', 'hoteles',
        'inventario', 'reservas', 'pagos', 'notificaciones'].map((name) => ({
         name,
         status: 'loading' as const,

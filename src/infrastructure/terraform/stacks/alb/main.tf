@@ -1,14 +1,15 @@
 locals {
-  services = [
-    "autenticacion",
-    "usuarios",
-    "busqueda",
-    "hoteles",
-    "inventario",
-    "reservas",
-    "pagos",
-    "notificaciones",
-  ]
+  # Mapa de nombre de servicio → prefijo real del router en la app
+  services = {
+    auth           = "auth"
+    usuarios       = "usuarios"
+    busqueda       = "busqueda"
+    hoteles        = "hoteles"
+    inventario     = "inventario"
+    reservas       = "reservas"
+    pagos          = "pagos"
+    notificaciones = "notificaciones"
+  }
 }
 
 module "alb" {
