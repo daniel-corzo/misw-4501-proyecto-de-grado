@@ -30,7 +30,7 @@ variable "codestar_connection_arn" {
 }
 
 variable "file_path_filter" {
-  description = "Patron de ruta para filtrar triggers (ej: 'src/backend/reservas/**'). Si es null, el pipeline se dispara con cualquier cambio."
-  type        = string
+  description = "Patrones de ruta para filtrar triggers. Si es null o vacío, el pipeline se dispara con cualquier cambio."
+  type        = list(string)
   default     = null
 }

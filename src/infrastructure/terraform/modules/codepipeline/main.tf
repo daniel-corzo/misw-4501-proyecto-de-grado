@@ -61,7 +61,7 @@ resource "aws_codepipeline" "this" {
           }
 
           file_paths {
-            includes = [var.file_path_filter]
+            includes = var.file_path_filter
           }
         }
       }

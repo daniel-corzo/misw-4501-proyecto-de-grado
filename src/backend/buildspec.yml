@@ -25,4 +25,6 @@ phases:
       - echo "Subiendo imagen a ECR..."
       - docker push $ECR_REGISTRY/travelhub-$SERVICE:$CODEBUILD_RESOLVED_SOURCE_VERSION
       - docker push $ECR_REGISTRY/travelhub-$SERVICE:latest
+      - echo "Desplegando en ECS..."
+      - aws ecs update-service --cluster travelhub-cluster --service travelhub-$SERVICE-service --force-new-deployment --region $AWS_REGION
       - echo "Deploy de $SERVICE completado."

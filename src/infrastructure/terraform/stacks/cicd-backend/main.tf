@@ -73,6 +73,11 @@ resource "aws_iam_role_policy" "codebuild" {
         ]
         Resource = "*"
       },
+      {
+        Effect   = "Allow"
+        Action   = ["ecs:UpdateService"]
+        Resource = "arn:aws:ecs:${var.region}:*:service/travelhub-cluster/*"
+      },
     ]
   })
 }
@@ -147,5 +152,5 @@ module "pipeline" {
   github_branch           = var.github_branch
   codestar_connection_arn = var.codestar_connection_arn
   codebuild_project_name  = module.build[each.key].project_name
-  file_path_filter        = "src/backend/${each.key}/**"
+  file_path_filter        = ["src/backend/${each.key}/**", "src/backend/common/**"]
 }
