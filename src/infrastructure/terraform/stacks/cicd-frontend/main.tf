@@ -127,4 +127,5 @@ module "pipeline" {
   github_branch           = var.github_branch
   codestar_connection_arn = var.codestar_connection_arn
   codebuild_project_name  = module.build.project_name
+  file_path_filter        = "src/frontend/**"
 }
