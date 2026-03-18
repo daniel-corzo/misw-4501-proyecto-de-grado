@@ -1,5 +1,5 @@
 //
-//  CapsuleTextField.swift
+//  FormTextFieldView.swift
 //  TravelHub
 //
 //  Created by Andres Donoso on 17/03/26.
@@ -7,7 +7,8 @@
 
 import SwiftUI
 
-struct CapsuleTextField: View {
+struct FormTextFieldView: View {
+    let fieldName: LocalizedStringResource
     let icon: String
     let placeholder: LocalizedStringResource
     let textInputAutocapitalization: TextInputAutocapitalization?
@@ -16,12 +17,14 @@ struct CapsuleTextField: View {
     @Binding var text: String
 
     init(
+        fieldName: LocalizedStringResource,
         icon: String,
         placeholder: LocalizedStringResource,
         textInputAutocapitalization: TextInputAutocapitalization? = nil,
         isSecuredField: Bool = false,
         text: Binding<String>
     ) {
+        self.fieldName = fieldName
         self.icon = icon
         self.placeholder = placeholder
         self.textInputAutocapitalization = textInputAutocapitalization
@@ -31,43 +34,30 @@ struct CapsuleTextField: View {
     }
 
     var body: some View {
-        HStack {
-            Image(systemName: icon)
-                .foregroundColor(.gray)
+        VStack(alignment: .leading) {
+            Text(fieldName)
+                .bold()
 
-            if isSecuredField {
-                SecureField(placeholder, text: $text)
-            } else {
-                TextField(placeholder, text: $text)
-                    .textInputAutocapitalization(textInputAutocapitalization)
-            }
-
+            CapsuleTextField(
+                icon: icon,
+                placeholder: placeholder,
+                textInputAutocapitalization: textInputAutocapitalization,
+                isSecuredField: isSecuredField,
+                text: $text
+            )
         }
-        .padding()
-        .background(Color.white)
-        .clipShape(.capsule)
-        .overlay(
-            Capsule()
-                .stroke(Color.gray.opacity(0.4), lineWidth: 1)
-        )
     }
 }
 
-#Preview {
+#Preview(traits: .sizeThatFitsLayout) {
     @Previewable @State var fullName: String = ""
-    @Previewable @State var password: String = ""
 
-    CapsuleTextField(
+    FormTextFieldView(
+        fieldName: .UserData.fullName,
         icon: "person",
         placeholder: "John Doe",
         textInputAutocapitalization: .words,
         text: $fullName
     )
-
-    CapsuleTextField(
-        icon: "lock",
-        placeholder: "Password",
-        isSecuredField: true,
-        text: $password
-    )
+    .padding()
 }
