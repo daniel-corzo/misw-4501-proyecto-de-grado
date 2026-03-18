@@ -27,3 +27,13 @@ data "terraform_remote_state" "alb" {
     region = var.region
   }
 }
+
+data "terraform_remote_state" "rds" {
+  backend = "s3"
+
+  config = {
+    bucket = "terraform-travelhub-state"
+    key    = "rds/terraform.tfstate"
+    region = var.region
+  }
+}

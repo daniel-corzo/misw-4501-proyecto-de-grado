@@ -1,3 +1,14 @@
+locals {
+  # Asigna prioridad a cada servicio según su posición en la lista (10, 20, 30, ...)
+  services_with_priority = {
+    for idx, svc in var.services : svc => (idx + 1) * 10
+  }
+}
+
+# ===============================
+# Security Group
+# ===============================
+
 resource "aws_security_group" "alb" {
   name        = "${var.project_name}-alb-sg"
   description = "Security group for ALB"
@@ -24,6 +35,10 @@ resource "aws_security_group" "alb" {
   }
 }
 
+# ===============================
+# Application Load Balancer
+# ===============================
+
 resource "aws_lb" "this" {
   name               = "${var.project_name}-alb"
   internal           = false
@@ -38,14 +53,18 @@ resource "aws_lb" "this" {
   }
 }
 
+# ===============================
+# Target Groups (uno por servicio)
+# ===============================
 
 resource "aws_lb_target_group" "ecs" {
-  name        = "${var.project_name}-tg"
+  for_each = toset(var.services)
+
+  name        = "${var.project_name}-${each.key}-tg"
   port        = var.target_port
   protocol    = "HTTP"
   target_type = "ip"
-
-  vpc_id = var.vpc_id
+  vpc_id      = var.vpc_id
 
   health_check {
     path                = var.health_check_path
@@ -62,6 +81,9 @@ resource "aws_lb_target_group" "ecs" {
   }
 }
 
+# ===============================
+# Listener HTTP (default: 404)
+# ===============================
 
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.this.arn
@@ -69,7 +91,33 @@ resource "aws_lb_listener" "http" {
   protocol          = "HTTP"
 
   default_action {
+    type = "fixed-response"
+    fixed_response {
+      content_type = "application/json"
+      message_body = "{\"error\": \"not found\"}"
+      status_code  = "404"
+    }
+  }
+}
+
+# ===============================
+# Listener Rules (path-based por servicio)
+# ===============================
+
+resource "aws_lb_listener_rule" "service" {
+  for_each = local.services_with_priority
+
+  listener_arn = aws_lb_listener.http.arn
+  priority     = each.value
+
+  action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.ecs.arn
+    target_group_arn = aws_lb_target_group.ecs[each.key].arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/${each.key}", "/${each.key}/*"]
+    }
   }
 }

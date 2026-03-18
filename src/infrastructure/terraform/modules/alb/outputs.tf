@@ -1,5 +1,6 @@
-output "target_group_arn" {
-  value = aws_lb_target_group.ecs.arn
+output "target_group_arns" {
+  description = "Mapa de nombre de servicio a ARN del target group"
+  value       = { for svc, tg in aws_lb_target_group.ecs : svc => tg.arn }
 }
 
 output "load_balancer_dns" {

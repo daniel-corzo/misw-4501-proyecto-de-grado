@@ -41,7 +41,7 @@ printf "%b\n" "${YELLOW}🚀 Starting Terraform deployment${NC}"
 printf "%bProgress: 0/%d stacks%b\n\n" "${CYAN}" "$TOTAL_STACKS" "${NC}"
 
 for STACK in "${STACKS[@]}"; do
-  ((current++))
+  current=$((current + 1))
   printf "%bProgress: [%d/%d] %s%b\n" "${CYAN}" "$current" "$TOTAL_STACKS" "$STACK" "${NC}"
 
   print_stack_header "$STACK"

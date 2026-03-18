@@ -3,6 +3,7 @@
 STACKS=(
   network
   ecr
+  rds
   alb
   ecs
   static-frontend

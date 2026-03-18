@@ -1,5 +1,6 @@
-output "target_group_arn" {
-  value = module.alb.target_group_arn
+output "target_group_arns" {
+  description = "Mapa de nombre de servicio a ARN del target group"
+  value       = module.alb.target_group_arns
 }
 
 output "load_balancer_dns" {

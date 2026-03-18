@@ -21,3 +21,8 @@ variable "target_port" {
 variable "health_check_path" {
   type = string
 }
+
+variable "services" {
+  description = "Lista ordenada de servicios. El índice determina la prioridad de la listener rule."
+  type        = list(string)
+}

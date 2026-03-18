@@ -12,7 +12,7 @@ resource "aws_ecs_cluster" "cluster" {
 }
 
 # ===============================
-# ECS Log Group
+# ECS Log Group (compartido)
 # ===============================
 
 resource "aws_cloudwatch_log_group" "ecs_logs" {
@@ -22,7 +22,7 @@ resource "aws_cloudwatch_log_group" "ecs_logs" {
 }
 
 # ===============================
-# ECS Task Execution Role
+# ECS Task Execution Role (compartido)
 # ===============================
 
 resource "aws_iam_role" "ecs_task_execution_role" {
@@ -45,31 +45,55 @@ resource "aws_iam_role_policy_attachment" "ecs_execution_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+resource "aws_iam_role_policy" "ecs_secrets_policy" {
+  name = "${var.project_name}-ecs-secrets-policy"
+  role = aws_iam_role.ecs_task_execution_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["secretsmanager:GetSecretValue"]
+      Resource = [var.shared_secret_arn]
+    }]
+  })
+}
+
 # ===============================
-# ECS Task Definition
+# ECS Task Definitions (uno por servicio)
 # ===============================
 
 resource "aws_ecs_task_definition" "task" {
-  family                   = "${var.project_name}-task"
+  for_each = var.services
+
+  family                   = "${var.project_name}-${each.key}-task"
   requires_compatibilities = ["FARGATE"]
-
-  network_mode = "awsvpc"
-
-  cpu    = "256"
-  memory = "512"
+  network_mode             = "awsvpc"
+  cpu                      = "256"
+  memory                   = "512"
 
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
 
   container_definitions = jsonencode([
     {
-      name  = "${var.project_name}-container"
-      image = "${var.repository_url}:latest"
+      name  = "${var.project_name}-${each.key}"
+      image = "${each.value.repository_url}:latest"
 
       portMappings = [
         {
-          containerPort = 3000
+          containerPort = each.value.container_port
           protocol      = "tcp"
         }
+      ]
+
+      environment = [
+        { name = "SERVICE_NAME", value = each.key },
+        { name = "AWS_REGION", value = var.region },
+      ]
+
+      secrets = [
+        { name = "DB_URL",     valueFrom = "${var.shared_secret_arn}:db_url::" },
+        { name = "JWT_SECRET", valueFrom = "${var.shared_secret_arn}:jwt_secret::" },
       ]
 
       logConfiguration = {
@@ -77,7 +101,7 @@ resource "aws_ecs_task_definition" "task" {
         options = {
           awslogs-group         = aws_cloudwatch_log_group.ecs_logs.name
           awslogs-region        = var.region
-          awslogs-stream-prefix = "ecs"
+          awslogs-stream-prefix = each.key
         }
       }
     }
@@ -85,21 +109,25 @@ resource "aws_ecs_task_definition" "task" {
 }
 
 # ===============================
-# ECS Service
+# ECS Services (uno por servicio)
 # ===============================
 
 resource "aws_ecs_service" "service" {
-  name            = "${var.project_name}-service"
+  for_each = var.services
+
+  name            = "${var.project_name}-${each.key}-service"
   cluster         = aws_ecs_cluster.cluster.id
-  task_definition = aws_ecs_task_definition.task.arn
+  task_definition = aws_ecs_task_definition.task[each.key].arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
 
-  desired_count = 1
-  launch_type   = "FARGATE"
-
-  load_balancer {
-    target_group_arn = var.target_group_arn
-    container_name   = "${var.project_name}-container"
-    container_port   = 3000
+  dynamic "load_balancer" {
+    for_each = each.value.target_group_arn != null ? [each.value.target_group_arn] : []
+    content {
+      target_group_arn = load_balancer.value
+      container_name   = "${var.project_name}-${each.key}"
+      container_port   = each.value.container_port
+    }
   }
 
   network_configuration {
