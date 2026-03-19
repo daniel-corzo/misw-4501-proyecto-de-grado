@@ -9,6 +9,9 @@ phases:
     commands:
       - echo "Autenticando en ECR para el servicio $SERVICE..."
       - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+      - REPOSITORY_URI=$ECR_REGISTRY/travelhub-$SERVICE
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=${COMMIT_HASH:=latest}
 
   build:
     commands:
@@ -16,15 +19,39 @@ phases:
       - |
         docker build \
           --file src/backend/$SERVICE/Dockerfile \
-          --tag  $ECR_REGISTRY/travelhub-$SERVICE:$CODEBUILD_RESOLVED_SOURCE_VERSION \
-          --tag  $ECR_REGISTRY/travelhub-$SERVICE:latest \
+          --tag  $REPOSITORY_URI:$IMAGE_TAG \
+          --tag  $REPOSITORY_URI:latest \
           src/backend
 
   post_build:
     commands:
       - echo "Subiendo imagen a ECR..."
-      - docker push $ECR_REGISTRY/travelhub-$SERVICE:$CODEBUILD_RESOLVED_SOURCE_VERSION
-      - docker push $ECR_REGISTRY/travelhub-$SERVICE:latest
-      - echo "Desplegando en ECS..."
-      - aws ecs update-service --cluster travelhub-cluster --service travelhub-$SERVICE-service --force-new-deployment --region $AWS_REGION
-      - echo "Deploy de $SERVICE completado."
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - docker push $REPOSITORY_URI:latest
+      - echo "Generando artefactos para CodeDeploy..."
+      - |
+        # Obtener la task definition actual para usarla como base (reemplazando la imagen)
+        TASK_DEFINITION_NAME="travelhub-$SERVICE-task"
+        aws ecs describe-task-definition --task-definition $TASK_DEFINITION_NAME --region $AWS_REGION --query 'taskDefinition' > taskdef_full.json
+        # Limpiar la task definition para que sea válida para registro (quitar campos de solo lectura)
+        jq '.containerDefinitions[0].image = "'$REPOSITORY_URI':'$IMAGE_TAG'" | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' taskdef_full.json > taskdef.json
+      - |
+        # Generar appspec.yaml
+        # Nota: El contenedor se llama "travelhub-$SERVICE" (ver modulo ecs en terraform)
+        cat <<EOF > appspec.yaml
+        version: 0.0
+        Resources:
+          - TargetService:
+              Type: AWS::ECS::Service
+              Properties:
+                TaskDefinition: <TASK_DEFINITION>
+                LoadBalancerInfo:
+                  ContainerName: "travelhub-$SERVICE"
+                  ContainerPort: 8000
+        EOF
+      - echo "Desplegando mediante CodeDeploy gestionado por CodePipeline..."
+
+artifacts:
+  files:
+    - taskdef.json
+    - appspec.yaml

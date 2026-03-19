@@ -34,3 +34,13 @@ variable "file_path_filter" {
   type        = list(string)
   default     = null
 }
+
+variable "codedeploy_app_name" {
+  type    = string
+  default = null
+}
+
+variable "codedeploy_group_name" {
+  type    = string
+  default = null
+}

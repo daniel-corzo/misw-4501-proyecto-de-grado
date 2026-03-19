@@ -46,6 +46,31 @@ resource "aws_codepipeline" "this" {
     }
   }
 
+  dynamic "stage" {
+    for_each = var.codedeploy_app_name != null ? [1] : []
+    content {
+      name = "Deploy"
+
+      action {
+        name            = "Deploy"
+        category        = "Deploy"
+        owner           = "AWS"
+        provider        = "CodeDeployToECS"
+        version         = "1"
+        input_artifacts = ["build_output"]
+
+        configuration = {
+          ApplicationName                = var.codedeploy_app_name
+          DeploymentGroupName            = var.codedeploy_group_name
+          TaskDefinitionTemplateArtifact = "build_output"
+          AppSpecTemplateArtifact        = "build_output"
+          TaskDefinitionTemplatePath     = "taskdef.json"
+          AppSpecTemplatePath            = "appspec.yaml"
+        }
+      }
+    }
+  }
+
   dynamic "trigger" {
     for_each = var.file_path_filter != null ? [1] : []
 

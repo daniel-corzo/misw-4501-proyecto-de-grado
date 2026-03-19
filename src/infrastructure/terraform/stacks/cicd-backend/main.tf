@@ -75,9 +75,9 @@ resource "aws_iam_role_policy" "codebuild" {
       },
       {
         Effect   = "Allow"
-        Action   = ["ecs:UpdateService"]
-        Resource = "arn:aws:ecs:${var.region}:*:service/travelhub-cluster/*"
-      },
+        Action   = ["iam:PassRole"]
+        Resource = "*"
+      }
     ]
   })
 }
@@ -119,6 +119,33 @@ resource "aws_iam_role_policy" "codepipeline" {
         Action   = ["codestar-connections:UseConnection"]
         Resource = var.codestar_connection_arn
       },
+      {
+        Effect = "Allow"
+        Action = [
+          "codedeploy:CreateDeployment",
+          "codedeploy:GetDeployment",
+          "codedeploy:GetDeploymentConfig",
+          "codedeploy:GetApplicationRevision",
+          "codedeploy:RegisterApplicationRevision",
+          "codedeploy:GetApplication",
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ecs:DescribeServices",
+          "ecs:DescribeTaskDefinition",
+          "ecs:RegisterTaskDefinition",
+          "ecs:UpdateService"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["iam:PassRole"]
+        Resource = "*"
+      }
     ]
   })
 }
@@ -153,4 +180,7 @@ module "pipeline" {
   codestar_connection_arn = var.codestar_connection_arn
   codebuild_project_name  = module.build[each.key].project_name
   file_path_filter        = ["src/backend/${each.key}/**", "src/backend/common/**"]
+
+  codedeploy_app_name   = data.terraform_remote_state.ecs.outputs.codedeploy_application_names[each.key]
+  codedeploy_group_name = data.terraform_remote_state.ecs.outputs.codedeploy_deployment_group_names[each.key]
 }

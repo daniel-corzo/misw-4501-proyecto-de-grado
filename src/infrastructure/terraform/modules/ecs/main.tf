@@ -121,6 +121,10 @@ resource "aws_ecs_service" "service" {
   desired_count   = 1
   launch_type     = "FARGATE"
 
+  deployment_controller {
+    type = "CODE_DEPLOY"
+  }
+
   dynamic "load_balancer" {
     for_each = each.value.target_group_arn != null ? [each.value.target_group_arn] : []
     content {
@@ -134,5 +138,12 @@ resource "aws_ecs_service" "service" {
     subnets          = var.subnet_ids
     assign_public_ip = true
     security_groups  = [var.security_group_id]
+  }
+
+  lifecycle {
+    ignore_changes = [
+      task_definition,
+      load_balancer
+    ]
   }
 }
