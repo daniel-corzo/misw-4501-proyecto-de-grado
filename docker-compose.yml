@@ -48,7 +48,7 @@ services:
     volumes:
       - ./nginx/gateway.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
-      - autenticacion
+      - auth
       - usuarios
       - busqueda
       - hoteles
@@ -59,15 +59,16 @@ services:
 
   # ── Microservicios ───────────────────────────────────────────────────────────
 
-  autenticacion:
+  auth:
     build:
       context: ./src/backend
-      dockerfile: autenticacion/Dockerfile
+      dockerfile: auth/Dockerfile
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8001:8000"
     environment:
       ENVIRONMENT: ${ENVIRONMENT}
-      SERVICE_NAME: autenticacion
+      SERVICE_NAME: auth
       DB_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
       JWT_SECRET: ${JWT_SECRET}
       AWS_REGION: ${AWS_REGION}
@@ -75,12 +76,14 @@ services:
       postgres:
         condition: service_healthy
     volumes:
-      - ./src/backend/autenticacion/app:/app/app
+      - ./src/backend/auth/app:/app/app
+      - ./src/backend/common:/common
 
   usuarios:
     build:
       context: ./src/backend
       dockerfile: usuarios/Dockerfile
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8002:8000"
     environment:
@@ -94,11 +97,13 @@ services:
         condition: service_healthy
     volumes:
       - ./src/backend/usuarios/app:/app/app
+      - ./src/backend/common:/common
 
   busqueda:
     build:
       context: ./src/backend
       dockerfile: busqueda/Dockerfile
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8003:8000"
     environment:
@@ -114,11 +119,13 @@ services:
         condition: service_healthy
     volumes:
       - ./src/backend/busqueda/app:/app/app
+      - ./src/backend/common:/common
 
   hoteles:
     build:
       context: ./src/backend
       dockerfile: hoteles/Dockerfile
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8004:8000"
     environment:
@@ -131,11 +138,13 @@ services:
         condition: service_healthy
     volumes:
       - ./src/backend/hoteles/app:/app/app
+      - ./src/backend/common:/common
 
   inventario:
     build:
       context: ./src/backend
       dockerfile: inventario/Dockerfile
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8005:8000"
     environment:
@@ -151,11 +160,13 @@ services:
         condition: service_healthy
     volumes:
       - ./src/backend/inventario/app:/app/app
+      - ./src/backend/common:/common
 
   reservas:
     build:
       context: ./src/backend
       dockerfile: reservas/Dockerfile
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8006:8000"
     environment:
@@ -172,11 +183,13 @@ services:
         condition: service_started
     volumes:
       - ./src/backend/reservas/app:/app/app
+      - ./src/backend/common:/common
 
   pagos:
     build:
       context: ./src/backend
       dockerfile: pagos/Dockerfile
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8007:8000"
     environment:
@@ -192,11 +205,13 @@ services:
         condition: service_started
     volumes:
       - ./src/backend/pagos/app:/app/app
+      - ./src/backend/common:/common
 
   notificaciones:
     build:
       context: ./src/backend
       dockerfile: notificaciones/Dockerfile
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8008:8000"
     environment:
@@ -210,6 +225,7 @@ services:
         condition: service_started
     volumes:
       - ./src/backend/notificaciones/app:/app/app
+      - ./src/backend/common:/common
 
 volumes:
   postgres_data:

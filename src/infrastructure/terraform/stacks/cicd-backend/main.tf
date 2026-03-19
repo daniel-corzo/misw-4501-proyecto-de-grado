@@ -11,20 +11,11 @@ locals {
   ])
 }
 
-# ── Bucket S3 compartido para artefactos de todos los pipelines ───────────────
+# ── Bucket S3 compartido para artefactos ─────────────────────────────────────
 
 resource "aws_s3_bucket" "artifacts" {
-  bucket        = "${var.project_name}-backend-pipeline-artifacts"
+  bucket        = "${var.project_name}-backend-artifacts-${data.aws_caller_identity.current.account_id}"
   force_destroy = true
-  tags          = { Project = var.project_name }
-}
-
-resource "aws_s3_bucket_public_access_block" "artifacts" {
-  bucket                  = aws_s3_bucket.artifacts.id
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
 }
 
 # ── IAM Role compartido para todos los CodeBuild ─────────────────────────────
@@ -75,9 +66,9 @@ resource "aws_iam_role_policy" "codebuild" {
       },
       {
         Effect   = "Allow"
-        Action   = ["iam:PassRole"]
-        Resource = "*"
-      }
+        Action   = ["ecs:UpdateService"]
+        Resource = "arn:aws:ecs:${var.region}:*:service/travelhub-cluster/*"
+      },
     ]
   })
 }
@@ -119,33 +110,6 @@ resource "aws_iam_role_policy" "codepipeline" {
         Action   = ["codestar-connections:UseConnection"]
         Resource = var.codestar_connection_arn
       },
-      {
-        Effect = "Allow"
-        Action = [
-          "codedeploy:CreateDeployment",
-          "codedeploy:GetDeployment",
-          "codedeploy:GetDeploymentConfig",
-          "codedeploy:GetApplicationRevision",
-          "codedeploy:RegisterApplicationRevision",
-          "codedeploy:GetApplication",
-        ]
-        Resource = "*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "ecs:DescribeServices",
-          "ecs:DescribeTaskDefinition",
-          "ecs:RegisterTaskDefinition",
-          "ecs:UpdateService"
-        ]
-        Resource = "*"
-      },
-      {
-        Effect   = "Allow"
-        Action   = ["iam:PassRole"]
-        Resource = "*"
-      }
     ]
   })
 }
@@ -180,7 +144,4 @@ module "pipeline" {
   codestar_connection_arn = var.codestar_connection_arn
   codebuild_project_name  = module.build[each.key].project_name
   file_path_filter        = ["src/backend/${each.key}/**", "src/backend/common/**"]
-
-  codedeploy_app_name   = data.terraform_remote_state.ecs.outputs.codedeploy_application_names[each.key]
-  codedeploy_group_name = data.terraform_remote_state.ecs.outputs.codedeploy_deployment_group_names[each.key]
 }

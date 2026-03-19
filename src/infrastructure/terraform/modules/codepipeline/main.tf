@@ -12,7 +12,7 @@ resource "aws_codepipeline" "this" {
     name = "Source"
 
     action {
-      name             = "GitHub"
+      name             = "Source"
       category         = "Source"
       owner            = "AWS"
       provider         = "CodeStarSourceConnection"
@@ -20,10 +20,10 @@ resource "aws_codepipeline" "this" {
       output_artifacts = ["source_output"]
 
       configuration = {
-        ConnectionArn    = var.codestar_connection_arn
-        FullRepositoryId = var.github_repo
-        BranchName       = var.github_branch
-        DetectChanges    = "false"
+        ConnectionArn        = var.codestar_connection_arn
+        FullRepositoryId     = var.github_repo
+        BranchName           = var.github_branch
+        DetectChanges        = "false"
       }
     }
   }
@@ -46,31 +46,6 @@ resource "aws_codepipeline" "this" {
     }
   }
 
-  dynamic "stage" {
-    for_each = var.codedeploy_app_name != null ? [1] : []
-    content {
-      name = "Deploy"
-
-      action {
-        name            = "Deploy"
-        category        = "Deploy"
-        owner           = "AWS"
-        provider        = "CodeDeployToECS"
-        version         = "1"
-        input_artifacts = ["build_output"]
-
-        configuration = {
-          ApplicationName                = var.codedeploy_app_name
-          DeploymentGroupName            = var.codedeploy_group_name
-          TaskDefinitionTemplateArtifact = "build_output"
-          AppSpecTemplateArtifact        = "build_output"
-          TaskDefinitionTemplatePath     = "taskdef.json"
-          AppSpecTemplatePath            = "appspec.yaml"
-        }
-      }
-    }
-  }
-
   dynamic "trigger" {
     for_each = var.file_path_filter != null ? [1] : []
 
@@ -78,7 +53,7 @@ resource "aws_codepipeline" "this" {
       provider_type = "CodeStarSourceConnection"
 
       git_configuration {
-        source_action_name = "GitHub"
+        source_action_name = "Source"
 
         push {
           branches {
