@@ -33,13 +33,6 @@ misw-4501-proyecto-de-grado/
 | CI/CD | AWS CodeBuild + CodeDeploy |
 | Contenedores | Docker |
 
-## Ambientes
-
-| Ambiente | Propósito |
-|---|---|
-| STAGING | Réplica de producción para pruebas de carga, E2E y aceptación |
-| PRODUCTION | Ambiente live — sin pruebas directas |
-
 ## Cómo levantar el proyecto localmente
 
 ### Backend (Microservicios con Docker Compose)
@@ -48,6 +41,8 @@ misw-4501-proyecto-de-grado/
 - Docker Desktop corriendo
 
 #### 1. Crear el archivo `.env` en la raíz del proyecto
+
+Estas variables son usadas por `docker-compose` para levantar la infraestructura local (PostgreSQL, Redis, LocalStack) y para construir la variable `DB_URL` que se inyecta en cada microservicio.
 
 ```env
 ENVIRONMENT=local
@@ -62,6 +57,16 @@ SQS_QUEUE_URL=http://localstack:4566/000000000000/travelhub-queue
 STRIPE_KEY=sk_test_placeholder
 ```
 
+> **Variables que recibe cada microservicio en runtime:**
+>
+> | Variable | Local (docker-compose) | Producción (AWS ECS) |
+> |---|---|---|
+> | `DB_URL` | Construido desde `POSTGRES_*` | AWS Secrets Manager → `travelhub/shared-config` clave `db_url` |
+> | `JWT_SECRET` | Desde `.env` directamente | AWS Secrets Manager → `travelhub/shared-config` clave `jwt_secret` |
+> | `ENVIRONMENT` | `local` | `production` (inyectado por ECS task definition) |
+> | `REDIS_URL` | `redis://redis:6379` | Desde `.env` o variable de entorno |
+> | `SQS_ENDPOINT` / `SQS_QUEUE_URL` | LocalStack en `localhost:4566` | AWS SQS (endpoint nativo) |
+
 #### 2. Levantar todos los servicios
 
 ```bash
@@ -72,7 +77,7 @@ docker-compose up --build
 
 | Servicio | Puerto | Swagger UI |
 |---|---|---|
-| autenticacion | 8001 | http://localhost:8001/docs |
+| auth | 8001 | http://localhost:8001/docs |
 | usuarios | 8002 | http://localhost:8002/docs |
 | busqueda | 8003 | http://localhost:8003/docs |
 | hoteles | 8004 | http://localhost:8004/docs |
@@ -87,7 +92,7 @@ docker-compose up --build
 
 ```bash
 # Ver logs de un servicio
-docker-compose logs -f autenticacion
+docker-compose logs -f auth
 
 # Reiniciar un servicio sin rebuild
 docker-compose restart reservas
