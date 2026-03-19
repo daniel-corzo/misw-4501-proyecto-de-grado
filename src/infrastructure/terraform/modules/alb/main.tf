@@ -52,13 +52,13 @@ resource "aws_lb" "this" {
 }
 
 # ===============================
-# Target Groups (uno por servicio)
+# Target Groups Blue (producción activa)
 # ===============================
 
-resource "aws_lb_target_group" "ecs" {
+resource "aws_lb_target_group" "blue" {
   for_each = var.services
 
-  name        = "${var.project_name}-${each.key}-tg"
+  name        = "${var.project_name}-${each.key}-blue"
   port        = var.target_port
   protocol    = "HTTP"
   target_type = "ip"
@@ -67,7 +67,35 @@ resource "aws_lb_target_group" "ecs" {
   health_check {
     path                = var.health_check_path
     matcher             = "200"
-    interval            = 30
+    interval            = 10
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+  }
+
+  tags = {
+    Project = var.project_name
+    Owner   = var.owner
+  }
+}
+
+# ===============================
+# Target Groups Green (nueva versión durante deploy)
+# ===============================
+
+resource "aws_lb_target_group" "green" {
+  for_each = var.services
+
+  name        = "${var.project_name}-${each.key}-green"
+  port        = var.target_port
+  protocol    = "HTTP"
+  target_type = "ip"
+  vpc_id      = var.vpc_id
+
+  health_check {
+    path                = var.health_check_path
+    matcher             = "200"
+    interval            = 10
     timeout             = 5
     healthy_threshold   = 2
     unhealthy_threshold = 2
@@ -99,7 +127,7 @@ resource "aws_lb_listener" "http" {
 }
 
 # ===============================
-# Listener Rules (path-based por prefijo de router)
+# Listener Rules (path-based, apuntan al TG blue)
 # ===============================
 
 resource "aws_lb_listener_rule" "service" {
@@ -110,12 +138,11 @@ resource "aws_lb_listener_rule" "service" {
 
   action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.ecs[each.key].arn
+    target_group_arn = aws_lb_target_group.blue[each.key].arn
   }
 
   condition {
     path_pattern {
-      # var.services[each.key] es el prefijo del router (ej. "auth" para auth)
       values = ["/${var.services[each.key]}", "/${var.services[each.key]}/*"]
     }
   }

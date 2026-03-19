@@ -65,9 +65,10 @@ resource "aws_iam_role_policy" "codebuild" {
         Resource = "*"
       },
       {
+        # Necesario para leer la task definition vigente y generar taskdef.json
         Effect   = "Allow"
-        Action   = ["ecs:UpdateService"]
-        Resource = "arn:aws:ecs:${var.region}:*:service/travelhub-cluster/*"
+        Action   = ["ecs:DescribeServices", "ecs:DescribeTaskDefinition"]
+        Resource = "*"
       },
     ]
   })
@@ -110,8 +111,61 @@ resource "aws_iam_role_policy" "codepipeline" {
         Action   = ["codestar-connections:UseConnection"]
         Resource = var.codestar_connection_arn
       },
+      {
+        Effect = "Allow"
+        Action = [
+          "codedeploy:CreateDeployment",
+          "codedeploy:GetDeployment",
+          "codedeploy:GetDeploymentConfig",
+          "codedeploy:GetApplicationRevision",
+          "codedeploy:RegisterApplicationRevision",
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ecs:DescribeServices",
+          "ecs:DescribeTaskDefinition",
+          "ecs:RegisterTaskDefinition",
+        ]
+        Resource = "*"
+      },
+      {
+        # CodePipeline necesita pasar el rol de ejecución de tareas ECS a CodeDeploy
+        Effect   = "Allow"
+        Action   = ["iam:PassRole"]
+        Resource = "*"
+        Condition = {
+          StringEqualsIfExists = {
+            "iam:PassedToService" = [
+              "ecs-tasks.amazonaws.com",
+              "codedeploy.amazonaws.com",
+            ]
+          }
+        }
+      },
     ]
   })
+}
+
+# ── Módulo CodeDeploy (una app + deployment group por servicio) ───────────────
+
+module "codedeploy" {
+  source = "../../modules/codedeploy"
+
+  project_name = var.project_name
+  region       = var.region
+
+  services = {
+    for svc in local.services : svc => {
+      cluster_name            = "${var.project_name}-cluster"
+      service_name            = "${var.project_name}-${svc}-service"
+      listener_arn            = data.aws_lb_listener.http.arn
+      blue_target_group_name  = "${var.project_name}-${svc}-blue"
+      green_target_group_name = "${var.project_name}-${svc}-green"
+    }
+  }
 }
 
 # ── Un CodeBuild + un CodePipeline por microservicio ─────────────────────────
@@ -136,12 +190,15 @@ module "pipeline" {
   for_each = local.services
   source   = "../../modules/codepipeline"
 
-  project_name            = "${var.project_name}-${each.key}"
-  role_arn                = aws_iam_role.codepipeline.arn
-  artifact_bucket_id      = aws_s3_bucket.artifacts.id
-  github_repo             = var.github_repo
-  github_branch           = var.github_branch
-  codestar_connection_arn = var.codestar_connection_arn
-  codebuild_project_name  = module.build[each.key].project_name
-  file_path_filter        = ["src/backend/${each.key}/**", "src/backend/common/**"]
+  project_name                     = "${var.project_name}-${each.key}"
+  role_arn                         = aws_iam_role.codepipeline.arn
+  artifact_bucket_id               = aws_s3_bucket.artifacts.id
+  github_repo                      = var.github_repo
+  github_branch                    = var.github_branch
+  codestar_connection_arn          = var.codestar_connection_arn
+  codebuild_project_name           = module.build[each.key].project_name
+  container_name                   = "${var.project_name}-${each.key}"
+  codedeploy_app_name              = module.codedeploy.application_names[each.key]
+  codedeploy_deployment_group_name = module.codedeploy.deployment_group_names[each.key]
+  file_path_filter                 = ["src/backend/${each.key}/**", "src/backend/common/**"]
 }

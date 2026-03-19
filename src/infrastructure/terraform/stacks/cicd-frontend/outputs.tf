@@ -1,5 +1,5 @@
 output "pipeline_name" {
-  value = module.pipeline.pipeline_name
+  value = aws_codepipeline.frontend.name
 }
 
 output "connection_arn" {

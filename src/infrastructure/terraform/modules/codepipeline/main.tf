@@ -20,10 +20,10 @@ resource "aws_codepipeline" "this" {
       output_artifacts = ["source_output"]
 
       configuration = {
-        ConnectionArn        = var.codestar_connection_arn
-        FullRepositoryId     = var.github_repo
-        BranchName           = var.github_branch
-        DetectChanges        = "false"
+        ConnectionArn    = var.codestar_connection_arn
+        FullRepositoryId = var.github_repo
+        BranchName       = var.github_branch
+        DetectChanges    = "false"
       }
     }
   }
@@ -42,6 +42,30 @@ resource "aws_codepipeline" "this" {
 
       configuration = {
         ProjectName = var.codebuild_project_name
+      }
+    }
+  }
+
+  stage {
+    name = "Deploy"
+
+    action {
+      name            = "Deploy"
+      category        = "Deploy"
+      owner           = "AWS"
+      provider        = "CodeDeployToECS"
+      version         = "1"
+      input_artifacts = ["build_output"]
+
+      configuration = {
+        AppSpecTemplateArtifact        = "build_output"
+        AppSpecTemplatePath            = "appspec.yaml"
+        TaskDefinitionTemplateArtifact = "build_output"
+        TaskDefinitionTemplatePath     = "taskdef.json"
+        Image1ArtifactName             = "build_output"
+        Image1ContainerName            = var.container_name
+        ApplicationName                = var.codedeploy_app_name
+        DeploymentGroupName            = var.codedeploy_deployment_group_name
       }
     }
   }

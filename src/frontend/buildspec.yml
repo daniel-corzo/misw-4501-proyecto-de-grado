@@ -1,10 +1,8 @@
 version: 0.2
 
-# CodeBuild ejecuta este archivo cuando el pipeline de frontend se activa.
-# Instala dependencias, compila Angular en modo produccion, sincroniza con S3
-# e invalida el cache de CloudFront.
-# Las variables S3_BUCKET_NAME y CLOUDFRONT_DISTRIBUTION_ID las inyecta
-# el modulo de Terraform al crear el proyecto CodeBuild.
+# CodeBuild compila Angular y produce el artefacto listo para subir a S3.
+# El deploy a S3 y la invalidación de CloudFront los gestiona CodePipeline
+# en stages separados (Deploy y Invalidate).
 
 phases:
   install:
@@ -21,9 +19,9 @@ phases:
       - echo Compilando Angular...
       - npm run build -- --configuration production
 
-  post_build:
-    commands:
-      - echo Subiendo archivos a S3...
-      - aws s3 sync dist/travelhub-web/browser/ s3://$S3_BUCKET_NAME --delete
-      - echo Invalidando cache CloudFront...
-      - aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
+artifacts:
+  # Empaqueta solo los archivos compilados del browser para que CodePipeline
+  # los suba directamente a la raíz del bucket S3.
+  base-directory: src/frontend/dist/travelhub-web/browser
+  files:
+    - "**/*"
