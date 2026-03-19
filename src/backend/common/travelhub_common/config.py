@@ -23,11 +23,4 @@ def get_secret(secret_name: str, region: str) -> dict:
 
 
 def load_secrets(settings: BaseAppSettings) -> BaseAppSettings:
-    if settings.environment not in ("local", "test"):
-        secrets = get_secret(
-            f"travelhub/{settings.environment}/{settings.service_name}",
-            settings.aws_region,
-        )
-        settings.db_url = secrets.get("db_url", settings.db_url)
-        settings.jwt_secret = secrets.get("jwt_secret", settings.jwt_secret)
     return settings
