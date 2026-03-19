@@ -28,30 +28,6 @@ phases:
       - echo "Subiendo imagen a ECR..."
       - docker push $REPOSITORY_URI:$IMAGE_TAG
       - docker push $REPOSITORY_URI:latest
-      - echo "Generando artefactos para CodeDeploy..."
-      - |
-        # Obtener la task definition actual para usarla como base (reemplazando la imagen)
-        TASK_DEFINITION_NAME="travelhub-$SERVICE-task"
-        aws ecs describe-task-definition --task-definition $TASK_DEFINITION_NAME --region $AWS_REGION --query 'taskDefinition' > taskdef_full.json
-        # Limpiar la task definition para que sea válida para registro (quitar campos de solo lectura)
-        jq '.containerDefinitions[0].image = "'$REPOSITORY_URI':'$IMAGE_TAG'" | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' taskdef_full.json > taskdef.json
-      - |
-        # Generar appspec.yaml
-        # Nota: El contenedor se llama "travelhub-$SERVICE" (ver modulo ecs en terraform)
-        cat <<EOF > appspec.yaml
-        version: 0.0
-        Resources:
-          - TargetService:
-              Type: AWS::ECS::Service
-              Properties:
-                TaskDefinition: <TASK_DEFINITION>
-                LoadBalancerInfo:
-                  ContainerName: "travelhub-$SERVICE"
-                  ContainerPort: 8000
-        EOF
-      - echo "Desplegando mediante CodeDeploy gestionado por CodePipeline..."
-
-artifacts:
-  files:
-    - taskdef.json
-    - appspec.yaml
+      - echo "Desplegando en ECS..."
+      - aws ecs update-service --cluster travelhub-cluster --service travelhub-$SERVICE-service --force-new-deployment --region $AWS_REGION
+      - echo "Deploy de $SERVICE completado."
