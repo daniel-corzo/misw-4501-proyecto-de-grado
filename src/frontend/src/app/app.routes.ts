@@ -1,7 +1,19 @@
 import { Routes } from '@angular/router';
-import { HealthDashboardComponent } from './features/health/health-dashboard.component';
+import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
 
 export const routes: Routes = [
-  { path: 'health', component: HealthDashboardComponent },
-  { path: '', redirectTo: 'health', pathMatch: 'full' },
+  {
+    path: '',
+    component: MainLayoutComponent,
+    children: [
+      {
+        path: 'health',
+        loadComponent: () =>
+          import('./features/health/health-dashboard.component').then(
+            (m) => m.HealthDashboardComponent
+          ),
+      },
+      { path: '', redirectTo: 'health', pathMatch: 'full' },
+    ],
+  },
 ];

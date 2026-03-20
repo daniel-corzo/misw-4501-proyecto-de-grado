@@ -1,1 +1,73 @@
-/* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+/* ── Design System Tokens ─────────────────────────────────────── */
+:root {
+  /* Colors */
+  --color-primary:     #0077FF;
+  --color-primary-dk:  #005FCC;
+  --color-success:     #34C759;
+  --color-danger:      #FF383C;
+  --color-warning:     #FFCC00;
+  --color-secondary:   #8E8E93;
+  --color-secondary-dk:#6E6E73;
+
+  /* Neutrals */
+  --color-white:       #FFFFFF;
+  --color-bg:          #F5F5F7;
+  --color-border:      #E5E5EA;
+  --color-text:        #1C1C1E;
+  --color-text-muted:  #6E6E73;
+
+  /* Typography */
+  --font-family:       'Inter', system-ui, -apple-system, sans-serif;
+  --font-h1:           700 32px/1.2 var(--font-family);
+  --font-h2-bold:      700 18px/1.4 var(--font-family);
+  --font-h2:           300 18px/1.4 var(--font-family);
+  --font-body1:        300 16px/1.5 var(--font-family);
+  --font-body2:        300 14px/1.5 var(--font-family);
+  --font-body3:        300 12px/1.5 var(--font-family);
+
+  /* Spacing */
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  16px;
+  --space-lg:  24px;
+  --space-xl:  32px;
+  --space-2xl: 48px;
+
+  /* Layout */
+  --navbar-height: 64px;
+  --content-max-width: 1200px;
+  --border-radius: 8px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.10);
+}
+
+/* ── Reset & Base ─────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font: var(--font-body1);
+  color: var(--color-text);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: var(--font-family);
+  cursor: pointer;
+  border: none;
+  background: none;
+}
