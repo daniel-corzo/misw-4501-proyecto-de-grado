@@ -1,6 +1,6 @@
 version: 0.2
 
-# CodeBuild compila Angular y produce el artefacto listo para subir a S3.
+# CodeBuild compila Angular y genera los docs OpenAPI estáticos.
 # El deploy a S3 y la invalidación de CloudFront los gestiona CodePipeline
 # en stages separados (Deploy y Invalidate).
 
@@ -11,17 +11,23 @@ phases:
 
   pre_build:
     commands:
-      - echo Instalando dependencias...
-      - cd src/frontend && npm ci
+      - echo Instalando dependencias Node...
+      - cd src/frontend && npm ci && cd ../..
+      - echo Instalando dependencias Python para generacion de OpenAPI docs...
+      - pip install -q fastapi "sqlalchemy[asyncio]" asyncpg "python-jose[cryptography]" "passlib[bcrypt]" httpx boto3
+      - pip install -q -e src/backend/common
 
   build:
     commands:
       - echo Compilando Angular...
-      - npm run build -- --configuration production
+      - cd src/frontend && npm run build -- --configuration production && cd ../..
+      - echo Generando OpenAPI docs...
+      - python3 src/backend/generate_docs.py src/frontend/dist/travelhub-web/browser/api
 
 artifacts:
-  # Empaqueta solo los archivos compilados del browser para que CodePipeline
-  # los suba directamente a la raíz del bucket S3.
+  # Empaqueta los archivos compilados del browser (Angular + OpenAPI docs) para
+  # que CodePipeline los suba directamente a la raíz del bucket S3.
+  # Los docs quedan en api/openapi.json y api/docs.html dentro del bucket.
   base-directory: src/frontend/dist/travelhub-web/browser
   files:
     - "**/*"
