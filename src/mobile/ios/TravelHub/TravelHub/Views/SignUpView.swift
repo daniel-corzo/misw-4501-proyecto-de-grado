@@ -8,16 +8,7 @@
 import SwiftUI
 
 struct SignUpView: View {
-    @State private var fullName: String = ""
-    @State private var phone: String = ""
-    @State private var email: String = ""
-    @State private var password: String = ""
-
-    @State private var agreeToTerms: Bool = false
-
-    var rawPhone: String {
-        phone.filter { $0.isNumber }
-    }
+    @State private var viewModel = ViewModel()
 
     var agreementText: AttributedString {
         var text = AttributedString(
@@ -59,7 +50,7 @@ struct SignUpView: View {
                             icon: "person",
                             placeholder: "John Doe",
                             textInputAutocapitalization: .words,
-                            text: $fullName
+                            text: $viewModel.fullName
                         )
                         .textContentType(.name)
                         
@@ -68,11 +59,11 @@ struct SignUpView: View {
                             fieldName: .UserData.phone,
                             icon: "phone",
                             placeholder: "3214567890",
-                            text: $phone
+                            text: $viewModel.phone
                         )
                         .keyboardType(.phonePad)
-                        .onChange(of: phone) { _, newValue in
-                            phone = formatPhone(newValue)
+                        .onChange(of: viewModel.phone) { _, newValue in
+                            viewModel.phone = formatPhone(newValue)
                         }
                         .textContentType(.telephoneNumber)
                         
@@ -81,7 +72,7 @@ struct SignUpView: View {
                             fieldName: .UserData.email,
                             icon: "envelope",
                             placeholder: "example@mail.com",
-                            text: $email
+                            text: $viewModel.email
                         )
                         .keyboardType(.emailAddress)
                         .textContentType(.emailAddress)
@@ -93,19 +84,19 @@ struct SignUpView: View {
                             placeholder: LocalizedStringResource.SignUp
                                 .passwordPlaceholder,
                             isSecuredField: true,
-                            text: $password
+                            text: $viewModel.password
                         )
                         .textContentType(.newPassword)
                         
                         HStack {
                             Button {
-                                agreeToTerms.toggle()
+                                viewModel.agreeToTerms.toggle()
                             } label: {
                                 Image(
-                                    systemName: agreeToTerms
+                                    systemName: viewModel.agreeToTerms
                                     ? "checkmark.square.fill" : "square"
                                 )
-                                .foregroundStyle(agreeToTerms ? .accent : .gray)
+                                .foregroundStyle(viewModel.agreeToTerms ? .accent : .gray)
                                 .font(.system(size: 30))
                             }  //: Button Label
                             
