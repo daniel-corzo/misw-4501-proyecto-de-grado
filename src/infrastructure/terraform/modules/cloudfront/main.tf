@@ -6,24 +6,6 @@ resource "aws_cloudfront_origin_access_control" "s3" {
   signing_protocol                  = "sigv4"
 }
 
-# CloudFront Function: rewrites /api/docs and /api/docs/ → /api/docs.html before forwarding to S3
-resource "aws_cloudfront_function" "docs_path_rewrite" {
-  name    = "${var.project_name}-docs-path-rewrite"
-  runtime = "cloudfront-js-2.0"
-  comment = "Rewrites /api/docs to /api/docs.html for S3 serving"
-  publish = true
-
-  code = <<-EOT
-    function handler(event) {
-      var request = event.request;
-      if (request.uri === '/api/docs' || request.uri === '/api/docs/') {
-        request.uri = '/api/docs.html';
-      }
-      return request;
-    }
-  EOT
-}
-
 # CloudFront Function: strips /api prefix before forwarding to ALB
 # e.g. /api/auth/login → /auth/login
 resource "aws_cloudfront_function" "strip_api_prefix" {
@@ -70,54 +52,7 @@ resource "aws_cloudfront_distribution" "this" {
     }
   }
 
-  # Behavior 1: /api/openapi.json → S3 (spec estático, cacheado 1h)
-  ordered_cache_behavior {
-    path_pattern           = "/api/openapi.json"
-    allowed_methods        = ["GET", "HEAD"]
-    cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = "S3-${var.bucket_id}"
-    viewer_protocol_policy = "https-only"
-    compress               = true
-
-    forwarded_values {
-      query_string = false
-      cookies {
-        forward = "none"
-      }
-    }
-
-    min_ttl     = 0
-    default_ttl = 3600
-    max_ttl     = 86400
-  }
-
-  # Behavior 2: /api/docs* → S3 (Swagger UI estático, cacheado 1h)
-  ordered_cache_behavior {
-    path_pattern           = "/api/docs*"
-    allowed_methods        = ["GET", "HEAD"]
-    cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = "S3-${var.bucket_id}"
-    viewer_protocol_policy = "https-only"
-    compress               = true
-
-    forwarded_values {
-      query_string = false
-      cookies {
-        forward = "none"
-      }
-    }
-
-    min_ttl     = 0
-    default_ttl = 3600
-    max_ttl     = 86400
-
-    function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.docs_path_rewrite.arn
-    }
-  }
-
-  # Behavior 3: /api/* → ALB (sin caché, todos los métodos HTTP)
+  # Behavior: /api/* → ALB (sin caché, todos los métodos HTTP)
   ordered_cache_behavior {
     path_pattern           = "/api/*"
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]

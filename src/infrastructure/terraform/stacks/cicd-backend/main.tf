@@ -18,6 +18,13 @@ resource "aws_s3_bucket" "artifacts" {
   force_destroy = true
 }
 
+resource "aws_s3_bucket_versioning" "artifacts" {
+  bucket = aws_s3_bucket.artifacts.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
 # ── IAM Role compartido para todos los CodeBuild ─────────────────────────────
 
 resource "aws_iam_role" "codebuild" {
