@@ -17,3 +17,8 @@ variable "bucket_regional_domain_name" {
   description = "Regional domain name of the S3 bucket for the origin"
   type        = string
 }
+
+variable "alb_dns_name" {
+  description = "DNS name of the ALB, used as origin for /api/* paths"
+  type        = string
+}
