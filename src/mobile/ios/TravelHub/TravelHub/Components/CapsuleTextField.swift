@@ -12,7 +12,6 @@ struct CapsuleTextField: View {
     let placeholder: LocalizedStringResource
     let textInputAutocapitalization: TextInputAutocapitalization?
     let isSecuredField: Bool
-    let keyboardType: UIKeyboardType
     
     @Binding var text: String
     
@@ -22,14 +21,13 @@ struct CapsuleTextField: View {
         icon: String,
         placeholder: LocalizedStringResource,
         textInputAutocapitalization: TextInputAutocapitalization? = nil,
-        isSecuredField: Bool = false,keyboardType: UIKeyboardType = .default,
+        isSecuredField: Bool = false,
         text: Binding<String>
     ) {
         self.icon = icon
         self.placeholder = placeholder
         self.textInputAutocapitalization = textInputAutocapitalization
         self.isSecuredField = isSecuredField
-        self.keyboardType = keyboardType
         
         self._text = text
     }
@@ -40,10 +38,10 @@ struct CapsuleTextField: View {
                 .foregroundStyle(.neutral)
             
             if isSecuredField && isHidingSecureText {
-                SecureField(placeholder, text: $text).keyboardType(keyboardType)
+                SecureField(placeholder, text: $text)
             } else {
                 TextField(placeholder, text: $text)
-                    .textInputAutocapitalization(textInputAutocapitalization).keyboardType(keyboardType)
+                    .textInputAutocapitalization(textInputAutocapitalization)
             }
             
             if isSecuredField {
