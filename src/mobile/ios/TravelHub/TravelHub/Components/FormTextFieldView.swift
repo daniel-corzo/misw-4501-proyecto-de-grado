@@ -13,6 +13,7 @@ struct FormTextFieldView: View {
     let placeholder: LocalizedStringResource
     let textInputAutocapitalization: TextInputAutocapitalization?
     let isSecuredField: Bool
+    let keyboardType: UIKeyboardType
 
     @Binding var text: String
 
@@ -22,6 +23,7 @@ struct FormTextFieldView: View {
         placeholder: LocalizedStringResource,
         textInputAutocapitalization: TextInputAutocapitalization? = nil,
         isSecuredField: Bool = false,
+        keyboardType: UIKeyboardType = .default,
         text: Binding<String>
     ) {
         self.fieldName = fieldName
@@ -29,6 +31,7 @@ struct FormTextFieldView: View {
         self.placeholder = placeholder
         self.textInputAutocapitalization = textInputAutocapitalization
         self.isSecuredField = isSecuredField
+        self.keyboardType = keyboardType
 
         self._text = text
     }
@@ -43,6 +46,7 @@ struct FormTextFieldView: View {
                 placeholder: placeholder,
                 textInputAutocapitalization: textInputAutocapitalization,
                 isSecuredField: isSecuredField,
+                keyboardType: keyboardType,
                 text: $text
             )
         }
@@ -57,6 +61,7 @@ struct FormTextFieldView: View {
         icon: "person",
         placeholder: "John Doe",
         textInputAutocapitalization: .words,
+        keyboardType: .default,
         text: $fullName
     )
     .padding()
