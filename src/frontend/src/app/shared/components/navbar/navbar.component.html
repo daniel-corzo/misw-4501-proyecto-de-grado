@@ -19,20 +19,13 @@
 
     <!-- Actions -->
     <div class="navbar__actions">
-      <a class="navbar__link" routerLink="/bookings" routerLinkActive="navbar__link--active">My Bookings</a>
-      <a class="navbar__link" routerLink="/favorites" routerLinkActive="navbar__link--active">Favorites</a>
+      <a class="navbar__link" routerLink="/bookings" routerLinkActive="navbar__link--active">Mis reservas</a>
+      <a class="navbar__link" routerLink="/favorites" routerLinkActive="navbar__link--active">Favoritos</a>
 
-      <button class="navbar__icon-btn" aria-label="Notifications">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2a7 7 0 0 1 7 7v4.586l1.707 1.707A1 1 0 0 1 20 17H4a1 1 0 0 1-.707-1.707L5 13.586V9a7 7 0 0 1 7-7zm0 19a3 3 0 0 1-2.83-2h5.66A3 3 0 0 1 12 21z"/>
-        </svg>
-      </button>
-
-      <button class="navbar__avatar" aria-label="User account">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-5.33 0-8 2.67-8 4v1h16v-1c0-1.33-2.67-4-8-4z"/>
-        </svg>
-      </button>
+      <div class="navbar__auth">
+        <a class="navbar__link" routerLink="/auth/login">Iniciar sesión</a>
+        <a class="navbar__btn-primary" routerLink="/auth/register">Registrarse</a>
+      </div>
     </div>
 
   </div>

@@ -119,26 +119,29 @@
     }
   }
 
-  &__avatar {
+  &__auth {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    color: var(--color-secondary);
-    transition: border-color 0.15s;
+    gap: var(--space-sm);
+    margin-left: var(--space-sm);
+    padding-left: var(--space-md);
+    border-left: 1px solid var(--color-border);
+  }
 
-    svg {
-      width: 20px;
-      height: 20px;
-    }
+  &__btn-primary {
+    height: 32px;
+    padding: 0 var(--space-md);
+    background: var(--color-primary);
+    color: var(--color-white);
+    border-radius: var(--border-radius);
+    font: var(--font-body2);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    transition: background 0.15s;
 
     &:hover {
-      border-color: var(--color-primary);
-      color: var(--color-primary);
+      background: var(--color-primary-dk);
     }
   }
 }
