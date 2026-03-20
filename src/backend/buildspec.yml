@@ -34,27 +34,8 @@ phases:
       # imageDetail.json — URI de la imagen recién construida
       - echo "{\"ImageURI\":\"${REPOSITORY_URI}:${IMAGE_TAG}\"}" > imageDetail.json
 
-      # taskdef.json — task definition vigente con placeholder de imagen
-      - |
-        TASK_DEF_ARN=$(aws ecs describe-services \
-          --cluster travelhub-cluster \
-          --services travelhub-$SERVICE-service \
-          --region $AWS_REGION \
-          --query 'services[0].taskDefinition' \
-          --output text)
-      - |
-        aws ecs describe-task-definition \
-          --task-definition $TASK_DEF_ARN \
-          --query 'taskDefinition' \
-          --output json | python3 -c "
-        import json, sys
-        td = json.load(sys.stdin)
-        for key in ['taskDefinitionArn','revision','status','requiresAttributes',
-                    'compatibilities','registeredAt','registeredBy']:
-            td.pop(key, None)
-        td['containerDefinitions'][0]['image'] = '<IMAGE1_NAME>'
-        print(json.dumps(td, indent=2))
-        " > taskdef.json
+      # taskdef.json — task definition vigente con placeholder de imagen.
+      - python3 src/backend/generate_taskdef.py travelhub-cluster travelhub-$SERVICE-service $AWS_REGION
 
       # appspec.yaml — instrucciones de deployment para CodeDeploy
       - |
