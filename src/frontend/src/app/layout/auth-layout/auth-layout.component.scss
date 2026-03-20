@@ -1,0 +1,34 @@
+.auth-layout {
+  min-height: 100vh;
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl) var(--space-md);
+  gap: var(--space-xl);
+
+  &__logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font: var(--font-h2-bold);
+    color: var(--color-text);
+
+    svg {
+      width: 28px;
+      height: 28px;
+      color: var(--color-primary);
+    }
+  }
+
+  &__card {
+    width: 100%;
+    max-width: 400px;
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    padding: var(--space-xl);
+    box-shadow: var(--shadow-md);
+  }
+}

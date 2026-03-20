@@ -1,0 +1,45 @@
+<footer class="footer">
+  <div class="footer__inner">
+
+    <!-- Brand -->
+    <div class="footer__brand">
+      <a class="footer__logo" routerLink="/">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M2 20v-8a2 2 0 0 1 2-2h1V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2h1a2 2 0 0 1 2 2v8h-2v-2H4v2H2zm4-10h12V8H6v2zm-2 6h16v-4a.5.5 0 0 0-.5-.5H4.5A.5.5 0 0 0 4 12v4z"/>
+        </svg>
+        <span>TravelHub</span>
+      </a>
+      <p class="footer__tagline">Enjoy our hotels</p>
+    </div>
+
+    <!-- Explore -->
+    <div class="footer__col">
+      <h3 class="footer__col-title">Explore</h3>
+      <ul class="footer__links">
+        <li><a routerLink="/hotels">Hotels</a></li>
+      </ul>
+    </div>
+
+    <!-- Support -->
+    <div class="footer__col">
+      <h3 class="footer__col-title">Support</h3>
+      <ul class="footer__links">
+        <li><a routerLink="/help">Help Center</a></li>
+        <li><a routerLink="/bookings">My Bookings</a></li>
+        <li><a routerLink="/cancellation">Cancellation Options</a></li>
+        <li><a routerLink="/terms">Terms of Service</a></li>
+      </ul>
+    </div>
+
+  </div>
+
+  <div class="footer__bottom">
+    <div class="footer__bottom-inner">
+      <span>© {{ year }} TravelHub. All rights reserved.</span>
+      <div class="footer__bottom-links">
+        <a routerLink="/privacy">Privacy Policy</a>
+        <a routerLink="/cookies">Cookie Settings</a>
+      </div>
+    </div>
+  </div>
+</footer>
