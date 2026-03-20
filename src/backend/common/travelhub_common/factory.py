@@ -32,8 +32,8 @@ def create_app(
     app = FastAPI(
         title=f"TravelHub - {service_name}",
         version="1.0.0",
-        docs_url=f"/{service_name}/docs",
-        openapi_url=f"/{service_name}/openapi.json",
+        docs_url="/docs",
+        openapi_url="/openapi.json",
     )
 
     app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
