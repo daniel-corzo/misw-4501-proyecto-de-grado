@@ -130,9 +130,15 @@ struct LogInView: View {
                         HStack {
                             Spacer()
                             Text(LocalizedStringResource.LogIn.dontHaveAnAccount)
-                            Text(LocalizedStringResource.LogIn.signUpText)
-                                .bold()
-                                .foregroundStyle(.accent)
+                            
+                            NavigationLink {
+                                SignUpView()
+                            } label: {
+                                Text(LocalizedStringResource.LogIn.signUpText)
+                                    .bold()
+                                    .foregroundStyle(.accent)
+                            }
+                            
                             Spacer()
                         }
                         
