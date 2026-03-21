@@ -20,10 +20,6 @@ graph TB
             CF[CloudFront CDN]
         end
 
-        subgraph API [API Layer]
-            APIGW[API Gateway HTTP v2\nCORS + proxy]
-        end
-
         subgraph LoadBalancing [Load Balancing]
             ALB[Application Load Balancer\npath-based routing]
             TG_BLUE[Target Groups x8\n-blue\nproduction traffic]
@@ -60,14 +56,13 @@ graph TB
 
     %% User flows
     USER -->|HTTPS| CF
-    USER -->|HTTPS| APIGW
-    MOBILE -->|HTTPS| APIGW
+    MOBILE -->|HTTPS /api/*| ALB
 
     %% Frontend delivery
     CF --> S3
 
-    %% API flow
-    APIGW --> ALB
+    %% API flow — CloudFront /api/* behavior → ALB path-based routing
+    CF -->|/api/*| ALB
     ALB -->|/auth/*| TG_BLUE
     ALB -->|/usuarios/*| TG_BLUE
     ALB -->|/busqueda/*| TG_BLUE
