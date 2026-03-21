@@ -150,7 +150,6 @@ struct SignUpView: View {
 
                         Text(LocalizedStringResource.SignUp.alreadyHaveAccount)
 
-                        // TODO: Change this to navigation link when login exists
                         Text(LocalizedStringResource.SignUp.loginText)
                             .bold()
                             .foregroundStyle(.accent)
