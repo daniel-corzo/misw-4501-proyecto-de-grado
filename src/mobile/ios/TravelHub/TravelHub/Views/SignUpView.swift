@@ -50,6 +50,7 @@ struct SignUpView: View {
                             icon: "person",
                             placeholder: "John Doe",
                             textInputAutocapitalization: .words,
+                            smallText: viewModel.fullNameSmallText,
                             text: $viewModel.fullName
                         )
                         .textContentType(.name)
@@ -59,6 +60,7 @@ struct SignUpView: View {
                             fieldName: .UserData.phone,
                             icon: "phone",
                             placeholder: "3214567890",
+                            smallText: viewModel.phoneSmallText,
                             text: $viewModel.phone
                         )
                         .keyboardType(.phonePad)
@@ -72,6 +74,7 @@ struct SignUpView: View {
                             fieldName: .UserData.email,
                             icon: "envelope",
                             placeholder: "example@mail.com",
+                            smallText: viewModel.emailSmallText,
                             text: $viewModel.email
                         )
                         .keyboardType(.emailAddress)
@@ -83,7 +86,9 @@ struct SignUpView: View {
                             icon: "lock",
                             placeholder: LocalizedStringResource.SignUp
                                 .passwordPlaceholder,
+                            textInputAutocapitalization: .never,
                             isSecuredField: true,
+                            smallText: viewModel.passwordSmallText,
                             text: $viewModel.password
                         )
                         .textContentType(.newPassword)
@@ -139,9 +144,13 @@ struct SignUpView: View {
                         Text(LocalizedStringResource.SignUp.alreadyHaveAccount)
                         
                         // TODO: Change this to navigation link when login exists
-                        Text(LocalizedStringResource.SignUp.loginText)
-                            .bold()
-                            .foregroundStyle(.accent)
+                        NavigationLink {
+                            LogInView()
+                        } label: {
+                            Text(LocalizedStringResource.SignUp.loginText)
+                                .bold()
+                                .foregroundStyle(.accent)
+                        }
                         
                         Spacer()
                     }

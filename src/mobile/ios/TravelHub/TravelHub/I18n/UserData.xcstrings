@@ -12,6 +12,28 @@
         }
       }
     },
+    "emailFormatIsInvalidError" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The email has an invalid format"
+          }
+        }
+      }
+    },
+    "emailIsEmptyError" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The email is required"
+          }
+        }
+      }
+    },
     "fullName" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -19,6 +41,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Full name"
+          }
+        }
+      }
+    },
+    "fullNameEmptyError" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your full name is required"
           }
         }
       }
@@ -34,6 +67,83 @@
         }
       }
     },
+    "passwordIsEmptyError" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The password is required"
+          }
+        }
+      }
+    },
+    "passwordLowerCase" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "At least 1 lower case letter"
+          }
+        }
+      }
+    },
+    "passwordMinChar" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "At least 8 characters"
+          }
+        }
+      }
+    },
+    "passwordNumber" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "At least 1 number"
+          }
+        }
+      }
+    },
+    "passwordRequirementsDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The password must contain the following:"
+          }
+        }
+      }
+    },
+    "passwordSymbol" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "At least 1 symbol (., -, _)"
+          }
+        }
+      }
+    },
+    "passwordUpperCase" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "At least 1 upper case letter"
+          }
+        }
+      }
+    },
     "phone" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -41,6 +151,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Phone Number"
+          }
+        }
+      }
+    },
+    "phoneIsEmptyError" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The phone number is required"
+          }
+        }
+      }
+    },
+    "phoneIsInvalidError" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The phone number is not valid"
           }
         }
       }
