@@ -47,4 +47,13 @@ export const routes: Routes = [
       { path: '', redirectTo: 'login', pathMatch: 'full' },
     ],
   },
+
+  // ── 404 – página independiente (sin layout shell) ─────────────────
+  {
+    path: '**',
+    loadComponent: () =>
+      import('./features/not-found/not-found.component').then(
+        (m) => m.NotFoundComponent
+      ),
+  },
 ];
