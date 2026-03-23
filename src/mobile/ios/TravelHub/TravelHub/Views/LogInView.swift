@@ -15,7 +15,9 @@ struct LogInView: View {
     @FocusState private var focusedField: Field?
     @State private var viewModel = ViewModel()
     @State private var isHidingPassword: Bool = true
-    
+    @State private var goToHotels = false
+    @State private var showError = false
+    @State private var isLoading = false
     
     var body: some View {
         ZStack {
@@ -89,20 +91,46 @@ struct LogInView: View {
                         
                         // MARK: - Login button
                         Button {
-                            // TODO: Implement login
+                            isLoading = true
+                            showError = false
+                            
+                            // 2️⃣ Simulación de login (API)
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                isLoading = false
+                                
+                                if viewModel.email.isEmpty || viewModel.password.isEmpty {
+                                    // ❌ Error: campos vacíos
+                                    showError = true
+                                } else {
+                                    // ✅ Login OK: navegar
+                                    goToHotels = true
+                                }
+                            }
                         } label: {
                             HStack {
-                                Spacer()
-                                Text(LocalizedStringResource.LogIn.logInButton)
-                                    .foregroundStyle(.white)
-                                    .bold()
-                                Spacer()
-                            }
+                                    Spacer()
+                                    
+                                    if isLoading {
+                                        ProgressView()
+                                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    } else {
+                                        Text(LocalizedStringResource.LogIn.logInButton)
+                                            .foregroundStyle(.white)
+                                            .bold()
+                                    }
+                                    
+                                    Spacer()
+                                }
                         }
                         .padding(.vertical, 24)
                         .glassEffect(.regular.tint(.accent).interactive())
                         .clipShape(Capsule())
                         .shadow(color: .accent.opacity(0.2), radius: 15, y: 10)
+                        .alert("Error", isPresented: $showError, actions: {
+                            Button("OK", role: .cancel) { }
+                        }, message: {
+                            Text(LocalizedStringResource.LogIn.emailAndPasswordError)
+                        })
                         
                         Divider()
                         
@@ -126,6 +154,9 @@ struct LogInView: View {
                     .frame(maxWidth: .infinity, minHeight: geo.size.height)
                 }
                 .scrollDismissesKeyboard(.immediately)
+                .navigationDestination(isPresented: $goToHotels) {
+                    ListHotelView()
+                }
             }
         }
         .onTapGesture { focusedField = nil }

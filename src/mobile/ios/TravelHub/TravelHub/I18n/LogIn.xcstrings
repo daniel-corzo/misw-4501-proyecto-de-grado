@@ -23,6 +23,17 @@
         }
       }
     },
+    "emailAndPasswordError" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Please enter your email and password"
+          }
+        }
+      }
+    },
     "emailPlaceholder" : {
       "extractionState" : "manual",
       "localizations" : {
