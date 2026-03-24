@@ -35,13 +35,7 @@ struct HotelDetailView: View {
             ],
             checkInHour: "15:00",
             checkOutHour: "11:00",
-            valorMinimoModificacion: 250,
-            title: "Grand Hotel",
-            imageURL:
-                "https://raw.githubusercontent.com/DavidMS73/images-test/main/hotel1.jpeg",
-            location: "New York",
-            price: "$250",
-            rating: 4
+            valorMinimoModificacion: 250
         )
     )
 }

@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ListHotelView: View {
-    @StateObject private var viewModel = ListHotelViewModel()
+    @State private var viewModel = ViewModel()
     @State private var searchText: String = ""
     @State private var filterIsActive = false
     @State private var showFilterSheet = false
@@ -19,8 +19,8 @@ struct ListHotelView: View {
             return viewModel.hotels
         } else {
             return viewModel.hotels.filter {
-                $0.location.localizedCaseInsensitiveContains(searchText) ||
-                $0.title.localizedCaseInsensitiveContains(searchText)
+                $0.ciudad.localizedCaseInsensitiveContains(searchText) ||
+                $0.nombre.localizedCaseInsensitiveContains(searchText)
             }
         }
     }
@@ -88,11 +88,11 @@ struct ListHotelView: View {
                 LazyVStack(spacing: 24) {
                     ForEach(filteredHotels) { hotel in
                         ListElementView(
-                            imageURL: hotel.imageURL,
-                            title: hotel.title,
-                            location: hotel.location,
-                            price: hotel.price,
-                            rating: hotel.rating
+                            imageURL: hotel.images[0],
+                            title: hotel.nombre,
+                            location: hotel.ciudad,
+                            price: "100",
+                            rating: hotel.ranking
                         )
                         .padding(.horizontal)
                     }
@@ -100,6 +100,7 @@ struct ListHotelView: View {
                 .padding(.top)
             }
         }
+        .navigationBarBackButtonHidden(true)
     }
     
 }
