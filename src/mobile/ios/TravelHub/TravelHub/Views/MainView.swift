@@ -33,7 +33,6 @@ struct MainView: View {
                 }
             }
             
-            // 👇 Tab bar
             VStack {
                 Spacer()
                 CustomTabBar(selectedTab: $selectedTab)
