@@ -15,6 +15,7 @@ struct ListHotelView: View {
     
     // Hoteles filtrados según búsqueda
     var filteredHotels: [Hotel] {
+        print(viewModel.hotels)
         if searchText.isEmpty {
             return viewModel.hotels
         } else {
@@ -87,14 +88,18 @@ struct ListHotelView: View {
             ScrollView {
                 LazyVStack(spacing: 24) {
                     ForEach(filteredHotels) { hotel in
-                        ListElementView(
-                            imageURL: hotel.images[0],
-                            title: hotel.nombre,
-                            location: hotel.ciudad,
-                            price: "100",
-                            rating: hotel.ranking
-                        )
-                        .padding(.horizontal)
+                        NavigationLink {
+                            HotelDetailView(hotel: hotel)
+                        } label: {
+                            ListElementView(
+                                imageURL: hotel.images[0],
+                                title: hotel.nombre,
+                                location: hotel.ciudad,
+                                price: "100",
+                                rating: hotel.ranking
+                            )
+                            .padding(.horizontal)
+                        }
                     }
                 }
                 .padding(.top)
