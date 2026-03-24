@@ -15,9 +15,10 @@ struct LogInView: View {
     @FocusState private var focusedField: Field?
     @State private var viewModel = ViewModel()
     @State private var isHidingPassword: Bool = true
-    @State private var goToHotels = false
     @State private var showError = false
     @State private var isLoading = false
+    
+    @Binding var isLoggedIn: Bool
     
     var body: some View {
         ZStack {
@@ -103,7 +104,7 @@ struct LogInView: View {
                                     showError = true
                                 } else {
                                     // ✅ Login OK: navegar
-                                    goToHotels = true
+                                    isLoggedIn = true
                                 }
                             }
                         } label: {
@@ -154,9 +155,6 @@ struct LogInView: View {
                     .frame(maxWidth: .infinity, minHeight: geo.size.height)
                 }
                 .scrollDismissesKeyboard(.immediately)
-                .navigationDestination(isPresented: $goToHotels) {
-                    ListHotelView()
-                }
             }
         }
         .onTapGesture { focusedField = nil }
@@ -164,5 +162,5 @@ struct LogInView: View {
 }
 
 #Preview {
-    LogInView()
+    LogInView(isLoggedIn: .constant(false))
 }

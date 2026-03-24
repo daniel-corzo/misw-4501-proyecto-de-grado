@@ -13,9 +13,7 @@ struct ListHotelView: View {
     @State private var filterIsActive = false
     @State private var showFilterSheet = false
     
-    // Hoteles filtrados según búsqueda
     var filteredHotels: [Hotel] {
-        print(viewModel.hotels)
         if searchText.isEmpty {
             return viewModel.hotels
         } else {
@@ -28,12 +26,13 @@ struct ListHotelView: View {
     
     var body: some View {
         VStack(spacing: 16) {
+            
             Text("Hotels")
                 .font(.title3)
                 .fontWeight(.bold)
-                .frame(maxWidth: .infinity, alignment: .center)
+                .frame(maxWidth: .infinity)
             
-            // Barra de búsqueda
+            // 🔍 Search
             HStack {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(.gray)
@@ -46,9 +45,10 @@ struct ListHotelView: View {
             .cornerRadius(12)
             .padding(.horizontal)
             
-            // Barra de filtros y orden
+            // 🎛️ Filtros
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
+                    
                     Button {
                         filterIsActive.toggle()
                         showFilterSheet = true
@@ -61,7 +61,6 @@ struct ListHotelView: View {
                             .clipShape(Capsule())
                     }
                     .sheet(isPresented: $showFilterSheet) {
-                        // Aquí va la vista de filtros
                         Text("Filter options here")
                             .presentationDetents([.medium])
                     }
@@ -84,10 +83,11 @@ struct ListHotelView: View {
                 .padding(.horizontal)
             }
             
-            // Lista de hoteles filtrada
+            // 🏨 Lista
             ScrollView {
                 LazyVStack(spacing: 24) {
                     ForEach(filteredHotels) { hotel in
+                        
                         NavigationLink {
                             HotelDetailView(hotel: hotel)
                         } label: {
@@ -98,16 +98,16 @@ struct ListHotelView: View {
                                 price: "100",
                                 rating: hotel.ranking
                             )
-                            .padding(.horizontal)
                         }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal)
                     }
                 }
                 .padding(.top)
+                .padding(.bottom, 100)
             }
         }
-        .navigationBarBackButtonHidden(true)
     }
-    
 }
 
 #Preview {
