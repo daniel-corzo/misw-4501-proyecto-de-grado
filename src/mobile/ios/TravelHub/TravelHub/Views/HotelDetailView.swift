@@ -148,6 +148,7 @@ struct HotelDetailView: View {
             }  //: VStack Container
         }  // ScrollView
         .ignoresSafeArea(edges: .top)
+        .padding(.bottom, 30)
     }
 }
 
