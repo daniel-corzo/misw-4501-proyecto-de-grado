@@ -15,7 +15,10 @@ struct LogInView: View {
     @FocusState private var focusedField: Field?
     @State private var viewModel = ViewModel()
     @State private var isHidingPassword: Bool = true
+    @State private var showError = false
+    @State private var isLoading = false
     
+    @Binding var isLoggedIn: Bool
     
     var body: some View {
         ZStack {
@@ -46,51 +49,33 @@ struct LogInView: View {
                         
                         // MARK: - Inputs
                         VStack(spacing: 24) {
-                            HStack {
-                                Image(systemName: "envelope")
-                                    .foregroundStyle(.neutral)
-                                
-                                TextField(LocalizedStringResource.LogIn.emailPlaceholder, text: $viewModel.email)
-                                    .keyboardType(.emailAddress)
-                                    .textContentType(.emailAddress)
-                                    .textInputAutocapitalization(.never)
-                                    .autocorrectionDisabled(true)
-                                    .focused($focusedField, equals: .email)
-                                    .submitLabel(.next)
-                                    .onSubmit { focusedField = .password }
-                            }
-                            .padding()
-                            .background(Color.white)
-                            .clipShape(Capsule())
-                            .overlay(Capsule().stroke(Color.gray.opacity(0.4), lineWidth: 1))
                             
-                            // Password con "ojito"
-                            HStack {
-                                Image(systemName: "lock")
-                                    .foregroundStyle(.neutral)
-                                
-                                Group {
-                                    if isHidingPassword {
-                                        SecureField(LocalizedStringResource.LogIn.passwordPlaceholder, text: $viewModel.password)
-                                    } else {
-                                        TextField(LocalizedStringResource.LogIn.passwordPlaceholder, text: $viewModel.password)
-                                            .textInputAutocapitalization(.never)
-                                    }
-                                }
-                                .textContentType(.newPassword)
-                                .focused($focusedField, equals: .password)
-                                .submitLabel(.done)
-                                .onSubmit { focusedField = nil }
-                                
-                                // Botón del ojo
-                                Image(systemName: isHidingPassword ? "eye" : "eye.slash")
-                                    .foregroundStyle(.neutral)
-                                    .onTapGesture { isHidingPassword.toggle() }
-                            }
-                            .padding()
-                            .background(Color.white)
-                            .clipShape(Capsule())
-                            .overlay(Capsule().stroke(Color.gray.opacity(0.4), lineWidth: 1))
+                            FormTextFieldView(
+                                fieldName: .UserData.email,
+                                icon: "envelope",
+                                placeholder: LocalizedStringResource.LogIn.emailPlaceholder,
+                                text: $viewModel.email
+                            )
+                            .keyboardType(.emailAddress)
+                            .textContentType(.emailAddress)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled(true)
+                            .focused($focusedField, equals: .email)
+                            .submitLabel(.next)
+                            .onSubmit { focusedField = .password }
+                            
+                            FormTextFieldView(
+                                fieldName: .UserData.password,
+                                icon: "lock",
+                                placeholder: LocalizedStringResource.LogIn.passwordPlaceholder,
+                                textInputAutocapitalization: .never,
+                                isSecuredField: true,
+                                text: $viewModel.password
+                            )
+                            .textContentType(.newPassword)
+                            .focused($focusedField, equals: .password)
+                            .submitLabel(.done)
+                            .onSubmit { focusedField = nil }
                             
                             // Forgot Password button
                             HStack {
@@ -107,38 +92,66 @@ struct LogInView: View {
                         
                         // MARK: - Login button
                         Button {
-                            // TODO: Implement login
+                            isLoading = true
+                            showError = false
+                            
+                            // 2️⃣ Simulación de login (API)
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                isLoading = false
+                                
+                                if viewModel.email.isEmpty || viewModel.password.isEmpty {
+                                    // ❌ Error: campos vacíos
+                                    showError = true
+                                } else {
+                                    // ✅ Login OK: navegar
+                                    isLoggedIn = true
+                                }
+                            }
                         } label: {
                             HStack {
-                                Spacer()
-                                Text(LocalizedStringResource.LogIn.logInButton)
-                                    .foregroundStyle(.white)
-                                    .bold()
-                                Image(systemName: "arrow.right")
-                                    .foregroundStyle(.white)
-                                    .bold()
-                                Spacer()
-                            }
+                                    Spacer()
+                                    
+                                    if isLoading {
+                                        ProgressView()
+                                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    } else {
+                                        Text(LocalizedStringResource.LogIn.logInButton)
+                                            .foregroundStyle(.white)
+                                            .bold()
+                                    }
+                                    
+                                    Spacer()
+                                }
                         }
                         .padding(.vertical, 24)
                         .glassEffect(.regular.tint(.accent).interactive())
                         .clipShape(Capsule())
                         .shadow(color: .accent.opacity(0.2), radius: 15, y: 10)
+                        .alert("Error", isPresented: $showError, actions: {
+                            Button("OK", role: .cancel) { }
+                        }, message: {
+                            Text(LocalizedStringResource.LogIn.emailAndPasswordError)
+                        })
                         
                         Divider()
                         
                         HStack {
                             Spacer()
                             Text(LocalizedStringResource.LogIn.dontHaveAnAccount)
-                            Text(LocalizedStringResource.LogIn.signUpText)
-                                .bold()
-                                .foregroundStyle(.accent)
+                            
+                            NavigationLink {
+                                SignUpView()
+                            } label: {
+                                Text(LocalizedStringResource.LogIn.signUpText)
+                                    .bold()
+                                    .foregroundStyle(.accent)
+                            }
+                            
                             Spacer()
                         }
                         
                     }
                     .padding()
-                    // 🔹 CAMBIO: usamos GeometryReader para altura
                     .frame(maxWidth: .infinity, minHeight: geo.size.height)
                 }
                 .scrollDismissesKeyboard(.immediately)
@@ -149,5 +162,5 @@ struct LogInView: View {
 }
 
 #Preview {
-    LogInView()
+    LogInView(isLoggedIn: .constant(false))
 }

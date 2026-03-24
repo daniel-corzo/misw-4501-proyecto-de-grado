@@ -1,178 +1,233 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "email" : {
+    "airConditioning" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Email"
+            "value" : "Air Conditioning"
           }
         }
       }
     },
-    "emailFormatIsInvalidError" : {
+    "bar" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The email has an invalid format"
+            "value" : "Bar"
           }
         }
       }
     },
-    "emailIsEmptyError" : {
+    "beachAccess" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The email is required"
+            "value" : "Beach Access"
           }
         }
       }
     },
-    "fullName" : {
+    "breakfastIncluded" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Full name"
+            "value" : "Breakfast Included"
           }
         }
       }
     },
-    "fullNameEmptyError" : {
+    "businessCenter" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Your full name is required"
+            "value" : "Business Center"
           }
         }
       }
     },
-    "password" : {
+    "childrenPlayground" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Password"
+            "value" : "Children Playground"
           }
         }
       }
     },
-    "passwordIsEmptyError" : {
+    "concierge" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The password is required"
+            "value" : "Concierge"
           }
         }
       }
     },
-    "passwordLowerCase" : {
+    "conferenceRoom" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "At least 1 lower case letter"
+            "value" : "Conference Room"
           }
         }
       }
     },
-    "passwordMinChar" : {
+    "evCharging" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "At least 8 characters"
+            "value" : "EV Charging"
           }
         }
       }
     },
-    "passwordNumber" : {
+    "gym" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "At least 1 number"
+            "value" : "Gym"
           }
         }
       }
     },
-    "passwordRequirementsDescription" : {
+    "laundry" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The password must contain the following:"
+            "value" : "Laundry"
           }
         }
       }
     },
-    "passwordSymbol" : {
+    "parking" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "At least 1 symbol (., -, _)"
+            "value" : "Parking"
           }
         }
       }
     },
-    "passwordUpperCase" : {
+    "petFriendly" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "At least 1 upper case letter"
+            "value" : "Pet Friendly"
           }
         }
       }
     },
-    "phone" : {
+    "pool" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Phone Number"
+            "value" : "Pool"
           }
         }
       }
     },
-    "phoneIsEmptyError" : {
+    "restaurant" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The phone number is required"
+            "value" : "Restaurant"
           }
         }
       }
     },
-    "phoneIsInvalidError" : {
+    "roomService" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The phone number is not valid"
+            "value" : "Room Service"
+          }
+        }
+      }
+    },
+    "shuttle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shuttle Service"
+          }
+        }
+      }
+    },
+    "skiAccess" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ski Access"
+          }
+        }
+      }
+    },
+    "smokingArea" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smoking Area"
+          }
+        }
+      }
+    },
+    "spa" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spa"
+          }
+        }
+      }
+    },
+    "wifi" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wi-Fi"
           }
         }
       }

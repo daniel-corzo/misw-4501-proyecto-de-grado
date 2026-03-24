@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct SignUpView: View {
+    @Environment(\.dismiss) private var dismiss
+
     @State private var viewModel = ViewModel()
 
     var agreementText: AttributedString {
@@ -37,28 +39,30 @@ struct SignUpView: View {
                         Text(LocalizedStringResource.SignUp.title)
                             .font(.title)
                             .bold()
-                        
+
                         Text(LocalizedStringResource.SignUp.description)
                             .foregroundStyle(.neutralDark)
                     }
-                    
+
                     VStack(spacing: 24) {
-                        
+
                         // FullName
                         FormTextFieldView(
                             fieldName: .UserData.fullName,
                             icon: "person",
                             placeholder: "John Doe",
                             textInputAutocapitalization: .words,
+                            smallText: viewModel.fullNameSmallText,
                             text: $viewModel.fullName
                         )
                         .textContentType(.name)
-                        
+
                         //Phone Number
                         FormTextFieldView(
                             fieldName: .UserData.phone,
                             icon: "phone",
                             placeholder: "3214567890",
+                            smallText: viewModel.phoneSmallText,
                             text: $viewModel.phone
                         )
                         .keyboardType(.phonePad)
@@ -66,40 +70,45 @@ struct SignUpView: View {
                             viewModel.phone = formatPhone(newValue)
                         }
                         .textContentType(.telephoneNumber)
-                        
+
                         // Email
                         FormTextFieldView(
                             fieldName: .UserData.email,
                             icon: "envelope",
                             placeholder: "example@mail.com",
+                            smallText: viewModel.emailSmallText,
                             text: $viewModel.email
                         )
                         .keyboardType(.emailAddress)
                         .textContentType(.emailAddress)
-                        
+
                         // Password
                         FormTextFieldView(
                             fieldName: .UserData.password,
                             icon: "lock",
                             placeholder: LocalizedStringResource.SignUp
                                 .passwordPlaceholder,
+                            textInputAutocapitalization: .never,
                             isSecuredField: true,
+                            smallText: viewModel.passwordSmallText,
                             text: $viewModel.password
                         )
                         .textContentType(.newPassword)
-                        
+
                         HStack {
                             Button {
                                 viewModel.agreeToTerms.toggle()
                             } label: {
                                 Image(
                                     systemName: viewModel.agreeToTerms
-                                    ? "checkmark.square.fill" : "square"
+                                        ? "checkmark.square.fill" : "square"
                                 )
-                                .foregroundStyle(viewModel.agreeToTerms ? .accent : .gray)
+                                .foregroundStyle(
+                                    viewModel.agreeToTerms ? .accent : .gray
+                                )
                                 .font(.system(size: 30))
                             }  //: Button Label
-                            
+
                             Text(agreementText)
                                 .foregroundStyle(.primary)
                                 .multilineTextAlignment(.leading)
@@ -107,21 +116,24 @@ struct SignUpView: View {
                         }  //: HStack Terms
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }  //: VStack Form
-                    
+
                     Button {
                         // TODO: Implement this
                     } label: {
                         HStack {
                             Spacer()
-                            
-                            Text(LocalizedStringResource.SignUp.createAccountButton)
-                                .foregroundStyle(.white)
-                                .bold()
-                            
+
+                            Text(
+                                LocalizedStringResource.SignUp
+                                    .createAccountButton
+                            )
+                            .foregroundStyle(.white)
+                            .bold()
+
                             Image(systemName: "arrow.right")
                                 .foregroundStyle(.white)
                                 .bold()
-                            
+
                             Spacer()
                         }
                     }
@@ -130,31 +142,35 @@ struct SignUpView: View {
                     .clipShape(.capsule)
                     .shadow(color: .accent.opacity(0.2), radius: 15, y: 10)
                     .glassEffect()
-                    
+
                     Divider()
-                    
+
                     HStack {
                         Spacer()
-                        
+
                         Text(LocalizedStringResource.SignUp.alreadyHaveAccount)
-                        
-                        // TODO: Change this to navigation link when login exists
+
                         Text(LocalizedStringResource.SignUp.loginText)
                             .bold()
                             .foregroundStyle(.accent)
-                        
+                            .onTapGesture {
+                                dismiss()
+                            }
+
                         Spacer()
                     }
-                    
+
                 }  //: VStack Container
                 .padding()
-            } //: ScrollView
+            }  //: ScrollView
             .scrollDismissesKeyboard(.immediately)
         }  //: ZStack Background
         .onTapGesture {
             UIApplication.shared.sendAction(
                 #selector(UIResponder.resignFirstResponder),
-                to: nil, from: nil, for: nil
+                to: nil,
+                from: nil,
+                for: nil
             )
         }
     }
