@@ -1,7 +1,8 @@
 import uuid
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Query, status, Depends
 from datetime import date
 from app.schemas.busqueda import BusquedaHotelesResponse, HotelResultado
+from travelhub_common.security import get_current_user, User
 
 router = APIRouter(prefix="/busqueda", tags=["busqueda"])
 
@@ -14,6 +15,7 @@ async def buscar_hoteles(
     num_huespedes: int = Query(1, ge=1, le=20, description="Numero de huespedes"),
     estrellas_min: int = Query(1, ge=1, le=5, description="Minimo de estrellas"),
     precio_max: float = Query(None, description="Precio maximo por noche"),
+    current_user: User = Depends(get_current_user)
 ):
     """
     Busca hoteles disponibles segun los criterios indicados.
