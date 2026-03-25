@@ -12,7 +12,7 @@ class RegisterRequest(BaseModel):
     id: Optional[UUID] = None
     email: str
     password: str
-    role: Optional[RoleEnum] = RoleEnum.USER
+    role: RoleEnum = RoleEnum.USER
 
 
 class LoginResponse(BaseModel):

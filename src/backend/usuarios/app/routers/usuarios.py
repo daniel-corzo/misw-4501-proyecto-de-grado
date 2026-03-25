@@ -37,7 +37,7 @@ async def crear_usuario(
         apellido=body.apellido,
         telefono=body.telefono,
     )
-    await db.add(user_profile)
+    db.add(user_profile)
     await db.flush()
 
     # Call Auth MS to register the credentials

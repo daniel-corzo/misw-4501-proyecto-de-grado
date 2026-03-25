@@ -5,7 +5,7 @@ This is the backend for the TravelHub application, built using FastAPI microserv
 ## Authentication and RBAC
 This project uses **JWT (RS256)** for authentication and decentralizing validation for microservices.
 - `auth`: Manages `UserCredentials` (email, hashed password, role) and issues JWTs signed with `JWT_PRIVATE_KEY`.
-- `usuarios`: Manages `UserProfile` (name, address, telephone).
+- `usuarios`: Manages `UserProfile` (first name, last name, telephone).
 - Other microservices validate JWTs using `JWT_PUBLIC_KEY` locally using the `travelhub_common` library.
 
 ### Generate RSA Keys (Local Development)

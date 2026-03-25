@@ -20,11 +20,11 @@ async def register(
     body: RegisterRequest,
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(UserCredentials).where(UserCredentials.email == body.email))
+    result = await db.execute(select(UserCredentials).where(UserCredentials.email == body.email or UserCredentials.id == body.id))
     if result.scalars().first():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            detail="User already registered"
         )
         
     hashed_password = get_password_hash(body.password)

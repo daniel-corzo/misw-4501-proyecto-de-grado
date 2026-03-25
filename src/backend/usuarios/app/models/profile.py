@@ -12,4 +12,3 @@ class UserProfile(BaseModel):
     nombre = Column(String(255), nullable=True)
     apellido = Column(String(255), nullable=True)
     telefono = Column(String(50), nullable=True)
-    created_at = Column(String, nullable=False, default=lambda: datetime.utcnow().isoformat())
