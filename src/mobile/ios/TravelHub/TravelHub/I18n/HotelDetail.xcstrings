@@ -12,6 +12,39 @@
         }
       }
     },
+    "bookNow" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Book Now"
+          }
+        }
+      }
+    },
+    "freeCancellation" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Free cancellation"
+          }
+        }
+      }
+    },
+    "perNight" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/ night"
+          }
+        }
+      }
+    },
     "readMore" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -19,6 +52,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Read more"
+          }
+        }
+      }
+    },
+    "showAllAmenities" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show all %1$(numAmenities)lld amenities"
+          }
+        }
+      }
+    },
+    "showLess" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show less"
           }
         }
       }

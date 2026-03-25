@@ -137,11 +137,7 @@ struct SignUpView: View {
                             Spacer()
                         }
                     }
-                    .padding(.vertical, 24)
-                    .glassEffect(.regular.tint(.accent).interactive())
-                    .clipShape(.capsule)
-                    .shadow(color: .accent.opacity(0.2), radius: 15, y: 10)
-                    .glassEffect()
+                    .capsuleButton()
 
                     Divider()
 

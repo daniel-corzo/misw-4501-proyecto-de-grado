@@ -12,9 +12,18 @@ struct HotelDetailView: View {
 
     @State private var aboutLineLimit: Int? = 5
     @State private var readMoreArrow = "chevron.down"
+    @State private var showAllAmenities = false
 
     var featuredAmenities: [HotelAmenity] {
         hotel.amenidades.filter({ $0.isFeatured })
+    }
+
+    var topAmenities: [HotelAmenity] {
+        if showAllAmenities {
+            return hotel.amenidades
+        }
+
+        return Array(hotel.amenidades[..<4])
     }
 
     var body: some View {
@@ -34,7 +43,7 @@ struct HotelDetailView: View {
                 .tabViewStyle(.page)
                 .frame(height: 300)
 
-                VStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .leading, spacing: 32) {
                     VStack(alignment: .leading, spacing: 16) {
                         HStack(spacing: 4) {
                             Image(systemName: "star")
@@ -67,7 +76,7 @@ struct HotelDetailView: View {
                                         .frame(width: 20, height: 20)
 
                                     Text(amenity.localizedName)
-                                        .frame(width: .infinity)
+                                        .frame(maxWidth: .infinity)
                                 }  //: HStack Capsule
                                 .padding()
                                 .background {
@@ -80,7 +89,6 @@ struct HotelDetailView: View {
                             }  //: ForEach
                         }  //: HStack
                     }  //: ScrollView Featured Amenities
-                    .padding(.vertical)
 
                     VStack(alignment: .leading, spacing: 16) {
                         Text(LocalizedStringResource.HotelDetail.about)
@@ -117,38 +125,113 @@ struct HotelDetailView: View {
                                         )
                                     )
                             }
-                        } //: Button Read More
+                        }  //: Button Read More
 
                     }  //: VStack About
                     .padding(.bottom, 16)
-                    
+
                     VStack(alignment: .leading, spacing: 16) {
                         Text(LocalizedStringResource.HotelDetail.topAmenities)
                             .font(.title2)
                             .bold()
-                        
-                        LazyVGrid(columns: [.init(.flexible()), .init(.flexible())], alignment: .leading, spacing: 32) {
-                            ForEach(hotel.amenidades, id: \.self) { amenity in
+
+                        LazyVGrid(
+                            columns: [.init(.flexible()), .init(.flexible())],
+                            alignment: .leading,
+                            spacing: 32
+                        ) {
+                            ForEach(self.topAmenities, id: \.self) { amenity in
                                 HStack(spacing: 16) {
                                     Image(systemName: amenity.icon)
                                         .resizable()
                                         .scaledToFit()
-                                        .frame(width: 30, height: 30)
-                                    
+                                        .frame(width: 25, height: 25)
+
                                     Text(amenity.localizedName)
-                                }
+                                }  //: HStack Amenity
+                            }  //: ForEach
+                        }  //: LazyVGrid Amenities
+
+                        Button {
+                            withAnimation {
+                                showAllAmenities.toggle()
                             }
+                        } label: {
+                            Spacer()
+
+                            Text(
+                                showAllAmenities
+                                    ? LocalizedStringResource.HotelDetail
+                                        .showLess
+                                    : LocalizedStringResource.HotelDetail
+                                        .showAllAmenities(
+                                            numAmenities: hotel.amenidades.count
+                                        )
+                            )
+                            .foregroundStyle(.black)
+                            .bold()
+
+                            Spacer()
+                        }  //: Button Show All
+                        .padding()
+                        .overlay {
+                            Capsule()
+                                .stroke(Color.neutralLight, lineWidth: 1)
                         }
-                    } //: VStack Top Amenities
+
+                    }  //: VStack Top Amenities
 
                 }  //: VStack Hotel Data Container
                 .padding(.horizontal)
 
                 Spacer()
             }  //: VStack Container
+            .background(Color.formBackground)
+            .padding(.bottom, 48)
         }  // ScrollView
         .ignoresSafeArea(edges: .top)
         .padding(.bottom, 30)
+        .overlay(alignment: .bottom) {
+            UnevenRoundedRectangle(topLeadingRadius: 25, topTrailingRadius: 25)
+                .fill(.background)
+                .frame(height: 100)
+                .shadow(color: .black.opacity(0.15), radius: 10)
+            
+            HStack {
+                VStack(alignment: .leading) {
+                    HStack {
+                        // TODO: Change this for value of room
+                        Text(480_000.formatted(.currency(code: "COP")))
+                            .font(.title3)
+                            .bold()
+                        
+                        Text(LocalizedStringResource.HotelDetail.perNight)
+                            .foregroundStyle(.neutral)
+                    } //: HStack Price
+                    
+                    Text(LocalizedStringResource.HotelDetail.freeCancellation)
+                        .font(.caption)
+                        .foregroundStyle(.accent)
+                        .bold()
+                } //: VStack
+                
+                Spacer()
+                
+                Button {
+                    // TODO: Book reservation
+                } label: {
+                    Text(LocalizedStringResource.HotelDetail.bookNow)
+                        .bold()
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 32)
+                }
+                .capsuleButton()
+                
+            } //: HStack
+            .padding(.horizontal, 32)
+        } //: Overlay Book Now
+        .ignoresSafeArea()
+        .toolbar(.hidden, for: .tabBar)
     }
 }
 
