@@ -104,7 +104,7 @@ struct ListHotelView: View {
                     }
                 }
                 .padding(.top)
-                .padding(.bottom, 100)
+                .padding(.bottom, 20)
             }
         }
     }

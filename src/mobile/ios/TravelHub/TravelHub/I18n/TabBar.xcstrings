@@ -7,7 +7,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "BOOKINGS"
+            "value" : "Bookings"
           }
         }
       }
@@ -18,7 +18,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "EXPLORE"
+            "value" : "Explore"
           }
         }
       }
@@ -29,7 +29,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "PROFILE"
+            "value" : "Profile"
           }
         }
       }

@@ -9,33 +9,28 @@ import SwiftUI
 
 struct MainView: View {
     
-    @State private var selectedTab: CustomTabBar.Tab = .explore
-    
     var body: some View {
-        ZStack {
+        TabView {
             
-            Group {
-                switch selectedTab {
-                case .explore:
-                    NavigationStack {
-                        ListHotelView()
-                    }
-                    
-                case .bookings:
-                    NavigationStack {
-                        Text("Bookings View")
-                    }
-                    
-                case .profile:
-                    NavigationStack {
-                        Text("Profile View")
-                    }
-                }
+            NavigationStack {
+                ListHotelView()
+            }
+            .tabItem {
+                Label(LocalizedStringResource.TabBar.explore, systemImage: "safari")
             }
             
-            VStack {
-                Spacer()
-                CustomTabBar(selectedTab: $selectedTab)
+            NavigationStack {
+                Text("Bookings View")
+            }
+            .tabItem {
+                Label(LocalizedStringResource.TabBar.bookings, systemImage: "calendar")
+            }
+            
+            NavigationStack {
+                Text("Profile View")
+            }
+            .tabItem {
+                Label(LocalizedStringResource.TabBar.profile, systemImage: "person")
             }
         }
     }
