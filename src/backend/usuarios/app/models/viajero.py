@@ -1,7 +1,6 @@
 from sqlalchemy import Column, String, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 from travelhub_common.models import BaseModel
-from datetime import datetime, timezone
 
 class Viajero(BaseModel):
     __tablename__ = "viajeros"

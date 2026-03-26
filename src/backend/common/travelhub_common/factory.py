@@ -34,8 +34,8 @@ def create_app(
         title=f"TravelHub - {service_name}",
         version="1.0.0",
         docs_url=None,
-        redoc_url=None,
         openapi_url="/openapi.json",
+        redoc_url=None,
     )
 
     @app.get("/docs", include_in_schema=False)
