@@ -157,9 +157,21 @@ resource "aws_s3_bucket_policy" "cloudfront" {
 }
 
 # Create Route53 Alias record pointing to CloudFront distribution
-resource "aws_route53_record" "frontend" {
+resource "aws_route53_record" "frontend-www" {
   zone_id = var.route53_zone_id
   name    = "www.${var.domain_name}"
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.this.domain_name
+    zone_id                = aws_cloudfront_distribution.this.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+resource "aws_route53_record" "frontend-root" {
+  zone_id = var.route53_zone_id
+  name    = var.domain_name
   type    = "A"
 
   alias {

@@ -141,7 +141,7 @@ resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.this.arn
   port              = 443
   protocol          = "HTTPS"
-  ssl_policy       = "ELBSecurityPolicy-2016-08"
+  ssl_policy       = "ELBSecurityPolicy-TLS13-1-2-2021-06"
   certificate_arn   = var.certificate_arn
 
   default_action {
@@ -174,10 +174,28 @@ resource "aws_route53_record" "backend_api" {
 # Listener Rules (path-based, apuntan al TG blue)
 # ===============================
 
-resource "aws_lb_listener_rule" "service" {
+resource "aws_lb_listener_rule" "service-http" {
   for_each = local.services_with_priority
 
   listener_arn = aws_lb_listener.http.arn
+  priority     = each.value
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.blue[each.key].arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/${var.services[each.key]}", "/${var.services[each.key]}/*"]
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "service-https" {
+  for_each = local.services_with_priority
+
+  listener_arn = aws_lb_listener.https.arn
   priority     = each.value
 
   action {
