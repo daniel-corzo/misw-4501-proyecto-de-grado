@@ -11,7 +11,7 @@ class Politica(BaseModel):
     descripcion = Column(String, nullable=True)
     tipo = Column(String(50), nullable=False)
     penalizacion = Column(Integer, nullable=False, default=0)
-    diasAntelacion = Column(Integer, nullable=False, default=0)
+    dias_antelacion = Column(Integer, nullable=False, default=0)
     
     # Internal relationship within the hoteles service
     hotel_id = Column(UUID(as_uuid=True), ForeignKey("hoteles.id"), nullable=False, index=True)

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer
+from sqlalchemy import Column, DateTime, String, Integer
 from travelhub_common.models import BaseModel
 
 class Tarifa(BaseModel):
@@ -6,5 +6,5 @@ class Tarifa(BaseModel):
 
     monto = Column(Integer, nullable=False, default=0)
     impuestos = Column(Integer, nullable=False, default=0)
-    fechaInicio = Column(String(50), nullable=False)
-    fechaFin = Column(String(50), nullable=False)
+    fecha_inicio = Column(DateTime(timezone=True), nullable=False)
+    fecha_fin = Column(DateTime(timezone=True), nullable=False)

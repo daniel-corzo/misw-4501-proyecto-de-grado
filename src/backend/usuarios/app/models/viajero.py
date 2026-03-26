@@ -8,7 +8,6 @@ class Viajero(BaseModel):
 
     nombre = Column(String(255), nullable=False)
     contacto = Column(String(255), nullable=True)
-    creacion = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     # Cross-schema/service reference to UserCredentials id in Auth
     usuario_id = Column(UUID(as_uuid=True), index=True, nullable=False, unique=True)
