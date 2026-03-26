@@ -48,7 +48,7 @@ async def override_client(mock_db_session):
 
 @pytest.mark.asyncio
 async def test_register_success(override_client, mock_db_session):
-    with patch("app.routers.usuarios.httpx.AsyncClient") as MockClient:
+    with patch("app.services.usuario_service.httpx.AsyncClient") as MockClient:
         # Patch the instantiated AsyncClient block returning via async context manager
         mock_client_instance = MockClient.return_value.__aenter__.return_value
         
@@ -91,7 +91,7 @@ async def test_register_email_already_exists(override_client, mock_db_session):
 
 @pytest.mark.asyncio
 async def test_register_auth_service_http_error(override_client, mock_db_session):
-    with patch("app.routers.usuarios.httpx.AsyncClient") as MockClient:
+    with patch("app.services.usuario_service.httpx.AsyncClient") as MockClient:
         mock_client_instance = MockClient.return_value.__aenter__.return_value
         
         # Mock HTTP Error natively returned from Auth MS (Fail state code)
@@ -113,7 +113,7 @@ async def test_register_auth_service_http_error(override_client, mock_db_session
 
 @pytest.mark.asyncio
 async def test_register_auth_service_unavailable(override_client, mock_db_session):
-    with patch("app.routers.usuarios.httpx.AsyncClient") as MockClient:
+    with patch("app.services.usuario_service.httpx.AsyncClient") as MockClient:
         mock_client_instance = MockClient.return_value.__aenter__.return_value
         
         # Mock Auth MS not responding
