@@ -1,18 +1,22 @@
 import uuid
 from datetime import datetime, date
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from app.schemas.reserva import (
     CrearReservaRequest,
     ReservaResponse,
     EstadoReserva,
     ListaReservasResponse,
 )
+from travelhub_common.security import get_current_user, User, RoleChecker, RoleEnum
 
 router = APIRouter(prefix="/reservas", tags=["reservas"])
 
 
 @router.post("", response_model=ReservaResponse, status_code=status.HTTP_201_CREATED)
-async def crear_reserva(body: CrearReservaRequest):
+async def crear_reserva(
+    body: CrearReservaRequest,
+    current_user: User = Depends(get_current_user)
+):
     """
     Crea una nueva reserva de habitacion.
 
@@ -42,7 +46,10 @@ async def crear_reserva(body: CrearReservaRequest):
 
 
 @router.get("/{reserva_id}", response_model=ReservaResponse, status_code=status.HTTP_200_OK)
-async def obtener_reserva(reserva_id: uuid.UUID):
+async def obtener_reserva(
+    reserva_id: uuid.UUID,
+    current_user: User = Depends(get_current_user)
+):
     """
     Retorna el detalle de una reserva por su ID.
 
@@ -66,7 +73,15 @@ async def obtener_reserva(reserva_id: uuid.UUID):
 
 
 @router.get("/usuario/{usuario_id}", response_model=ListaReservasResponse, status_code=status.HTTP_200_OK)
-async def listar_reservas_usuario(usuario_id: uuid.UUID):
+async def listar_reservas_usuario(
+    usuario_id: uuid.UUID,
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role != RoleEnum.ADMIN and current_user.id != usuario_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tienes permiso para ver las reservas de este usuario",
+        )
     """
     Lista todas las reservas de un usuario.
 

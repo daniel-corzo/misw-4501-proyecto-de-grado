@@ -42,7 +42,12 @@ misw-4501-proyecto-de-grado/
 
 #### 1. Crear el archivo `.env` en la raíz del proyecto
 
-Estas variables son usadas por `docker-compose` para levantar la infraestructura local (PostgreSQL, Redis, LocalStack) y para construir la variable `DB_URL` que se inyecta en cada microservicio.
+Estas variables son usadas por `docker compose` para levantar la infraestructura local (PostgreSQL, Redis, LocalStack) y para construir la variable `DB_URL` que se inyecta en cada microservicio.
+
+Genere las llaves de JWT públicas y privadas y reemplace los valores respectivos. Puede utilizar el script de python `generate_keys.py`.
+```bash
+python generate_keys.py
+```
 
 ```env
 ENVIRONMENT=local
@@ -50,6 +55,8 @@ POSTGRES_USER=travelhub
 POSTGRES_PASSWORD=travelhub
 POSTGRES_DB=travelhub
 JWT_SECRET=local-secret-only
+JWT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----...-----END PRIVATE KEY-----"
+JWT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----...-----END PUBLIC KEY-----"
 AWS_REGION=us-east-1
 REDIS_URL=redis://redis:6379
 SQS_ENDPOINT=http://localstack:4566

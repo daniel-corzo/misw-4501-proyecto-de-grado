@@ -1,13 +1,17 @@
 import uuid
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from app.schemas.pago import ProcesarPagoRequest, PagoResponse, EstadoPago
+from travelhub_common.security import get_current_user, User, RoleChecker, RoleEnum
 
 router = APIRouter(prefix="/pagos", tags=["pagos"])
 
 
 @router.post("", response_model=PagoResponse, status_code=status.HTTP_201_CREATED)
-async def procesar_pago(body: ProcesarPagoRequest):
+async def procesar_pago(
+    body: ProcesarPagoRequest,
+    current_user: User = Depends(get_current_user)
+):
     """
     Procesa el pago de una reserva via Stripe.
 
@@ -32,7 +36,10 @@ async def procesar_pago(body: ProcesarPagoRequest):
 
 
 @router.get("/{pago_id}", response_model=PagoResponse, status_code=status.HTTP_200_OK)
-async def obtener_pago(pago_id: uuid.UUID):
+async def obtener_pago(
+    pago_id: uuid.UUID,
+    current_user: User = Depends(get_current_user)
+):
     """
     Retorna el estado de un pago por su ID.
 

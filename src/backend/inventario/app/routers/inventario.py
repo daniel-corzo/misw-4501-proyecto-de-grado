@@ -1,11 +1,12 @@
 import uuid
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from app.schemas.inventario import (
     HabitacionResponse,
     TipoHabitacion,
     ActualizarDisponibilidadRequest,
     ListaHabitacionesResponse,
 )
+from travelhub_common.security import get_current_user, User, RoleChecker, RoleEnum
 
 router = APIRouter(prefix="/inventario", tags=["inventario"])
 
@@ -15,7 +16,10 @@ router = APIRouter(prefix="/inventario", tags=["inventario"])
     response_model=ListaHabitacionesResponse,
     status_code=status.HTTP_200_OK,
 )
-async def listar_habitaciones(hotel_id: uuid.UUID):
+async def listar_habitaciones(
+    hotel_id: uuid.UUID,
+    current_user: User = Depends(get_current_user)
+):
     """
     Lista todas las habitaciones de un hotel con su disponibilidad actual.
 
@@ -69,6 +73,7 @@ async def listar_habitaciones(hotel_id: uuid.UUID):
 async def actualizar_disponibilidad(
     habitacion_id: uuid.UUID,
     body: ActualizarDisponibilidadRequest,
+    current_user: User = Depends(RoleChecker([RoleEnum.ADMIN, RoleEnum.MANAGER]))
 ):
     """
     Actualiza la disponibilidad de una habitacion.
