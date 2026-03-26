@@ -32,6 +32,8 @@ resource "aws_cloudfront_distribution" "this" {
   default_root_object = "index.html"
   comment             = "${var.project_name} frontend + api"
 
+  aliases = [var.domain_name, "www.${var.domain_name}"]
+
   # Origin 1: S3 (Angular SPA)
   origin {
     domain_name              = var.bucket_regional_domain_name
@@ -118,7 +120,9 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    acm_certificate_arn            = var.certificate_arn
+    ssl_support_method             = "sni-only"
+    minimum_protocol_version       = "TLSv1.2_2021"
   }
 
   tags = {
@@ -150,4 +154,29 @@ resource "aws_s3_bucket_policy" "cloudfront" {
   })
 
   depends_on = [aws_cloudfront_distribution.this]
+}
+
+# Create Route53 Alias record pointing to CloudFront distribution
+resource "aws_route53_record" "frontend-www" {
+  zone_id = var.route53_zone_id
+  name    = "www.${var.domain_name}"
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.this.domain_name
+    zone_id                = aws_cloudfront_distribution.this.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+resource "aws_route53_record" "frontend-root" {
+  zone_id = var.route53_zone_id
+  name    = var.domain_name
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.this.domain_name
+    zone_id                = aws_cloudfront_distribution.this.hosted_zone_id
+    evaluate_target_health = false
+  }
 }
