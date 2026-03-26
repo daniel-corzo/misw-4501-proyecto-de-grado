@@ -3,6 +3,13 @@ variable "project_name" {
   type        = string
 }
 
+variable "domain_name" {
+  description = "Domain name for Route53"
+  type        = string
+  default     = "travel-hub.online"
+  
+}
+
 variable "vpc_cidr" {
   description = "CIDR block for the VPC"
   type        = string

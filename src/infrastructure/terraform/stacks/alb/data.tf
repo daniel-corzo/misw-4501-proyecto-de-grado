@@ -7,3 +7,14 @@ data "terraform_remote_state" "network" {
     region = var.region
   }
 }
+
+data "terraform_remote_state" "dns" {
+  backend = "s3"
+
+  config = {
+    bucket = "terraform-travelhub-state"
+    key    = "dns/terraform.tfstate"
+    region = var.region
+  }
+}
+

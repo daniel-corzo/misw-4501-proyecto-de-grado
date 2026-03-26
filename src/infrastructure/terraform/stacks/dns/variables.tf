@@ -11,6 +11,6 @@ variable "owner" {
 }
 
 variable "domain_name" {
-  description = "Domain name for CloudFront distribution"
+  description = "Domain name for Route53"
   type        = string
 }

@@ -22,3 +22,19 @@ variable "alb_dns_name" {
   description = "DNS name of the ALB, used as origin for /api/* paths"
   type        = string
 }
+
+variable "domain_name" {
+  description = "Domain name for the CloudFront distribution"
+  type        = string
+}
+
+variable "certificate_arn" {
+  description = "ARN of the ACM certificate for the CloudFront distribution"
+  type        = string
+}
+
+variable "route53_zone_id" {
+  description = "Route53 Hosted Zone ID for the domain, used for Alias record"
+  type        = string
+  
+}
