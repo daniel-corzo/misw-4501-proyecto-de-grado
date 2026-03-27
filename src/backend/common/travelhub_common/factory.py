@@ -1,5 +1,6 @@
 from typing import List, Optional
 from fastapi import FastAPI, APIRouter, Depends
+from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,9 +33,18 @@ def create_app(
     app = FastAPI(
         title=f"TravelHub - {service_name}",
         version="1.0.0",
-        docs_url="/docs",
+        docs_url=None,
         openapi_url="/openapi.json",
+        redoc_url=None,
     )
+
+    @app.get("/docs", include_in_schema=False)
+    async def custom_swagger_ui_html():
+        # Use a relative OpenAPI URL so docs work correctly behind /api/{service}/ prefixes.
+        return get_swagger_ui_html(
+            openapi_url="openapi.json",
+            title=f"TravelHub - {service_name} - Swagger UI",
+        )
 
     app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
     app.add_middleware(BaseHTTPMiddleware, dispatch=logging_middleware)

@@ -28,7 +28,7 @@ async def listar_hoteles(
             direccion="Cra 15 # 93-47",
             estrellas=4,
             descripcion="Hotel boutique en el corazon de Bogota",
-            amenidades=["wifi", "piscina", "spa", "restaurante"],
+            amenidades=["Wi-Fi", "Pool", "Spa", "Restaurant"],
             created_at=datetime.utcnow(),
         ),
         HotelResponse(
@@ -38,7 +38,7 @@ async def listar_hoteles(
             direccion="Calle 85 # 12-28",
             estrellas=5,
             descripcion="Lujo y confort en la zona rosa",
-            amenidades=["wifi", "gym", "bar", "concierge", "valet"],
+            amenidades=["Wi-Fi", "Gym", "Bar", "Concierge", "Parking"],
             created_at=datetime.utcnow(),
         ),
     ]
@@ -65,7 +65,7 @@ async def obtener_hotel(
         direccion="Cra 15 # 93-47",
         estrellas=4,
         descripcion="Hotel boutique en el corazon de Bogota",
-        amenidades=["wifi", "piscina", "spa", "restaurante"],
+        amenidades=["Wi-Fi", "Pool", "Spa", "Restaurant"],
         created_at=datetime.utcnow(),
     )
 
