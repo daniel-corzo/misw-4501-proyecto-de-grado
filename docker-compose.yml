@@ -47,6 +47,7 @@ services:
       - "8080:8080"
     volumes:
       - ./nginx/gateway.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/swagger.html:/usr/share/nginx/html/swagger.html:ro
     depends_on:
       - auth
       - usuarios
