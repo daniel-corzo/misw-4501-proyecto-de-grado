@@ -1,0 +1,108 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [develop, main]
+    paths:
+      - 'src/backend/**'
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - 'src/backend/**'
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.build-matrix.outputs.services }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            common:
+              - 'src/backend/common/**'
+            auth:
+              - 'src/backend/auth/**'
+            usuarios:
+              - 'src/backend/usuarios/**'
+            busqueda:
+              - 'src/backend/busqueda/**'
+            hoteles:
+              - 'src/backend/hoteles/**'
+            inventario:
+              - 'src/backend/inventario/**'
+            reservas:
+              - 'src/backend/reservas/**'
+            pagos:
+              - 'src/backend/pagos/**'
+            notificaciones:
+              - 'src/backend/notificaciones/**'
+
+      - name: Build service matrix
+        id: build-matrix
+        run: |
+          ALL_SERVICES=(auth usuarios busqueda hoteles inventario reservas pagos notificaciones)
+
+          if [ "${{ steps.filter.outputs.common }}" == "true" ]; then
+            SERVICES=("common" "${ALL_SERVICES[@]}")
+          else
+            SERVICES=()
+            [ "${{ steps.filter.outputs.auth }}" == "true" ] && SERVICES+=(auth)
+            [ "${{ steps.filter.outputs.usuarios }}" == "true" ] && SERVICES+=(usuarios)
+            [ "${{ steps.filter.outputs.busqueda }}" == "true" ] && SERVICES+=(busqueda)
+            [ "${{ steps.filter.outputs.hoteles }}" == "true" ] && SERVICES+=(hoteles)
+            [ "${{ steps.filter.outputs.inventario }}" == "true" ] && SERVICES+=(inventario)
+            [ "${{ steps.filter.outputs.reservas }}" == "true" ] && SERVICES+=(reservas)
+            [ "${{ steps.filter.outputs.pagos }}" == "true" ] && SERVICES+=(pagos)
+            [ "${{ steps.filter.outputs.notificaciones }}" == "true" ] && SERVICES+=(notificaciones)
+          fi
+
+          JSON=$(printf '%s\n' "${SERVICES[@]}" | jq -R . | jq -sc .)
+          echo "services=$JSON" >> "$GITHUB_OUTPUT"
+          echo "Matrix: $JSON"
+
+  test:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.services != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJson(needs.detect-changes.outputs.services) }}
+    defaults:
+      run:
+        working-directory: src/backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install common library
+        run: pip install -e ./common
+
+      - name: Install service dependencies
+        run: pip install -r ./${{ matrix.service }}/requirements.txt
+
+      - name: Run tests with coverage
+        working-directory: src/backend/${{ matrix.service }}
+        run: |
+          COV_SRC=$([[ "${{ matrix.service }}" == "common" ]] && echo "travelhub_common" || echo "app")
+          pytest \
+            --cov=$COV_SRC \
+            --cov-report=xml:coverage.xml \
+            --cov-report=term-missing \
+            --cov-fail-under=50 \
+            -v
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.service }}
+          path: src/backend/${{ matrix.service }}/coverage.xml
+          retention-days: 30
