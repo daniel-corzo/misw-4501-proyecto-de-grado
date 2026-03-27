@@ -31,4 +31,5 @@ def test_base_model_has_id_annotation():
 def test_base_model_id_is_uuid_type():
     import typing
     annotation = BaseModel.__annotations__["id"]
-    assert annotation == uuid.UUID
+    args = typing.get_args(annotation)
+    assert uuid.UUID in args
