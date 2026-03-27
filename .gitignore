@@ -4,6 +4,7 @@ __pychache__/
 *.pyo
 *.pyd
 .Python
+*.coverage
 env/
 
 # Local .terraform directories
@@ -71,3 +72,6 @@ xcuserdata/
 **/xcshareddata/WorkspaceSettings.xcsettings
 
 **/.DS_Store
+
+
+.idea/
