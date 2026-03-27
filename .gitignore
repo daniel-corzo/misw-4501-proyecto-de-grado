@@ -4,6 +4,7 @@ __pychache__/
 *.pyo
 *.pyd
 .Python
+*.coverage
 env/
 
 # Local .terraform directories
