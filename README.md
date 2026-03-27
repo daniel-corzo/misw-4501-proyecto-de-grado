@@ -94,6 +94,11 @@ docker-compose up --build
 | notificaciones | 8008 | http://localhost:8008/docs |
 |---|---|---|
 | api gateway | 8080 | http://localhost:8080/api/{microservicio} |
+| api docs | 8080 | http://localhost:8080/docs |
+
+
+![Open Api Docs](./assets/images/openapidocs.png)
+> La URL `/docs` expone un **Swagger UI unificado** con todos los microservicios. Usar el dropdown en la parte superior para cambiar entre servicios.
 
 #### Comandos útiles
 

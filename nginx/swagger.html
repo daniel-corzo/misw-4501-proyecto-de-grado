@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>TravelHub API Docs</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.18.2/swagger-ui.css" />
+  </head>
+  <body>
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist@5.18.2/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5.18.2/swagger-ui-standalone-preset.js"></script>
+    <script>
+      window.onload = function () {
+        SwaggerUIBundle({
+          dom_id: "#swagger-ui",
+          urls: [
+            { url: "/api/auth/openapi.json",           name: "auth" },
+            { url: "/api/usuarios/openapi.json",       name: "usuarios" },
+            { url: "/api/busqueda/openapi.json",       name: "busqueda" },
+            { url: "/api/hoteles/openapi.json",        name: "hoteles" },
+            { url: "/api/inventario/openapi.json",     name: "inventario" },
+            { url: "/api/reservas/openapi.json",       name: "reservas" },
+            { url: "/api/pagos/openapi.json",          name: "pagos" },
+            { url: "/api/notificaciones/openapi.json", name: "notificaciones" },
+          ],
+          "urls.primaryName": "auth",
+          presets: [
+            SwaggerUIBundle.presets.apis,
+            SwaggerUIStandalonePreset,
+          ],
+          plugins: [
+            SwaggerUIBundle.plugins.DownloadUrl,
+          ],
+          layout: "StandaloneLayout",
+        });
+      };
+    </script>
+  </body>
+</html>
