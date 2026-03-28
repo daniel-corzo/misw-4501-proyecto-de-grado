@@ -449,7 +449,7 @@
 
     <div class="table-panel">
       <div class="table-panel-header panel-header">
-        <span class="panel-title">Issues del sprint</span>
+        <span class="panel-title">Stories del sprint</span>
         <span id="issue-count" class="footer-text"></span>
       </div>
       <table>
@@ -459,6 +459,7 @@
             <th>Titulo</th>
             <th>SP</th>
             <th>Estado</th>
+            <th>Asignado</th>
           </tr>
         </thead>
         <tbody id="issues-body"></tbody>
@@ -486,6 +487,13 @@ const PROJECT_NUM = 3;
 const PAT = 'gh' + 'p_7cJmeG26RpL6xRjj' + 'dwfTEnlCEpcZdd3FAhFw';
 const SPRINT_NAME = 'Sprint 1';
 
+
+const ASSIGNEES = {
+  'afDonosoD':   { name: 'Andrés Donoso',   initials: 'AD', bg: '#185FA5' },
+  'DavidMS73':   { name: 'Germán Martínez', initials: 'GM', bg: '#0F6E56' },
+  'daniel-corzo':{ name: 'Daniel Corzo',    initials: 'DC', bg: '#993C1D' },
+  'ja-avos':     { name: 'Juan Avelino',    initials: 'JA', bg: '#534AB7' }
+};
 let SPRINT_START = null;
 let SPRINT_END   = null;
 let burndownChart = null;
@@ -535,7 +543,7 @@ async function loadData() {
     const fmtDate = d => d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }).toUpperCase();
     document.getElementById('sprint-badge').textContent = SPRINT_NAME.toUpperCase() + ' · ' + fmtDate(SPRINT_START) + ' – ' + fmtDate(SPRINT_END);
 
-    const q2 = `query($projectId:ID!,$cursor:String){node(id:$projectId){...on ProjectV2{items(first:100,after:$cursor){pageInfo{hasNextPage endCursor}nodes{id content{...on Issue{number title state closedAt labels(first:10){nodes{name}}}}fieldValues(first:20){nodes{...on ProjectV2ItemFieldNumberValue{field{...on ProjectV2Field{id name}}number}...on ProjectV2ItemFieldSingleSelectValue{field{...on ProjectV2SingleSelectField{id name}}name}...on ProjectV2ItemFieldIterationValue{field{...on ProjectV2IterationField{id name}}title startDate duration}}}}}}}}`;
+    const q2 = `query($projectId:ID!,$cursor:String){node(id:$projectId){...on ProjectV2{items(first:100,after:$cursor){pageInfo{hasNextPage endCursor}nodes{id content{...on Issue{number title state closedAt assignees(first:5){nodes{login}}labels(first:10){nodes{name}}}}fieldValues(first:20){nodes{...on ProjectV2ItemFieldNumberValue{field{...on ProjectV2Field{id name}}number}...on ProjectV2ItemFieldSingleSelectValue{field{...on ProjectV2SingleSelectField{id name}}name}...on ProjectV2ItemFieldIterationValue{field{...on ProjectV2IterationField{id name}}title startDate duration}}}}}}}}`;
     let allItems = [], cursor = null, hasMore = true;
     while (hasMore) {
       const d2 = await gql(token, q2, { projectId: project.id, cursor });
@@ -568,11 +576,10 @@ async function loadData() {
       const sp = spFv ? (spFv.number || 0) : 0;
       const status = stFv ? stFv.name : (item.content.state === 'CLOSED' ? 'Done' : 'Todo');
       const closedAt = item.content.closedAt ? new Date(item.content.closedAt) : null;
-      return { number: item.content.number, title: item.content.title, sp, status, closedAt };
+      const assignees = (item.content.assignees?.nodes || []).map(a => a.login);
+      return { number: item.content.number, title: item.content.title, sp, status, closedAt, assignees };
     });
 
-    console.log('statusField:', statusField);
-    console.log('issues sample:', issues.slice(0,5).map(i => ({num: i.number, sp: i.sp, status: i.status, closedAt: i.closedAt})));
     renderDashboard(issues);
     setStatus('Datos cargados · ' + new Date().toLocaleTimeString('es-CO'), 'ok');
     document.getElementById('dashboard').style.display = 'block';
@@ -713,14 +720,22 @@ function buildTable(issues) {
     const isIn   = /progress|curso|doing/i.test(i.status);
     const badgeClass = isDone ? 'badge-done' : isIn ? 'badge-in' : 'badge-todo';
     const badgeText  = isDone ? 'DONE' : isIn ? 'IN PROGRESS' : 'TODO';
+    const avatarsHtml = (i.assignees || []).map(login => {
+      const a = ASSIGNEES[login] || { name: login, initials: login.slice(0,2).toUpperCase(), bg: '#444441' };
+      return `<span style="display:inline-flex;align-items:center;gap:5px;margin-right:8px;">
+        <span style="width:22px;height:22px;border-radius:50%;background:${a.bg};color:#ffffff;font-size:9px;font-weight:500;font-family:var(--mono);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">${a.initials}</span>
+        <span style="font-size:12px;color:var(--muted);white-space:nowrap;">${a.name}</span>
+      </span>`;
+    }).join('');
     tbody.innerHTML += `<tr>
       <td><span class="issue-num">#${i.number}</span></td>
       <td class="issue-title">${i.title}</td>
       <td><span class="sp-val">${i.sp}</span></td>
       <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+      <td>${avatarsHtml || '<span style="color:var(--muted);font-size:12px;">—</span>'}</td>
     </tr>`;
   });
-  document.getElementById('issue-count').textContent = sorted.length + ' issues · ' + sorted.reduce((s,i)=>s+i.sp,0) + ' SP total';
+  document.getElementById('issue-count').textContent = sorted.length + ' stories · ' + sorted.reduce((s,i)=>s+i.sp,0) + ' SP total';
 }
 document.addEventListener('DOMContentLoaded', loadData);
 </script>
