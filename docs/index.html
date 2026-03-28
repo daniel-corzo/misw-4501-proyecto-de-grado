@@ -391,17 +391,7 @@
 
 <main class="main">
 
-  <div class="auth-panel">
-    <div class="auth-label">GitHub Personal Access Token</div>
-    <div class="auth-row">
-      <input type="password" id="pat-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" />
-      <button class="btn" id="load-btn" onclick="loadData()">Cargar sprint →</button>
-    </div>
-    <div class="auth-hint">
-      Requiere scopes <code>read:project</code> + <code>repo</code>.
-      Crear en <a href="https://github.com/settings/tokens" target="_blank">github.com/settings/tokens</a>.
-      No se almacena ni se envía a ningún servidor externo.
-    </div>
+  <div id="status-wrap" style="margin-bottom:1.5rem;">
     <div class="status-line" id="status-line"></div>
   </div>
 
@@ -493,9 +483,11 @@
 const OWNER = 'daniel-corzo';
 const REPO  = 'misw-4501-proyecto-de-grado';
 const PROJECT_NUM = 3;
-const SPRINT_START = new Date('2026-03-23T00:00:00');
-const SPRINT_END   = new Date('2026-04-05T23:59:59');
+const PAT = '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';
+const SPRINT_NAME = 'Sprint 1';
 
+let SPRINT_START = null;
+let SPRINT_END   = null;
 let burndownChart = null;
 
 function setStatus(msg, type) {
@@ -516,9 +508,7 @@ async function gql(token, query, variables) {
 }
 
 async function loadData() {
-  const token = document.getElementById('pat-input').value.trim();
-  if (!token) { setStatus('Ingresa tu PAT primero.', 'err'); return; }
-  document.getElementById('load-btn').disabled = true;
+  const token = PAT;
   document.getElementById('empty-state').style.display = 'none';
   document.getElementById('dashboard').style.display = 'none';
   setStatus('Conectando con GitHub Projects...', 'loading');
@@ -533,6 +523,18 @@ async function loadData() {
     const spField = fields.find(f => f.name === 'Estimate');
     const statusField = fields.find(f => f.name && /status|estado/i.test(f.name));
 
+    // Extraer fechas del sprint desde el campo iteration
+    const iterField = fields.find(f => f.configuration && f.configuration.iterations);
+    if (!iterField) throw new Error('No se encontro un campo de iteracion en el proyecto.');
+    const iteration = iterField.configuration.iterations.find(it => it.title === SPRINT_NAME);
+    if (!iteration) throw new Error('No se encontro la iteracion "' + SPRINT_NAME + '". Verifica que el nombre sea exacto.');
+    SPRINT_START = new Date(iteration.startDate + 'T00:00:00');
+    SPRINT_END   = new Date(SPRINT_START.getTime() + iteration.duration * 24 * 3600 * 1000 - 1000);
+
+    // Actualizar badge con fechas reales
+    const fmtDate = d => d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }).toUpperCase();
+    document.getElementById('sprint-badge').textContent = SPRINT_NAME.toUpperCase() + ' · ' + fmtDate(SPRINT_START) + ' – ' + fmtDate(SPRINT_END);
+
     const q2 = `query($projectId:ID!,$cursor:String){node(id:$projectId){...on ProjectV2{items(first:100,after:$cursor){pageInfo{hasNextPage endCursor}nodes{id content{...on Issue{number title state closedAt labels(first:10){nodes{name}}}}fieldValues(first:20){nodes{...on ProjectV2ItemFieldNumberValue{field{...on ProjectV2Field{id name}}number}...on ProjectV2ItemFieldSingleSelectValue{field{...on ProjectV2SingleSelectField{id name}}name}...on ProjectV2ItemFieldIterationValue{field{...on ProjectV2IterationField{id name}}title startDate duration}}}}}}}}`;
     let allItems = [], cursor = null, hasMore = true;
     while (hasMore) {
@@ -545,22 +547,17 @@ async function loadData() {
 
     setStatus('Procesando ' + allItems.length + ' items...', 'loading');
 
+    // Filtrar items cuyo campo iteracion coincide exactamente con SPRINT_NAME
     const sprintItems = allItems.filter(item => {
       if (!item.content || !item.content.title) return false;
       const fvs = item.fieldValues.nodes;
-      const iterFv = fvs.find(fv => fv.startDate);
-      if (iterFv) {
-        const start = new Date(iterFv.startDate);
-        return Math.abs(start - SPRINT_START) < 7 * 24 * 3600 * 1000;
-      }
-      const labels = (item.content.labels?.nodes || []).map(l => l.name.toLowerCase());
-      return labels.some(l => l.includes('sprint') && (l.includes('1') || l.includes('one')));
+      const iterFv = fvs.find(fv => fv.field && fv.field.id === iterField.id);
+      return iterFv && iterFv.title === SPRINT_NAME;
     });
 
     if (sprintItems.length === 0) {
-      setStatus('No se encontraron issues en Sprint 1. Verifica que tengan la iteracion asignada en el Project.', 'err');
+      setStatus('No se encontraron issues en "' + SPRINT_NAME + '". Verifica que tengan la iteracion asignada en el Project.', 'err');
       document.getElementById('empty-state').style.display = 'block';
-      document.getElementById('load-btn').disabled = false;
       return;
     }
 
@@ -574,6 +571,8 @@ async function loadData() {
       return { number: item.content.number, title: item.content.title, sp, status, closedAt };
     });
 
+    console.log('statusField:', statusField);
+    console.log('issues sample:', issues.slice(0,5).map(i => ({num: i.number, sp: i.sp, status: i.status, closedAt: i.closedAt})));
     renderDashboard(issues);
     setStatus('Datos cargados · ' + new Date().toLocaleTimeString('es-CO'), 'ok');
     document.getElementById('dashboard').style.display = 'block';
@@ -581,7 +580,6 @@ async function loadData() {
     setStatus('Error: ' + e.message, 'err');
     document.getElementById('empty-state').style.display = 'block';
   }
-  document.getElementById('load-btn').disabled = false;
 }
 
 function renderDashboard(issues) {
@@ -724,6 +722,7 @@ function buildTable(issues) {
   });
   document.getElementById('issue-count').textContent = sorted.length + ' issues · ' + sorted.reduce((s,i)=>s+i.sp,0) + ' SP total';
 }
+document.addEventListener('DOMContentLoaded', loadData);
 </script>
 </body>
 </html>
