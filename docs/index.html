@@ -425,8 +425,10 @@
   <div id="dashboard" style="display:none;">
 
     <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('burndown')">Burndown</button>
-      <button class="tab-btn" onclick="switchTab('velocity')">Velocity</button>
+      <button class="tab-btn active" onclick="switchTab('burndown')">Sprint burndown</button>
+      <button class="tab-btn" onclick="switchTab('velocity')">Velocidad</button>
+      <button class="tab-btn" onclick="switchTab('value')">Valor</button>
+      <button class="tab-btn" onclick="switchTab('release')">Release burndown</button>
     </div>
 
     <!-- TAB: BURNDOWN -->
@@ -542,6 +544,84 @@
       </div>
     </div><!-- /tab-velocity -->
 
+    <!-- TAB: VALUE -->
+    <div class="tab-pane" id="tab-value">
+      <div class="chart-panel">
+        <div class="panel-header">
+          <span class="panel-title">Value chart</span>
+          <div class="legend">
+            <div class="legend-item"><span style="display:inline-block;width:20px;height:0;border-top:2px dashed var(--muted);"></span><span>Ideal</span></div>
+            <div class="legend-item"><span style="display:inline-block;width:20px;height:2px;background:#4ade80;"></span><span>Real</span></div>
+          </div>
+        </div>
+        <div style="position:relative;height:340px;">
+          <canvas id="value-chart"></canvas>
+        </div>
+      </div>
+
+      <div class="metrics" style="margin-top:1.5rem;">
+        <div class="metric-card highlight">
+          <div class="metric-lbl">Valor ganado</div>
+          <div class="metric-val good" id="val-earned">--</div>
+          <div class="metric-sub">de 100 puntos totales</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-lbl">Valor ideal</div>
+          <div class="metric-val" id="val-ideal">--</div>
+          <div class="metric-sub">esperado a hoy</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-lbl">Diferencia</div>
+          <div class="metric-val" id="val-diff">--</div>
+          <div class="metric-sub">real vs ideal</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-lbl">Historias Done</div>
+          <div class="metric-val" id="val-stories">--</div>
+          <div class="metric-sub">de 47 totales</div>
+        </div>
+      </div>
+    </div><!-- /tab-value -->
+
+    <!-- TAB: RELEASE BURNDOWN -->
+    <div class="tab-pane" id="tab-release">
+      <div class="chart-panel">
+        <div class="panel-header">
+          <span class="panel-title">Release burndown (actualizado al finalizar el sprint)</span>
+          <div class="legend">
+            <div class="legend-item"><span style="display:inline-block;width:20px;height:0;border-top:2px dashed var(--muted);"></span><span>Ideal</span></div>
+            <div class="legend-item"><span style="display:inline-block;width:20px;height:2px;background:#4ade80;"></span><span>Real</span></div>
+          </div>
+        </div>
+        <div style="position:relative;height:340px;">
+          <canvas id="release-chart"></canvas>
+        </div>
+      </div>
+
+      <div class="metrics" style="margin-top:1.5rem;">
+        <div class="metric-card highlight">
+          <div class="metric-lbl">SP totales</div>
+          <div class="metric-val" id="rel-total">114</div>
+          <div class="metric-sub">del proyecto</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-lbl">SP completados</div>
+          <div class="metric-val good" id="rel-done">--</div>
+          <div class="metric-sub">acumulado real</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-lbl">SP restantes</div>
+          <div class="metric-val" id="rel-remaining">--</div>
+          <div class="metric-sub">por completar</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-lbl">Sprint actual</div>
+          <div class="metric-val" id="rel-sprint">--</div>
+          <div class="metric-sub">en progreso</div>
+        </div>
+      </div>
+    </div><!-- /tab-release -->
+
   </div>
 
   <div id="empty-state" class="empty">
@@ -605,6 +685,7 @@ async function loadData() {
 
     const fields = project.fields.nodes;
     const spField = fields.find(f => f.name === 'Estimate');
+    const bvField = fields.find(f => f.name === 'BusinessValue');
     const statusField = fields.find(f => f.name && /status|estado/i.test(f.name));
 
     // Extraer fechas del sprint desde el campo iteration
@@ -665,12 +746,16 @@ async function loadData() {
         const stFv = statusField ? fvs.find(fv => fv.field && fv.field.id === statusField.id) : null;
         const sp = spFv ? (spFv.number || 0) : 0;
         const status = stFv ? stFv.name : (item.content.state === 'CLOSED' ? 'Done' : 'Todo');
+        const bvFv = bvField ? fvs.find(fv => fv.field && fv.field.id === bvField.id) : null;
+        const bv = bvFv ? (bvFv.number || 0) : 0;
         const closedAt = item.content.closedAt ? new Date(item.content.closedAt) : null;
-        return { sp, status, closedAt };
+        return { sp, bv, status, closedAt };
       });
 
     renderDashboard(issues);
     buildVelocityChart(allMappedIssues);
+    buildValueChart(allMappedIssues);
+    buildReleaseChart(allMappedIssues);
     setStatus('Datos cargados · ' + new Date().toLocaleTimeString('es-CO'), 'ok');
     document.getElementById('dashboard').style.display = 'block';
   } catch(e) {
@@ -926,6 +1011,254 @@ function switchTab(name) {
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
   document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
   document.getElementById('tab-' + name).classList.add('active');
+}
+
+// ---- VALUE CHART ----
+// Project timeline: 23 mar - 17 may = 8 weeks
+const VALUE_WEEKS = [
+  { label: 'Semana 1', start: new Date('2026-03-23'), end: new Date('2026-03-29') },
+  { label: 'Semana 2', start: new Date('2026-03-30'), end: new Date('2026-04-05') },
+  { label: 'Semana 3', start: new Date('2026-04-06'), end: new Date('2026-04-12') },
+  { label: 'Semana 4', start: new Date('2026-04-13'), end: new Date('2026-04-19') },
+  { label: 'Semana 5', start: new Date('2026-04-20'), end: new Date('2026-04-26') },
+  { label: 'Semana 6', start: new Date('2026-04-27'), end: new Date('2026-05-03') },
+  { label: 'Semana 7', start: new Date('2026-05-04'), end: new Date('2026-05-10') },
+  { label: 'Semana 8', start: new Date('2026-05-11'), end: new Date('2026-05-17') }
+];
+
+let valueChart = null;
+
+function buildValueChart(allIssues) {
+  const today = new Date();
+  const totalWeeks = VALUE_WEEKS.length;
+  const idealPerWeek = 100 / totalWeeks;
+
+  // Cumulative real value per week
+  const realCumulative = [];
+  let accumulated = 0;
+  VALUE_WEEKS.forEach(w => {
+    if (w.start > today) {
+      realCumulative.push(null);
+      return;
+    }
+    const endOfWeek = new Date(w.end.getTime() + 86400000);
+    const weekBV = allIssues
+      .filter(i => /done|cerrad|closed|complet/i.test(i.status) && i.closedAt && i.closedAt >= w.start && i.closedAt < endOfWeek)
+      .reduce((s, i) => s + i.bv, 0);
+    accumulated += weekBV;
+    realCumulative.push(Math.round(accumulated * 10) / 10);
+  });
+
+  // Ideal cumulative line (linear 0 -> 100)
+  const idealCumulative = VALUE_WEEKS.map((_, idx) => Math.round((idealPerWeek * (idx + 1)) * 10) / 10);
+
+  // Metrics
+  const currentReal = realCumulative.filter(v => v !== null).slice(-1)[0] || 0;
+  const weeksElapsed = realCumulative.filter(v => v !== null).length;
+  const currentIdeal = weeksElapsed > 0 ? Math.round(idealPerWeek * weeksElapsed * 10) / 10 : 0;
+  const diff = Math.round((currentReal - currentIdeal) * 10) / 10;
+  const storiesDone = allIssues.filter(i => /done|cerrad|closed|complet/i.test(i.status) && i.bv > 0).length;
+
+  document.getElementById('val-earned').textContent = currentReal;
+  document.getElementById('val-ideal').textContent = currentIdeal;
+  const diffEl = document.getElementById('val-diff');
+  diffEl.textContent = (diff >= 0 ? '+' : '') + diff;
+  diffEl.className = 'metric-val ' + (diff >= 0 ? 'good' : 'bad');
+  document.getElementById('val-stories').textContent = storiesDone;
+
+  const ctx = document.getElementById('value-chart').getContext('2d');
+  if (valueChart) valueChart.destroy();
+  valueChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['Inicio', ...VALUE_WEEKS.map(w => w.label)],
+      datasets: [
+        {
+          label: 'Ideal',
+          data: [0, ...idealCumulative],
+          borderColor: '#6b7068',
+          borderWidth: 1.5,
+          borderDash: [5, 4],
+          pointRadius: 0,
+          tension: 0,
+          fill: false
+        },
+        {
+          label: 'Real',
+          data: [0, ...realCumulative],
+          borderColor: '#4ade80',
+          backgroundColor: 'rgba(74,222,128,0.06)',
+          borderWidth: 2,
+          pointRadius: 3,
+          pointBackgroundColor: '#4ade80',
+          tension: 0.3,
+          fill: true,
+          spanGaps: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1a1d1a',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          titleColor: '#6b7068',
+          bodyColor: '#e8ece8',
+          titleFont: { family: 'IBM Plex Mono', size: 11 },
+          bodyFont: { family: 'IBM Plex Mono', size: 12 },
+          callbacks: {
+            label: ctx => ctx.dataset.label + ': ' + (ctx.parsed.y !== null ? ctx.parsed.y : '—')
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#6b7068', font: { family: 'IBM Plex Mono', size: 11 } },
+          grid: { display: false },
+          border: { color: 'rgba(255,255,255,0.07)' }
+        },
+        y: {
+          min: 0,
+          max: 100,
+          ticks: {
+            color: '#6b7068',
+            font: { family: 'IBM Plex Mono', size: 10 },
+            callback: v => v + '%'
+          },
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          border: { color: 'rgba(255,255,255,0.07)' },
+          title: { display: true, text: 'Valor de negocio ganado', color: '#6b7068', font: { family: 'IBM Plex Mono', size: 10 } }
+        }
+      }
+    }
+  });
+}
+
+// ---- RELEASE BURNDOWN ----
+const RELEASE_SPRINTS = [
+  { label: 'Sprint 1', start: new Date('2026-03-23'), end: new Date('2026-04-05') },
+  { label: 'Sprint 2', start: new Date('2026-04-06'), end: new Date('2026-04-19') },
+  { label: 'Sprint 3', start: new Date('2026-04-20'), end: new Date('2026-05-10') },
+  { label: 'Entrega',  start: new Date('2026-05-11'), end: new Date('2026-05-17') }
+];
+const TOTAL_SP = 114;
+
+let releaseChart = null;
+
+function buildReleaseChart(allIssues) {
+  const today = new Date();
+
+  // SP completed per sprint (cumulative burn)
+  let burned = 0;
+  const realRemaining = [TOTAL_SP]; // starts at 114 before Sprint 1
+  RELEASE_SPRINTS.forEach(s => {
+    const endOfSprint = new Date(s.end.getTime() + 86400000);
+    // Only count if sprint has started
+    if (s.start > today) {
+      realRemaining.push(null);
+      return;
+    }
+    const sprintDone = allIssues
+      .filter(i => /done|cerrad|closed|complet/i.test(i.status) && i.closedAt && i.closedAt >= s.start && i.closedAt < endOfSprint)
+      .reduce((acc, i) => acc + i.sp, 0);
+    burned += sprintDone;
+    realRemaining.push(Math.max(0, TOTAL_SP - burned));
+  });
+
+  // Ideal: linear from 114 to 0 across sprints
+  const idealRemaining = [TOTAL_SP];
+  const idealBurnPerSprint = TOTAL_SP / RELEASE_SPRINTS.length;
+  RELEASE_SPRINTS.forEach((_, idx) => {
+    idealRemaining.push(Math.max(0, Math.round((TOTAL_SP - idealBurnPerSprint * (idx + 1)) * 10) / 10));
+  });
+
+  // Metrics
+  const currentReal = realRemaining.filter(v => v !== null).slice(-1)[0];
+  const currentDone = TOTAL_SP - currentReal;
+  const currentSprintIdx = RELEASE_SPRINTS.findIndex(s => today >= s.start && today <= s.end);
+  const currentSprintLabel = currentSprintIdx >= 0 ? RELEASE_SPRINTS[currentSprintIdx].label : 'Entrega';
+
+  document.getElementById('rel-done').textContent = currentDone;
+  document.getElementById('rel-remaining').textContent = currentReal;
+  document.getElementById('rel-sprint').textContent = currentSprintLabel;
+
+  const labels = ['Inicio', ...RELEASE_SPRINTS.map(s => s.label)];
+
+  const ctx = document.getElementById('release-chart').getContext('2d');
+  if (releaseChart) releaseChart.destroy();
+  releaseChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Ideal',
+          data: idealRemaining,
+          borderColor: '#6b7068',
+          borderWidth: 1.5,
+          borderDash: [5, 4],
+          pointRadius: 4,
+          pointBackgroundColor: '#6b7068',
+          tension: 0,
+          fill: false
+        },
+        {
+          label: 'Real',
+          data: realRemaining,
+          borderColor: '#4ade80',
+          backgroundColor: 'rgba(74,222,128,0.06)',
+          borderWidth: 2,
+          pointRadius: 5,
+          pointBackgroundColor: realRemaining.map((v, i) => {
+            if (v === null) return 'transparent';
+            const ideal = idealRemaining[i];
+            return v <= ideal ? '#4ade80' : '#f87171';
+          }),
+          tension: 0,
+          fill: true,
+          spanGaps: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1a1d1a',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          titleColor: '#6b7068',
+          bodyColor: '#e8ece8',
+          titleFont: { family: 'IBM Plex Mono', size: 11 },
+          bodyFont: { family: 'IBM Plex Mono', size: 12 },
+          callbacks: {
+            label: ctx => ctx.dataset.label + ': ' + (ctx.parsed.y !== null ? ctx.parsed.y + ' SP' : '—')
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#6b7068', font: { family: 'IBM Plex Mono', size: 11 } },
+          grid: { display: false },
+          border: { color: 'rgba(255,255,255,0.07)' }
+        },
+        y: {
+          min: 0,
+          max: TOTAL_SP + 10,
+          ticks: { color: '#6b7068', font: { family: 'IBM Plex Mono', size: 10 } },
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          border: { color: 'rgba(255,255,255,0.07)' },
+          title: { display: true, text: 'Story Points restantes', color: '#6b7068', font: { family: 'IBM Plex Mono', size: 10 } }
+        }
+      }
+    }
+  });
 }
 document.addEventListener('DOMContentLoaded', loadData);
 </script>
