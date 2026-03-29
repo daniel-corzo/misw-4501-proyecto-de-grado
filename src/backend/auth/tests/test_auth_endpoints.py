@@ -74,7 +74,7 @@ async def test_register_duplicate_email(override_client, mock_db_session):
     })
 
     assert response.status_code == 400
-    assert response.json()["detail"] == "User already registered"
+    assert response.json()["detail"] == "Email already registered"
 
 
 @pytest.mark.asyncio
