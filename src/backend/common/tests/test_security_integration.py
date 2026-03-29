@@ -55,7 +55,7 @@ async def test_protected_route_authorized(test_settings, generate_token):
     user_id = str(uuid4())
     token = generate_token({"sub": user_id, "email": "test@test.com", "role": "USER"})
 
-    with patch("travelhub_common.security._get_cached_session_factory", return_value=_not_revoked_factory()):
+    with patch("travelhub_common.security.get_session_factory", return_value=_not_revoked_factory()):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
             response = await ac.get("/protected", headers={"Authorization": f"Bearer {token}"})
 
@@ -70,7 +70,7 @@ async def test_admin_route_forbidden(test_settings, generate_token):
     user_id = str(uuid4())
     token = generate_token({"sub": user_id, "email": "test@test.com", "role": "USER"})
 
-    with patch("travelhub_common.security._get_cached_session_factory", return_value=_not_revoked_factory()):
+    with patch("travelhub_common.security.get_session_factory", return_value=_not_revoked_factory()):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
             response = await ac.get("/admin", headers={"Authorization": f"Bearer {token}"})
 
@@ -85,7 +85,7 @@ async def test_admin_route_authorized(test_settings, generate_token):
     user_id = str(uuid4())
     token = generate_token({"sub": user_id, "email": "admin@test.com", "role": "ADMIN"})
 
-    with patch("travelhub_common.security._get_cached_session_factory", return_value=_not_revoked_factory()):
+    with patch("travelhub_common.security.get_session_factory", return_value=_not_revoked_factory()):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
             response = await ac.get("/admin", headers={"Authorization": f"Bearer {token}"})
 
