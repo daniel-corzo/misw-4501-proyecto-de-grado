@@ -1,9 +1,9 @@
 import { HttpInterceptorFn } from '@angular/common/http';
-
-const TOKEN_KEY = 'travelhub_token';
+import { inject } from '@angular/core';
+import { AuthService } from '../services/auth.service';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const token = localStorage.getItem(TOKEN_KEY);
+  const token = inject(AuthService).token;
 
   if (!token) {
     return next(req);
