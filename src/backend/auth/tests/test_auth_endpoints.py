@@ -195,9 +195,9 @@ async def test_logout_invalid_token(logout_client):
 
 @pytest.mark.asyncio
 async def test_logout_no_token(logout_client):
-    """Logout sin header Authorization retorna 403."""
+    """Logout sin header Authorization retorna 401."""
     client, _ = logout_client
 
     response = await client.post("/auth/logout")
 
-    assert response.status_code == 403
+    assert response.status_code == 401

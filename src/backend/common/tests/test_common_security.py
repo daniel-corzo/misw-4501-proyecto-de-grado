@@ -1,9 +1,25 @@
 ﻿import pytest
+from contextlib import asynccontextmanager
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 from travelhub_common.security import RoleChecker, RoleEnum, User, TokenPayload, get_current_user
 from travelhub_common.config import BaseAppSettings
+
+
+def _make_mock_db_factory(revoked: bool = False):
+    """Devuelve un factory mock que simula la sesion de DB para el check de revocacion."""
+    mock_db = AsyncMock()
+    mock_result = MagicMock()
+    mock_result.first.return_value = object() if revoked else None
+    mock_db.execute.return_value = mock_result
+
+    @asynccontextmanager
+    async def _cm():
+        yield mock_db
+
+    return MagicMock(side_effect=_cm)
 
 def test_role_checker_allowed():
     checker = RoleChecker([RoleEnum.ADMIN])
@@ -39,41 +55,48 @@ def test_token_payload_model():
     assert obj.sub == payload["sub"]
     assert obj.role == RoleEnum.USER
 
-def test_get_current_user_success(test_settings, generate_token):
+@pytest.mark.asyncio
+async def test_get_current_user_success(test_settings, generate_token):
     user_id = str(uuid4())
     token = generate_token({"sub": user_id, "email": "test@test.com", "role": RoleEnum.USER.value})
     credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
-    
-    user = get_current_user(credentials=credentials, settings=test_settings)
+
+    with patch("travelhub_common.security._get_cached_session_factory", return_value=_make_mock_db_factory()):
+        user = await get_current_user(credentials=credentials, settings=test_settings)
+
     assert str(user.id) == user_id
     assert user.email == "test@test.com"
     assert user.role == RoleEnum.USER
 
-def test_get_current_user_missing_public_key():
+@pytest.mark.asyncio
+async def test_get_current_user_missing_public_key():
     settings = BaseAppSettings(jwt_public_key="", jwt_algorithm="HS256")
     credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="any")
-    
+
     with pytest.raises(HTTPException) as excinfo:
-        get_current_user(credentials=credentials, settings=settings)
-        
+        await get_current_user(credentials=credentials, settings=settings)
+
     assert excinfo.value.status_code == 500
     assert excinfo.value.detail == "La clave publica JWT no esta configurada"
 
-def test_get_current_user_invalid_jwt(test_settings):
+@pytest.mark.asyncio
+async def test_get_current_user_invalid_jwt(test_settings):
     credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="invalid-token")
-    
+
     with pytest.raises(HTTPException) as excinfo:
-        get_current_user(credentials=credentials, settings=test_settings)
-        
+        await get_current_user(credentials=credentials, settings=test_settings)
+
     assert excinfo.value.status_code == 401
     assert excinfo.value.detail == "No se pudieron validar las credenciales"
 
-def test_get_current_user_invalid_subject(test_settings, generate_token):
+@pytest.mark.asyncio
+async def test_get_current_user_invalid_subject(test_settings, generate_token):
     token = generate_token({"sub": "not-a-uuid", "email": "test@test.com", "role": RoleEnum.USER.value})
     credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
-    
-    with pytest.raises(HTTPException) as excinfo:
-        get_current_user(credentials=credentials, settings=test_settings)
-        
+
+    with patch("travelhub_common.security._get_cached_session_factory", return_value=_make_mock_db_factory()):
+        with pytest.raises(HTTPException) as excinfo:
+            await get_current_user(credentials=credentials, settings=test_settings)
+
     assert excinfo.value.status_code == 401
     assert excinfo.value.detail == "Identificador de usuario invalido"

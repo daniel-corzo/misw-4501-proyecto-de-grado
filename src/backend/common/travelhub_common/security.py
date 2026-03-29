@@ -54,6 +54,11 @@ async def get_current_user(
     except ValueError:
         raise HTTPException(status_code=401, detail="Identificador de usuario invalido")
 
+    try:
+        user = User(id=UUID(token_data.sub), email=token_data.email, role=token_data.role)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Identificador de usuario invalido")
+
     factory = _get_cached_session_factory(settings.db_url)
     async with factory() as db:
         result = await db.execute(
@@ -63,7 +68,7 @@ async def get_current_user(
         if result.first() is not None:
             raise HTTPException(status_code=401, detail="Token ha sido revocado")
 
-    return User(id=UUID(token_data.sub), email=token_data.email, role=token_data.role)
+    return user
 
 class RoleChecker:
     def __init__(self, allowed_roles: List[RoleEnum]):
