@@ -1,6 +1,6 @@
 import uuid
+
 import bcrypt
-import httpx
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -34,11 +34,13 @@ async def create_user(
             detail="Usuario ya existe con este email",
         )
 
+    role = body.role if body.role is not None else RoleEnum.USER
     user = Usuario(
         id=uuid.uuid4(),
         email=body.email,
         hashed_contrasena=_get_password_hash(body.password),
         tipo=body.tipo,
+        role=role,
     )
 
     if body.tipo == TipoUsuario.VIAJERO:
@@ -54,7 +56,8 @@ async def create_user(
 
     await db.commit()
     await db.refresh(user)
-    await db.refresh(user.viajero)
+    if user.viajero is not None:
+        await db.refresh(user.viajero)
 
     return user
 

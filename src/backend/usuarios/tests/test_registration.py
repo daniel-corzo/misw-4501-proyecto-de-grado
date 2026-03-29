@@ -1,4 +1,4 @@
-﻿import datetime
+import datetime
 import os
 import pytest
 import uuid
@@ -65,6 +65,7 @@ async def test_register_viajero_success(override_client, mock_db_session):
     assert data["id"] is not None
     assert data["email"] == VALID_PAYLOAD["email"]
     assert data["tipo"] == VALID_PAYLOAD["tipo"]
+    assert data["role"] == VALID_PAYLOAD["role"]
     assert data["viajero"] is not None
     assert data["viajero"]["id"] is not None
     assert data["viajero"]["nombre"] == VALID_PAYLOAD["nombre"]

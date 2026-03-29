@@ -17,7 +17,7 @@ async def crear_usuario(
     settings: Settings = Depends(get_settings)
 ):
     """
-    Crea un nuevo usuario en el sistema informando al microservicio de auth.
+    Registra un nuevo usuario (credenciales y perfil) en el sistema.
     """
     created_user = await create_user(body, db, settings)
 

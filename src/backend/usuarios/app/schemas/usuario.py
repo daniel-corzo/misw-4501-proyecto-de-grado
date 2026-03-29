@@ -33,6 +33,7 @@ class UsuarioResponse(BaseModel):
     id: UUID
     tipo: TipoUsuario
     email: str
+    role: RoleEnum
     viajero: Optional[ViajeroResponse]
 
     model_config = ConfigDict(from_attributes=True)
