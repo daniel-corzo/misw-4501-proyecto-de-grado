@@ -58,7 +58,7 @@ async def test_admin_route_forbidden(test_settings, generate_token):
         response = await ac.get("/admin", headers={"Authorization": f"Bearer {token}"})
         
     assert response.status_code == 403
-    assert response.json()["detail"] == "Operation not permitted"
+        assert response.json()["detail"] == "Operacion no permitida"
     app.dependency_overrides.clear()
 
 @pytest.mark.asyncio
@@ -83,5 +83,5 @@ async def test_protected_route_invalid_token(test_settings):
         response = await ac.get("/protected", headers={"Authorization": "Bearer invalidtoken123"})
         
     assert response.status_code == 401
-    assert response.json()["detail"] == "Could not validate credentials"
+        assert response.json()["detail"] == "No se pudieron validar las credenciales"
     app.dependency_overrides.clear()
