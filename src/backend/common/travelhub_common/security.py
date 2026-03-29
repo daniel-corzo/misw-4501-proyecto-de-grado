@@ -46,7 +46,7 @@ def get_current_user(
     except JWTError:
         raise HTTPException(status_code=401, detail="No se pudieron validar las credenciales")
     except ValueError:
-        raise HTTPException(status_code=401, detail="Subject invalido")
+        raise HTTPException(status_code=401, detail="Identificador de usuario invalido")
 
 class RoleChecker:
     def __init__(self, allowed_roles: List[RoleEnum]):

@@ -76,4 +76,4 @@ def test_get_current_user_invalid_subject(test_settings, generate_token):
         get_current_user(credentials=credentials, settings=test_settings)
         
     assert excinfo.value.status_code == 401
-    assert excinfo.value.detail == "Subject invalido"
+    assert excinfo.value.detail == "Identificador de usuario invalido"
