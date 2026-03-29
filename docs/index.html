@@ -538,8 +538,7 @@ function renderDashboard(issues) {
 function getWorkDays() {
   const days = [];
   for (let d = 0; d <= Math.round((SPRINT_END - SPRINT_START) / 86400000); d++) {
-    const dd = new Date(SPRINT_START.getTime() + d * 86400000);
-    if (dd.getDay() !== 0 && dd.getDay() !== 6) days.push(dd);
+    days.push(new Date(SPRINT_START.getTime() + d * 86400000));
   }
   return days;
 }
