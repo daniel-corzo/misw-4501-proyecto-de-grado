@@ -1,8 +1,12 @@
 ﻿import datetime
+import os
 import pytest
 import uuid
 from unittest.mock import AsyncMock, patch, MagicMock
 from httpx import AsyncClient, ASGITransport, Response, Request, HTTPStatusError, RequestError
+
+os.environ.setdefault("ENVIRONMENT", "test")
+
 from app.main import app
 from app.database import get_db
 from travelhub_common.security import RoleEnum
@@ -18,9 +22,10 @@ VALID_PAYLOAD = {
 @pytest.fixture
 def mock_db_session():
     mock_session = AsyncMock()
+    mock_session.add = MagicMock()
     
-    # Configure the execute().scalars().first() chain to return None
-    # This prevents the dummy data from triggering the 'duplicate email' check natively
+    # Configure the execute().scalars().first() chain to return None.
+    # This avoids triggering the duplicate profile id check by default.
     mock_result = MagicMock()
     mock_result.scalars.return_value.first.return_value = None
     mock_session.execute.return_value = mock_result
@@ -62,7 +67,6 @@ async def test_register_success(override_client, mock_db_session):
         
         assert response.status_code == 201
         data = response.json()
-        assert data["email"] == VALID_PAYLOAD["email"]
         assert "id" in data
         
         # Verify db actions (commit and flush must be called)
@@ -72,18 +76,16 @@ async def test_register_success(override_client, mock_db_session):
 
 
 @pytest.mark.asyncio
-async def test_register_email_already_exists(override_client, mock_db_session):
-    # Adjust mock to simulate an existing user profile overlapping email
+async def test_register_id_already_exists(override_client, mock_db_session):
+    # Adjust mock to simulate an existing user profile with duplicated id
     mock_result = MagicMock()
-    mock_user = MagicMock()
-    mock_user.email = VALID_PAYLOAD["email"]
-    mock_result.scalars.return_value.first.return_value = mock_user
+    mock_result.scalars.return_value.first.return_value = MagicMock()
     mock_db_session.execute.return_value = mock_result
 
     response = await override_client.post("/usuarios", json=VALID_PAYLOAD)
     
     assert response.status_code == 400
-    assert response.json()["detail"] == "Perfil ya existe con este email"
+    assert response.json()["detail"] == "Perfil ya existe con este id"
     
     # Remote call completely stalled and records weren't touched
     mock_db_session.add.assert_not_called()

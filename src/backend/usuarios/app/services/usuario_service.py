@@ -10,17 +10,17 @@ from travelhub_common.security import User, RoleEnum
 from app.config import Settings
 
 async def create_user(body: CrearUsuarioRequest, db: AsyncSession, settings: Settings) -> UserProfile:
-    result = await db.execute(select(UserProfile).where(UserProfile.email == body.email))
+    user_id = body.id if body.id else uuid.uuid4()
+
+    result = await db.execute(select(UserProfile).where(UserProfile.id == user_id))
     if result.scalars().first():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Perfil ya existe con este email",
+            detail="Perfil ya existe con este id",
         )
-        
-    user_id = body.id if body.id else uuid.uuid4()
+
     user_profile = UserProfile(
         id=user_id,
-        email=body.email,
         nombre=body.nombre,
         apellido=body.apellido,
         telefono=body.telefono,

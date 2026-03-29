@@ -4,9 +4,14 @@ from app.database import get_db, initialize_database
 from app.routers import usuarios
 
 settings = get_settings()
-initialize_database()
 app = create_app(
     service_name=settings.service_name,
     routers=[usuarios.router],
     get_db=get_db,
 )
+
+
+if settings.environment != "test":
+    @app.on_event("startup")
+    async def startup_initialize_database():
+        await initialize_database()
