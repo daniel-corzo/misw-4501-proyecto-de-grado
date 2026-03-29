@@ -352,6 +352,33 @@
   }
   .empty .big { font-size: 32px; margin-bottom: 12px; opacity: 0.3; }
 
+
+  /* ---- tabs ---- */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2rem;
+  }
+  .tab-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 10px 16px;
+    cursor: pointer;
+    margin-bottom: -1px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
   /* ---- footer ---- */
   .footer {
     border-top: 1px solid var(--border);
@@ -396,6 +423,14 @@
   </div>
 
   <div id="dashboard" style="display:none;">
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('burndown')">Burndown</button>
+      <button class="tab-btn" onclick="switchTab('velocity')">Velocity</button>
+    </div>
+
+    <!-- TAB: BURNDOWN -->
+    <div class="tab-pane active" id="tab-burndown">
 
     <div class="metrics" id="metrics-grid">
       <div class="metric-card highlight">
@@ -449,7 +484,7 @@
 
     <div class="table-panel">
       <div class="table-panel-header panel-header">
-        <span class="panel-title">Issues del sprint</span>
+        <span class="panel-title">Stories del sprint</span>
         <span id="issue-count" class="footer-text"></span>
       </div>
       <table>
@@ -459,11 +494,53 @@
             <th>Titulo</th>
             <th>SP</th>
             <th>Estado</th>
+            <th>Asignado</th>
           </tr>
         </thead>
         <tbody id="issues-body"></tbody>
       </table>
     </div>
+
+    </div><!-- /tab-burndown -->
+
+    <!-- TAB: VELOCITY -->
+    <div class="tab-pane" id="tab-velocity">
+      <div class="chart-panel">
+        <div class="panel-header">
+          <span class="panel-title">Velocity chart</span>
+          <div class="legend">
+            <div class="legend-item"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#4ade80;"></span><span>Real</span></div>
+            <div class="legend-item"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#378ADD;"></span><span>Planeado</span></div>
+          </div>
+        </div>
+        <div style="position:relative;height:340px;">
+          <canvas id="velocity-chart"></canvas>
+        </div>
+      </div>
+
+      <div class="metrics" style="margin-top:1.5rem;">
+        <div class="metric-card">
+          <div class="metric-lbl">SP planeados</div>
+          <div class="metric-val" id="v-planned">114</div>
+          <div class="metric-sub">total del proyecto</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-lbl">SP completados</div>
+          <div class="metric-val good" id="v-done">--</div>
+          <div class="metric-sub">acumulado real</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-lbl">Velocidad promedio</div>
+          <div class="metric-val" id="v-avg">--</div>
+          <div class="metric-sub">SP/semana real</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-lbl">Semanas con data</div>
+          <div class="metric-val" id="v-weeks">--</div>
+          <div class="metric-sub">sprints con data</div>
+        </div>
+      </div>
+    </div><!-- /tab-velocity -->
 
   </div>
 
@@ -486,6 +563,13 @@ const PROJECT_NUM = 3;
 const PAT = 'gh' + 'p_7cJmeG26RpL6xRjj' + 'dwfTEnlCEpcZdd3FAhFw';
 const SPRINT_NAME = 'Sprint 1';
 
+
+const ASSIGNEES = {
+  'afDonosoD':   { name: 'Andrés Donoso',   initials: 'AD', bg: '#185FA5' },
+  'DavidMS73':   { name: 'Germán Martínez', initials: 'GM', bg: '#0F6E56' },
+  'daniel-corzo':{ name: 'Daniel Corzo',    initials: 'DC', bg: '#993C1D' },
+  'ja-avos':     { name: 'Juan Avelino',    initials: 'JA', bg: '#534AB7' }
+};
 let SPRINT_START = null;
 let SPRINT_END   = null;
 let burndownChart = null;
@@ -535,7 +619,7 @@ async function loadData() {
     const fmtDate = d => d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }).toUpperCase();
     document.getElementById('sprint-badge').textContent = SPRINT_NAME.toUpperCase() + ' · ' + fmtDate(SPRINT_START) + ' – ' + fmtDate(SPRINT_END);
 
-    const q2 = `query($projectId:ID!,$cursor:String){node(id:$projectId){...on ProjectV2{items(first:100,after:$cursor){pageInfo{hasNextPage endCursor}nodes{id content{...on Issue{number title state closedAt labels(first:10){nodes{name}}}}fieldValues(first:20){nodes{...on ProjectV2ItemFieldNumberValue{field{...on ProjectV2Field{id name}}number}...on ProjectV2ItemFieldSingleSelectValue{field{...on ProjectV2SingleSelectField{id name}}name}...on ProjectV2ItemFieldIterationValue{field{...on ProjectV2IterationField{id name}}title startDate duration}}}}}}}}`;
+    const q2 = `query($projectId:ID!,$cursor:String){node(id:$projectId){...on ProjectV2{items(first:100,after:$cursor){pageInfo{hasNextPage endCursor}nodes{id content{...on Issue{number title state closedAt assignees(first:5){nodes{login}}labels(first:10){nodes{name}}}}fieldValues(first:20){nodes{...on ProjectV2ItemFieldNumberValue{field{...on ProjectV2Field{id name}}number}...on ProjectV2ItemFieldSingleSelectValue{field{...on ProjectV2SingleSelectField{id name}}name}...on ProjectV2ItemFieldIterationValue{field{...on ProjectV2IterationField{id name}}title startDate duration}}}}}}}}`;
     let allItems = [], cursor = null, hasMore = true;
     while (hasMore) {
       const d2 = await gql(token, q2, { projectId: project.id, cursor });
@@ -568,12 +652,25 @@ async function loadData() {
       const sp = spFv ? (spFv.number || 0) : 0;
       const status = stFv ? stFv.name : (item.content.state === 'CLOSED' ? 'Done' : 'Todo');
       const closedAt = item.content.closedAt ? new Date(item.content.closedAt) : null;
-      return { number: item.content.number, title: item.content.title, sp, status, closedAt };
+      const assignees = (item.content.assignees?.nodes || []).map(a => a.login);
+      return { number: item.content.number, title: item.content.title, sp, status, closedAt, assignees };
     });
 
-    console.log('statusField:', statusField);
-    console.log('issues sample:', issues.slice(0,5).map(i => ({num: i.number, sp: i.sp, status: i.status, closedAt: i.closedAt})));
+    // Map all project items for velocity chart (across all sprints)
+    const allMappedIssues = allItems
+      .filter(item => item.content && item.content.title)
+      .map(item => {
+        const fvs = item.fieldValues.nodes;
+        const spFv = spField ? fvs.find(fv => fv.field && fv.field.id === spField.id) : null;
+        const stFv = statusField ? fvs.find(fv => fv.field && fv.field.id === statusField.id) : null;
+        const sp = spFv ? (spFv.number || 0) : 0;
+        const status = stFv ? stFv.name : (item.content.state === 'CLOSED' ? 'Done' : 'Todo');
+        const closedAt = item.content.closedAt ? new Date(item.content.closedAt) : null;
+        return { sp, status, closedAt };
+      });
+
     renderDashboard(issues);
+    buildVelocityChart(allMappedIssues);
     setStatus('Datos cargados · ' + new Date().toLocaleTimeString('es-CO'), 'ok');
     document.getElementById('dashboard').style.display = 'block';
   } catch(e) {
@@ -713,14 +810,122 @@ function buildTable(issues) {
     const isIn   = /progress|curso|doing/i.test(i.status);
     const badgeClass = isDone ? 'badge-done' : isIn ? 'badge-in' : 'badge-todo';
     const badgeText  = isDone ? 'DONE' : isIn ? 'IN PROGRESS' : 'TODO';
+    const avatarsHtml = (i.assignees || []).map(login => {
+      const a = ASSIGNEES[login] || { name: login, initials: login.slice(0,2).toUpperCase(), bg: '#444441' };
+      return `<span style="display:inline-flex;align-items:center;gap:5px;margin-right:8px;">
+        <span style="width:22px;height:22px;border-radius:50%;background:${a.bg};color:#ffffff;font-size:9px;font-weight:500;font-family:var(--mono);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">${a.initials}</span>
+        <span style="font-size:12px;color:var(--muted);white-space:nowrap;">${a.name}</span>
+      </span>`;
+    }).join('');
     tbody.innerHTML += `<tr>
       <td><span class="issue-num">#${i.number}</span></td>
       <td class="issue-title">${i.title}</td>
       <td><span class="sp-val">${i.sp}</span></td>
       <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+      <td>${avatarsHtml || '<span style="color:var(--muted);font-size:12px;">—</span>'}</td>
     </tr>`;
   });
-  document.getElementById('issue-count').textContent = sorted.length + ' issues · ' + sorted.reduce((s,i)=>s+i.sp,0) + ' SP total';
+  document.getElementById('issue-count').textContent = sorted.length + ' stories · ' + sorted.reduce((s,i)=>s+i.sp,0) + ' SP total';
+}
+
+// ---- VELOCITY CONFIG ----
+const SPRINTS = [
+  { label: 'Semana 1', start: new Date('2026-03-23'), end: new Date('2026-03-29'), planned: 32 },
+  { label: 'Semana 2', start: new Date('2026-03-30'), end: new Date('2026-04-05'), planned: 32 },
+  { label: 'Semana 3', start: new Date('2026-04-06'), end: new Date('2026-04-12'), planned: 33 },
+  { label: 'Semana 4', start: new Date('2026-04-13'), end: new Date('2026-04-19'), planned: 33 },
+  { label: 'Semana 5', start: new Date('2026-04-20'), end: new Date('2026-04-26'), planned: 49 },
+  { label: 'Semana 6', start: new Date('2026-04-27'), end: new Date('2026-05-03'), planned: 49 },
+  { label: 'Semana 7', start: new Date('2026-05-04'), end: new Date('2026-05-10'), planned: 49 },
+  { label: 'Semana 8', start: new Date('2026-05-11'), end: new Date('2026-05-17'), planned: 0  }
+];
+
+let velocityChart = null;
+
+function buildVelocityChart(allIssues) {
+  const today = new Date();
+  const realPerSprint = SPRINTS.map(s => {
+    if (s.start > today) return null;
+    const endOfSprint = new Date(s.end.getTime() + 86400000);
+    return allIssues
+      .filter(i => /done|cerrad|closed|complet/i.test(i.status) && i.closedAt && i.closedAt >= s.start && i.closedAt < endOfSprint)
+      .reduce((acc, i) => acc + i.sp, 0);
+  });
+
+  const weeksWithData = realPerSprint.filter(v => v !== null && v > 0).length;
+  const totalReal = realPerSprint.filter(v => v !== null).reduce((s, v) => s + v, 0);
+  const avgVelocity = weeksWithData > 0 ? Math.round(totalReal / weeksWithData) : 0;
+
+  document.getElementById('v-done').textContent = totalReal;
+  document.getElementById('v-avg').textContent = avgVelocity + ' SP/semana';
+  document.getElementById('v-weeks').textContent = weeksWithData + ' de ' + SPRINTS.length;
+
+  const ctx = document.getElementById('velocity-chart').getContext('2d');
+  if (velocityChart) velocityChart.destroy();
+  velocityChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: SPRINTS.map(s => s.label),
+      datasets: [
+        {
+          label: 'Planeado',
+          data: SPRINTS.map(s => s.planned),
+          backgroundColor: '#378ADD',
+          borderRadius: 3,
+          barPercentage: 0.5,
+          categoryPercentage: 0.7
+        },
+        {
+          label: 'Real',
+          data: realPerSprint,
+          backgroundColor: '#4ade80',
+          borderRadius: 3,
+          barPercentage: 0.5,
+          categoryPercentage: 0.7
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1a1d1a',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          titleColor: '#6b7068',
+          bodyColor: '#e8ece8',
+          titleFont: { family: 'IBM Plex Mono', size: 11 },
+          bodyFont: { family: 'IBM Plex Mono', size: 12 },
+          callbacks: {
+            label: ctx => ctx.dataset.label + ': ' + (ctx.parsed.y !== null ? ctx.parsed.y + ' SP' : '—')
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#6b7068', font: { family: 'IBM Plex Mono', size: 11 } },
+          grid: { display: false },
+          border: { color: 'rgba(255,255,255,0.07)' }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { color: '#6b7068', font: { family: 'IBM Plex Mono', size: 10 } },
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          border: { color: 'rgba(255,255,255,0.07)' },
+          title: { display: true, text: 'Story Points', color: '#6b7068', font: { family: 'IBM Plex Mono', size: 10 } }
+        }
+      }
+    }
+  });
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
 }
 document.addEventListener('DOMContentLoaded', loadData);
 </script>
