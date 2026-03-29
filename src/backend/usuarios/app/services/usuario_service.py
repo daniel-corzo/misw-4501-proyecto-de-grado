@@ -46,7 +46,7 @@ async def create_user(body: CrearUsuarioRequest, db: AsyncSession, settings: Set
             try:
                 error_detail = e.response.json().get("detail", "Error en Auth MS")
             except Exception:
-                error_detail = "Error de comunicación con Auth MS"
+                error_detail = "Error de comunicacion con Auth MS"
             raise HTTPException(
                 status_code=e.response.status_code,
                 detail=error_detail
@@ -55,7 +55,7 @@ async def create_user(body: CrearUsuarioRequest, db: AsyncSession, settings: Set
             await db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Auth MS no está disponible"
+                detail="Auth MS no esta disponible"
             )
 
     await db.commit()
