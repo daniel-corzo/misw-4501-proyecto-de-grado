@@ -34,7 +34,7 @@ def get_current_user(
 ) -> User:
     try:
         if not settings.jwt_public_key:
-            raise HTTPException(status_code=500, detail="JWT public key not configured")
+            raise HTTPException(status_code=500, detail="La clave publica JWT no esta configurada")
             
         payload = jwt.decode(
             credentials.credentials,
@@ -44,9 +44,9 @@ def get_current_user(
         token_data = TokenPayload(**payload)
         return User(id=UUID(token_data.sub), email=token_data.email, role=token_data.role)
     except JWTError:
-        raise HTTPException(status_code=401, detail="Could not validate credentials")
+        raise HTTPException(status_code=401, detail="No se pudieron validar las credenciales")
     except ValueError:
-        raise HTTPException(status_code=401, detail="Invalid subject")
+        raise HTTPException(status_code=401, detail="Identificador de usuario invalido")
 
 class RoleChecker:
     def __init__(self, allowed_roles: List[RoleEnum]):
@@ -54,5 +54,5 @@ class RoleChecker:
 
     def __call__(self, user: User = Depends(get_current_user)):
         if user.role not in self.allowed_roles:
-            raise HTTPException(status_code=403, detail="Operation not permitted")
+            raise HTTPException(status_code=403, detail="Operacion no permitida")
         return user

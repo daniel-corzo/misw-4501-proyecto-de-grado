@@ -23,7 +23,6 @@ class ActualizarUsuarioRequest(BaseModel):
 
 class UsuarioResponse(BaseModel):
     id: UUID
-    email: str
     nombre: Optional[str] = None
     apellido: Optional[str] = None
     telefono: Optional[str] = None

@@ -19,7 +19,7 @@ def test_role_checker_denied():
         checker(user=user)
         
     assert excinfo.value.status_code == 403
-    assert excinfo.value.detail == "Operation not permitted"
+    assert excinfo.value.detail == "Operacion no permitida"
 
 def test_role_checker_multiple_roles():
     checker = RoleChecker([RoleEnum.ADMIN, RoleEnum.MANAGER])
@@ -57,7 +57,7 @@ def test_get_current_user_missing_public_key():
         get_current_user(credentials=credentials, settings=settings)
         
     assert excinfo.value.status_code == 500
-    assert excinfo.value.detail == "JWT public key not configured"
+    assert excinfo.value.detail == "La clave publica JWT no esta configurada"
 
 def test_get_current_user_invalid_jwt(test_settings):
     credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="invalid-token")
@@ -66,7 +66,7 @@ def test_get_current_user_invalid_jwt(test_settings):
         get_current_user(credentials=credentials, settings=test_settings)
         
     assert excinfo.value.status_code == 401
-    assert excinfo.value.detail == "Could not validate credentials"
+    assert excinfo.value.detail == "No se pudieron validar las credenciales"
 
 def test_get_current_user_invalid_subject(test_settings, generate_token):
     token = generate_token({"sub": "not-a-uuid", "email": "test@test.com", "role": RoleEnum.USER.value})
@@ -76,4 +76,4 @@ def test_get_current_user_invalid_subject(test_settings, generate_token):
         get_current_user(credentials=credentials, settings=test_settings)
         
     assert excinfo.value.status_code == 401
-    assert excinfo.value.detail == "Invalid subject"
+    assert excinfo.value.detail == "Identificador de usuario invalido"

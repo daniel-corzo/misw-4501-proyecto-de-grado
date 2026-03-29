@@ -24,7 +24,7 @@ def create_access_token(data: dict, settings: BaseAppSettings):
     to_encode.update({"exp": expire})
     
     if not settings.jwt_private_key:
-        raise ValueError("JWT private key not configured")
+        raise ValueError("La clave privada JWT no esta configurada")
         
     encoded_jwt = jwt.encode(
         to_encode, 
@@ -34,11 +34,11 @@ def create_access_token(data: dict, settings: BaseAppSettings):
     return encoded_jwt
 
 async def register_user(body: RegisterRequest, db: AsyncSession):
-    result = await db.execute(select(UserCredentials).where((UserCredentials.email == body.email) | (UserCredentials.id == body.id)))
+    result = await db.execute(select(UserCredentials).where(UserCredentials.email == body.email))
     if result.scalars().first():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User already registered"
+            detail="El correo ya esta registrado"
         )
         
     hashed_password = get_password_hash(body.password)

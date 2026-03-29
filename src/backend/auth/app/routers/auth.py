@@ -19,7 +19,7 @@ async def register(
     db: AsyncSession = Depends(get_db)
 ):
     user = await register_user(body, db)
-    return {"message": "User registered successfully", "id": str(user.id)}
+    return {"message": "Usuario registrado correctamente", "id": str(user.id)}
 
 @router.post("/login", response_model=LoginResponse, status_code=status.HTTP_200_OK)
 async def login(
@@ -45,5 +45,5 @@ async def refresh_token(body: RefreshRequest):
     """
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Not implemented yet",
+        detail="Aun no implementado",
     )

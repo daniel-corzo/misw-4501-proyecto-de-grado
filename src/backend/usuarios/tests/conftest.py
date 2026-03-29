@@ -1,5 +1,8 @@
-﻿import pytest
+﻿import os
+import pytest
 from travelhub_common.testing import create_test_client
+
+os.environ.setdefault("ENVIRONMENT", "test")
 
 @pytest.fixture
 async def client():
