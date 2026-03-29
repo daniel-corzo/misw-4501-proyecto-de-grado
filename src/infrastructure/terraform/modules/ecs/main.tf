@@ -56,6 +56,14 @@ resource "aws_ecs_task_definition" "task" {
         {
           name      = "JWT_SECRET"
           valueFrom = "${var.shared_secret_arn}:jwt_secret::"
+        },
+        {
+          name      = "JWT_PRIVATE_KEY"
+          valueFrom = "${var.shared_secret_arn}:jwt_private_key::"
+        },
+        {
+          name      = "JWT_PUBLIC_KEY"
+          valueFrom = "${var.shared_secret_arn}:jwt_public_key::"
         }
       ]
       logConfiguration = {

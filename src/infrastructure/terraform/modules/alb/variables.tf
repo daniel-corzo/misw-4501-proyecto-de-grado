@@ -14,6 +14,19 @@ variable "subnet_ids" {
   type = list(string)
 }
 
+variable "certificate_arn" {
+  type = string
+}
+
+variable "zone_id" {
+  type = string
+}
+
+variable "full_domain" {
+  description = "Domain name for the ALB (e.g. alb.travel-hub.online)"
+  type        = string
+}
+
 variable "target_port" {
   type = number
 }

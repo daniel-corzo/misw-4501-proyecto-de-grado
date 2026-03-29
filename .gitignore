@@ -4,6 +4,7 @@ __pychache__/
 *.pyo
 *.pyd
 .Python
+*.coverage
 env/
 
 # Local .terraform directories
@@ -15,10 +16,6 @@ env/
 
 # Crash log files
 crash.log
-
-# Terraform variable files (sensitive)
-*.tfvars
-*.tfvars.json
 
 # override files
 override.tf
@@ -75,3 +72,6 @@ xcuserdata/
 **/xcshareddata/WorkspaceSettings.xcsettings
 
 **/.DS_Store
+
+
+.idea/

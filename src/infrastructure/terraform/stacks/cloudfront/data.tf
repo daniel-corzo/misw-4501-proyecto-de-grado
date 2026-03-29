@@ -17,3 +17,13 @@ data "terraform_remote_state" "alb" {
     region = var.region
   }
 }
+
+data "terraform_remote_state" "dns" {
+  backend = "s3"
+
+  config = {
+    bucket = "terraform-travelhub-state"
+    key    = "dns/terraform.tfstate"
+    region = var.region
+  }
+}

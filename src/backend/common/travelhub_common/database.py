@@ -23,3 +23,8 @@ def make_get_db(db_url: str, debug: bool = False):
             yield session
 
     return get_db
+
+async def init_db(db_url: str, debug: bool = False):
+    engine = get_engine(db_url, debug)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)

@@ -5,6 +5,7 @@ from travelhub_common.config import BaseAppSettings, load_secrets
 class Settings(BaseAppSettings):
     # Agrega aqui settings especificos de usuarios
     service_name: str = "usuarios"
+    auth_service_url: str = "http://auth:8000"
 
 
 @lru_cache
