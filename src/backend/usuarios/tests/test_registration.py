@@ -5,6 +5,8 @@ import uuid
 from unittest.mock import AsyncMock, patch, MagicMock
 from httpx import AsyncClient, ASGITransport, Response, Request, HTTPStatusError, RequestError
 
+from app.models.usuario import TipoUsuario
+
 os.environ.setdefault("ENVIRONMENT", "test")
 
 from app.main import app
@@ -15,8 +17,9 @@ VALID_PAYLOAD = {
     "email": "test@example.com",
     "password": "strongPassword123",
     "nombre": "Test",
-    "apellido": "User",
-    "role": RoleEnum.USER.value
+    "telefono": "1234567890",
+    "tipo": TipoUsuario.VIAJERO.value,
+    "role": RoleEnum.USER.value,
 }
 
 @pytest.fixture
@@ -52,27 +55,20 @@ async def override_client(mock_db_session):
 
 
 @pytest.mark.asyncio
-async def test_register_success(override_client, mock_db_session):
-    with patch("app.services.usuario_service.httpx.AsyncClient") as MockClient:
-        # Patch the instantiated AsyncClient block returning via async context manager
-        mock_client_instance = MockClient.return_value.__aenter__.return_value
-        
-        # Configure successful Auth MS response
-        request = Request("POST", "http://auth:8000/auth/register")
-        auth_response = Response(status_code=201, request=request, json={"id": str(uuid.uuid4()), "message": "User registered successfully"})
-        mock_client_instance.post.return_value = auth_response
-        
-        # Execute POST
-        response = await override_client.post("/usuarios", json=VALID_PAYLOAD)
-        
-        assert response.status_code == 201
-        data = response.json()
-        assert "id" in data
-        
-        # Verify db actions (commit and flush must be called)
-        assert mock_db_session.add.called
-        assert mock_db_session.flush.called
-        assert mock_db_session.commit.called
+async def test_register_viajero_success(override_client, mock_db_session):
+    # Execute POST
+    response = await override_client.post("/usuarios", json=VALID_PAYLOAD)
+
+    assert response.status_code == 201
+    data = response.json()
+
+    assert data["id"] is not None
+    assert data["email"] == VALID_PAYLOAD["email"]
+    assert data["tipo"] == VALID_PAYLOAD["tipo"]
+    assert data["viajero"] is not None
+    assert data["viajero"]["id"] is not None
+    assert data["viajero"]["nombre"] == VALID_PAYLOAD["nombre"]
+    assert data["viajero"]["contacto"] == VALID_PAYLOAD["telefono"]
 
 
 @pytest.mark.asyncio
@@ -83,52 +79,53 @@ async def test_register_id_already_exists(override_client, mock_db_session):
     mock_db_session.execute.return_value = mock_result
 
     response = await override_client.post("/usuarios", json=VALID_PAYLOAD)
-    
+
     assert response.status_code == 400
-    assert response.json()["detail"] == "Perfil ya existe con este id"
-    
+    assert response.json()["detail"] == "Usuario ya existe con este email"
+
     # Remote call completely stalled and records weren't touched
     mock_db_session.add.assert_not_called()
 
 
-@pytest.mark.asyncio
-async def test_register_auth_service_http_error(override_client, mock_db_session):
-    with patch("app.services.usuario_service.httpx.AsyncClient") as MockClient:
-        mock_client_instance = MockClient.return_value.__aenter__.return_value
-        
-        # Mock HTTP Error natively returned from Auth MS (Fail state code)
-        error_response = Response(status_code=400, json={"detail": "Password too weak"})
-        request = Request("POST", "http://auth:8000/auth/register")
-        error = HTTPStatusError("Error", request=request, response=error_response)
-        
-        mock_client_instance.post.side_effect = error
-        
-        response = await override_client.post("/usuarios", json=VALID_PAYLOAD)
-        
-        assert response.status_code == 400
-        assert response.json()["detail"] == "Password too weak"
-        
-        # Verified DB rollback
-        assert mock_db_session.rollback.called
-        assert not mock_db_session.commit.called
+# TODO: Could be used for hotels call
+# @pytest.mark.asyncio
+# async def test_register_auth_service_http_error(override_client, mock_db_session):
+#     with patch("app.services.usuario_service.httpx.AsyncClient") as MockClient:
+#         mock_client_instance = MockClient.return_value.__aenter__.return_value
 
+#         # Mock HTTP Error natively returned from Auth MS (Fail state code)
+#         error_response = Response(status_code=400, json={"detail": "Password too weak"})
+#         request = Request("POST", "http://auth:8000/auth/register")
+#         error = HTTPStatusError("Error", request=request, response=error_response)
 
-@pytest.mark.asyncio
-async def test_register_auth_service_unavailable(override_client, mock_db_session):
-    with patch("app.services.usuario_service.httpx.AsyncClient") as MockClient:
-        mock_client_instance = MockClient.return_value.__aenter__.return_value
-        
-        # Mock Auth MS not responding
-        request = Request("POST", "http://auth:8000/auth/register")
-        error = RequestError("Connection Refused", request=request)
-        
-        mock_client_instance.post.side_effect = error
-        
-        response = await override_client.post("/usuarios", json=VALID_PAYLOAD)
-        
-        assert response.status_code == 503
-        assert response.json()["detail"] == "Auth MS no esta disponible"
-        
-        # Verified DB rollback
-        assert mock_db_session.rollback.called
-        assert not mock_db_session.commit.called
+#         mock_client_instance.post.side_effect = error
+
+#         response = await override_client.post("/usuarios", json=VALID_PAYLOAD)
+
+#         assert response.status_code == 400
+#         assert response.json()["detail"] == "Password too weak"
+
+#         # Verified DB rollback
+#         assert mock_db_session.rollback.called
+#         assert not mock_db_session.commit.called
+
+# TODO: Could be used for hotels call
+# @pytest.mark.asyncio
+# async def test_register_auth_service_unavailable(override_client, mock_db_session):
+#     with patch("app.services.usuario_service.httpx.AsyncClient") as MockClient:
+#         mock_client_instance = MockClient.return_value.__aenter__.return_value
+
+#         # Mock Auth MS not responding
+#         request = Request("POST", "http://auth:8000/auth/register")
+#         error = RequestError("Connection Refused", request=request)
+
+#         mock_client_instance.post.side_effect = error
+
+#         response = await override_client.post("/usuarios", json=VALID_PAYLOAD)
+
+#         assert response.status_code == 503
+#         assert response.json()["detail"] == "Auth MS no esta disponible"
+
+#         # Verified DB rollback
+#         assert mock_db_session.rollback.called
+#         assert not mock_db_session.commit.called

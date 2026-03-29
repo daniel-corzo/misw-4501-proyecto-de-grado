@@ -1,12 +1,14 @@
-from sqlalchemy import Column, String, DateTime
+from sqlalchemy import ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column
 from travelhub_common.models import BaseModel
 
 class Viajero(BaseModel):
     __tablename__ = "viajeros"
 
-    nombre = Column(String(255), nullable=False)
-    contacto = Column(String(255), nullable=True)
+    nombre: Mapped[str] = mapped_column(String(255), nullable=False)
+    contacto: Mapped[str] = mapped_column(String(255), nullable=True)
 
-    # Cross-schema/service reference to UserCredentials id in Auth
-    usuario_id = Column(UUID(as_uuid=True), index=True, nullable=False, unique=True)
+    usuario_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("usuarios.id"), nullable=False, unique=True
+    )
