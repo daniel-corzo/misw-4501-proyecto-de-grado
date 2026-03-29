@@ -1,0 +1,21 @@
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy.dialects.postgresql import ARRAY, UUID
+from sqlalchemy.orm import relationship
+from travelhub_common.models import BaseModel
+
+from app.models.hotel import Hotel
+
+
+class Habitacion(BaseModel):
+    __tablename__ = "habitacion"
+
+    capacidad = Column(Integer, nullable=False, default=1)
+    numero = Column(Integer, nullable=False)
+    descripcion = Column(String, nullable=True)
+    imagenes = Column(ARRAY(String), default=list)
+    monto = Column(Integer, nullable=False, default=0)
+    impuestos = Column(Integer, nullable=False, default=0)
+    disponible = Column(Boolean, nullable=False, default=True)
+
+    hotel_id = Column(UUID(as_uuid=True), ForeignKey("hotel.id"), nullable=False, index=True)
+    hotel = relationship(Hotel, back_populates="habitaciones")

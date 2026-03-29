@@ -5,7 +5,7 @@ from travelhub_common.models import BaseModel
 from app.models.hotel import Hotel
 
 class Politica(BaseModel):
-    __tablename__ = "politicas"
+    __tablename__ = "politica"
 
     nombre = Column(String(255), nullable=False)
     descripcion = Column(String, nullable=True)
@@ -14,6 +14,6 @@ class Politica(BaseModel):
     dias_antelacion = Column(Integer, nullable=False, default=0)
     
     # Internal relationship within the hoteles service
-    hotel_id = Column(UUID(as_uuid=True), ForeignKey("hoteles.id"), nullable=False, index=True)
+    hotel_id = Column(UUID(as_uuid=True), ForeignKey("hotel.id"), nullable=False, index=True)
 
-    hotel = relationship(Hotel, backref="politicas")
+    hotel = relationship(Hotel, back_populates="politicas")
