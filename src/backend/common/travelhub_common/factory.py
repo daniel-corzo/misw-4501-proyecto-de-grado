@@ -54,11 +54,13 @@ def create_app(
 
     if get_db:
         @health_router.get("/health", tags=["health"])
+        @health_router.get(f"/{service_name}/health", tags=["health"])
         async def health(db: AsyncSession = Depends(get_db)):
             await db.execute(text("SELECT 1"))
             return {"status": "healthy", "service": service_name}
     else:
         @health_router.get("/health", tags=["health"])
+        @health_router.get(f"/{service_name}/health", tags=["health"])
         async def health_no_db():
             return {"status": "healthy", "service": service_name}
 
