@@ -587,7 +587,7 @@
     <div class="tab-pane" id="tab-release">
       <div class="chart-panel">
         <div class="panel-header">
-          <span class="panel-title">Release burndown (actualizado al finalizar el sprint)</span>
+          <span class="panel-title">Release burndown</span>
           <div class="legend">
             <div class="legend-item"><span style="display:inline-block;width:20px;height:0;border-top:2px dashed var(--muted);"></span><span>Ideal</span></div>
             <div class="legend-item"><span style="display:inline-block;width:20px;height:2px;background:#4ade80;"></span><span>Real</span></div>
@@ -637,23 +637,104 @@
 </footer>
 
 <script>
+// ---- CONFIG ----
 const OWNER = 'daniel-corzo';
 const REPO  = 'misw-4501-proyecto-de-grado';
 const PROJECT_NUM = 3;
 const PAT = 'gh' + 'p_7cJmeG26RpL6xRjj' + 'dwfTEnlCEpcZdd3FAhFw';
 const SPRINT_NAME = 'Sprint 1';
-
+const TOTAL_SP = 114;
 
 const ASSIGNEES = {
-  'afDonosoD':   { name: 'Andrés Donoso',   initials: 'AD', bg: '#185FA5' },
-  'DavidMS73':   { name: 'Germán Martínez', initials: 'GM', bg: '#0F6E56' },
-  'daniel-corzo':{ name: 'Daniel Corzo',    initials: 'DC', bg: '#993C1D' },
-  'ja-avos':     { name: 'Juan Avelino',    initials: 'JA', bg: '#534AB7' }
+  'afDonosoD':    { name: 'Andrés Donoso',   initials: 'AD', bg: '#185FA5' },
+  'DavidMS73':    { name: 'Germán Martínez', initials: 'GM', bg: '#0F6E56' },
+  'daniel-corzo': { name: 'Daniel Corzo',    initials: 'DC', bg: '#993C1D' },
+  'ja-avos':      { name: 'Juan Avelino',    initials: 'JA', bg: '#534AB7' }
 };
-let SPRINT_START = null;
-let SPRINT_END   = null;
-let burndownChart = null;
 
+// Shared week/sprint definitions
+const WEEKS = [
+  { label: 'Semana 1', start: new Date('2026-03-23'), end: new Date('2026-03-29'), planned: 32 },
+  { label: 'Semana 2', start: new Date('2026-03-30'), end: new Date('2026-04-05'), planned: 32 },
+  { label: 'Semana 3', start: new Date('2026-04-06'), end: new Date('2026-04-12'), planned: 33 },
+  { label: 'Semana 4', start: new Date('2026-04-13'), end: new Date('2026-04-19'), planned: 33 },
+  { label: 'Semana 5', start: new Date('2026-04-20'), end: new Date('2026-04-26'), planned: 49 },
+  { label: 'Semana 6', start: new Date('2026-04-27'), end: new Date('2026-05-03'), planned: 49 },
+  { label: 'Semana 7', start: new Date('2026-05-04'), end: new Date('2026-05-10'), planned: 49 },
+  { label: 'Semana 8', start: new Date('2026-05-11'), end: new Date('2026-05-17'), planned: 0  }
+];
+
+const RELEASE_SPRINTS = [
+  { label: 'Sprint 1', start: new Date('2026-03-23'), end: new Date('2026-04-05') },
+  { label: 'Sprint 2', start: new Date('2026-04-06'), end: new Date('2026-04-19') },
+  { label: 'Sprint 3', start: new Date('2026-04-20'), end: new Date('2026-05-10') },
+  { label: 'Entrega',  start: new Date('2026-05-11'), end: new Date('2026-05-17') }
+];
+
+// ---- SHARED CHART HELPERS ----
+const C = {
+  mono: 'IBM Plex Mono',
+  muted: '#6b7068',
+  text: '#e8ece8',
+  surface: '#1a1d1a',
+  accent: '#4ade80',
+  blue: '#378ADD',
+  danger: '#f87171',
+  grid: 'rgba(255,255,255,0.04)',
+  border: 'rgba(255,255,255,0.07)'
+};
+
+function isDone(status) {
+  return /done|cerrad|closed|complet/i.test(status);
+}
+
+function endOfDay(d) {
+  return new Date(d.getTime() + 86400000);
+}
+
+function tooltip(labelFn) {
+  return {
+    backgroundColor: C.surface,
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1,
+    titleColor: C.muted,
+    bodyColor: C.text,
+    titleFont: { family: C.mono, size: 11 },
+    bodyFont: { family: C.mono, size: 12 },
+    callbacks: { label: labelFn }
+  };
+}
+
+function xScale(extra) {
+  return Object.assign({ ticks: { color: C.muted, font: { family: C.mono, size: 10 } }, grid: { display: false }, border: { color: C.border } }, extra);
+}
+
+function yScale(extra) {
+  return Object.assign({ ticks: { color: C.muted, font: { family: C.mono, size: 10 } }, grid: { color: C.grid }, border: { color: C.border } }, extra);
+}
+
+function idealDataset(data, extra) {
+  return Object.assign({ label: 'Ideal', data, borderColor: C.muted, borderWidth: 1.5, borderDash: [5,4], pointRadius: 0, tension: 0, fill: false }, extra);
+}
+
+function realLineDataset(data, extra) {
+  return Object.assign({ label: 'Real', data, borderColor: C.accent, backgroundColor: 'rgba(74,222,128,0.06)', borderWidth: 2, pointRadius: 3, pointBackgroundColor: C.accent, tension: 0.3, fill: true, spanGaps: false }, extra);
+}
+
+function baseOptions(tooltipFn, scaleOverrides) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: tooltip(tooltipFn) },
+    scales: scaleOverrides
+  };
+}
+
+// ---- STATE ----
+let SPRINT_START = null, SPRINT_END = null;
+let burndownChart = null, velocityChart = null, valueChart = null, releaseChart = null;
+
+// ---- GQL ----
 function setStatus(msg, type) {
   const el = document.getElementById('status-line');
   el.textContent = msg;
@@ -671,6 +752,7 @@ async function gql(token, query, variables) {
   return json.data;
 }
 
+// ---- LOAD DATA ----
 async function loadData() {
   const token = PAT;
   document.getElementById('empty-state').style.display = 'none';
@@ -684,23 +766,22 @@ async function loadData() {
     setStatus('Proyecto: ' + project.title + ' — cargando items...', 'loading');
 
     const fields = project.fields.nodes;
-    const spField = fields.find(f => f.name === 'Estimate');
-    const bvField = fields.find(f => f.name === 'BusinessValue');
-    const statusField = fields.find(f => f.name && /status|estado/i.test(f.name));
+    const spField     = fields.find(f => f.name === 'Estimate');
+    const bvField     = fields.find(f => f.name === 'BusinessValue');
+    const statusField = fields.find(f => f.name === 'Status');
+    const iterField   = fields.find(f => f.configuration && f.configuration.iterations);
 
-    // Extraer fechas del sprint desde el campo iteration
-    const iterField = fields.find(f => f.configuration && f.configuration.iterations);
-    if (!iterField) throw new Error('No se encontro un campo de iteracion en el proyecto.');
+    if (!iterField) throw new Error('No se encontro campo de iteracion.');
     const iteration = iterField.configuration.iterations.find(it => it.title === SPRINT_NAME);
-    if (!iteration) throw new Error('No se encontro la iteracion "' + SPRINT_NAME + '". Verifica que el nombre sea exacto.');
-    SPRINT_START = new Date(iteration.startDate + 'T00:00:00');
-    SPRINT_END   = new Date(SPRINT_START.getTime() + iteration.duration * 24 * 3600 * 1000 - 1000);
+    if (!iteration) throw new Error('Iteracion "' + SPRINT_NAME + '" no encontrada.');
 
-    // Actualizar badge con fechas reales
+    SPRINT_START = new Date(iteration.startDate + 'T00:00:00');
+    SPRINT_END   = new Date(SPRINT_START.getTime() + iteration.duration * 86400000 - 1000);
+
     const fmtDate = d => d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }).toUpperCase();
     document.getElementById('sprint-badge').textContent = SPRINT_NAME.toUpperCase() + ' · ' + fmtDate(SPRINT_START) + ' – ' + fmtDate(SPRINT_END);
 
-    const q2 = `query($projectId:ID!,$cursor:String){node(id:$projectId){...on ProjectV2{items(first:100,after:$cursor){pageInfo{hasNextPage endCursor}nodes{id content{...on Issue{number title state closedAt assignees(first:5){nodes{login}}labels(first:10){nodes{name}}}}fieldValues(first:20){nodes{...on ProjectV2ItemFieldNumberValue{field{...on ProjectV2Field{id name}}number}...on ProjectV2ItemFieldSingleSelectValue{field{...on ProjectV2SingleSelectField{id name}}name}...on ProjectV2ItemFieldIterationValue{field{...on ProjectV2IterationField{id name}}title startDate duration}}}}}}}}`;
+    const q2 = `query($projectId:ID!,$cursor:String){node(id:$projectId){...on ProjectV2{items(first:100,after:$cursor){pageInfo{hasNextPage endCursor}nodes{id content{...on Issue{number title state closedAt assignees(first:5){nodes{login}}}}fieldValues(first:20){nodes{...on ProjectV2ItemFieldNumberValue{field{...on ProjectV2Field{id name}}number}...on ProjectV2ItemFieldSingleSelectValue{field{...on ProjectV2SingleSelectField{id name}}name}...on ProjectV2ItemFieldIterationValue{field{...on ProjectV2IterationField{id name}}title startDate duration}}}}}}}}`;
     let allItems = [], cursor = null, hasMore = true;
     while (hasMore) {
       const d2 = await gql(token, q2, { projectId: project.id, cursor });
@@ -712,50 +793,42 @@ async function loadData() {
 
     setStatus('Procesando ' + allItems.length + ' items...', 'loading');
 
-    // Filtrar items cuyo campo iteracion coincide exactamente con SPRINT_NAME
-    const sprintItems = allItems.filter(item => {
-      if (!item.content || !item.content.title) return false;
+    function mapItem(item) {
       const fvs = item.fieldValues.nodes;
-      const iterFv = fvs.find(fv => fv.field && fv.field.id === iterField.id);
+      const get = field => field ? fvs.find(fv => fv.field && fv.field.id === field.id) : null;
+      const sp  = get(spField)?.number || 0;
+      const bv  = get(bvField)?.number || 0;
+      const stFv = get(statusField);
+      const status = stFv ? stFv.name : (item.content.state === 'CLOSED' ? 'Done' : 'Todo');
+      const closedAt = item.content.closedAt ? new Date(item.content.closedAt) : null;
+      return { sp, bv, status, closedAt };
+    }
+
+    const sprintItems = allItems.filter(item => {
+      if (!item.content?.title) return false;
+      const iterFv = item.fieldValues.nodes.find(fv => fv.field && fv.field.id === iterField.id);
       return iterFv && iterFv.title === SPRINT_NAME;
     });
 
     if (sprintItems.length === 0) {
-      setStatus('No se encontraron issues en "' + SPRINT_NAME + '". Verifica que tengan la iteracion asignada en el Project.', 'err');
+      setStatus('No se encontraron issues en "' + SPRINT_NAME + '".', 'err');
       document.getElementById('empty-state').style.display = 'block';
       return;
     }
 
-    const issues = sprintItems.map(item => {
-      const fvs = item.fieldValues.nodes;
-      const spFv = spField ? fvs.find(fv => fv.field && fv.field.id === spField.id) : null;
-      const stFv = statusField ? fvs.find(fv => fv.field && fv.field.id === statusField.id) : null;
-      const sp = spFv ? (spFv.number || 0) : 0;
-      const status = stFv ? stFv.name : (item.content.state === 'CLOSED' ? 'Done' : 'Todo');
-      const closedAt = item.content.closedAt ? new Date(item.content.closedAt) : null;
-      const assignees = (item.content.assignees?.nodes || []).map(a => a.login);
-      return { number: item.content.number, title: item.content.title, sp, status, closedAt, assignees };
-    });
+    const sprintIssues = sprintItems.map(item => ({
+      ...mapItem(item),
+      number: item.content.number,
+      title: item.content.title,
+      assignees: (item.content.assignees?.nodes || []).map(a => a.login)
+    }));
 
-    // Map all project items for velocity chart (across all sprints)
-    const allMappedIssues = allItems
-      .filter(item => item.content && item.content.title)
-      .map(item => {
-        const fvs = item.fieldValues.nodes;
-        const spFv = spField ? fvs.find(fv => fv.field && fv.field.id === spField.id) : null;
-        const stFv = statusField ? fvs.find(fv => fv.field && fv.field.id === statusField.id) : null;
-        const sp = spFv ? (spFv.number || 0) : 0;
-        const status = stFv ? stFv.name : (item.content.state === 'CLOSED' ? 'Done' : 'Todo');
-        const bvFv = bvField ? fvs.find(fv => fv.field && fv.field.id === bvField.id) : null;
-        const bv = bvFv ? (bvFv.number || 0) : 0;
-        const closedAt = item.content.closedAt ? new Date(item.content.closedAt) : null;
-        return { sp, bv, status, closedAt };
-      });
+    const allMapped = allItems.filter(i => i.content?.title).map(mapItem);
 
-    renderDashboard(issues);
-    buildVelocityChart(allMappedIssues);
-    buildValueChart(allMappedIssues);
-    buildReleaseChart(allMappedIssues);
+    renderDashboard(sprintIssues);
+    buildVelocityChart(allMapped);
+    buildValueChart(allMapped);
+    buildReleaseChart(allMapped);
     setStatus('Datos cargados · ' + new Date().toLocaleTimeString('es-CO'), 'ok');
     document.getElementById('dashboard').style.display = 'block';
   } catch(e) {
@@ -764,12 +837,12 @@ async function loadData() {
   }
 }
 
+// ---- BURNDOWN ----
 function renderDashboard(issues) {
   const totalSP = issues.reduce((s, i) => s + i.sp, 0);
-  const doneSP  = issues.filter(i => /done|cerrad|closed|complet/i.test(i.status)).reduce((s, i) => s + i.sp, 0);
+  const doneSP  = issues.filter(i => isDone(i.status)).reduce((s, i) => s + i.sp, 0);
   const remaining = totalSP - doneSP;
   const pct = totalSP > 0 ? Math.round(doneSP / totalSP * 100) : 0;
-
   const today = new Date();
   const sprintDays = Math.round((SPRINT_END - SPRINT_START) / 86400000) + 1;
   const daysPassed = Math.max(0, Math.min(sprintDays, Math.round((today - SPRINT_START) / 86400000)));
@@ -781,7 +854,6 @@ function renderDashboard(issues) {
   remEl.textContent = remaining;
   remEl.className = 'metric-val ' + (remaining === 0 ? 'good' : remaining < totalSP * 0.4 ? 'warn' : 'bad');
   document.getElementById('m-velocity').textContent = spPerDay;
-
   document.getElementById('progress-pct').textContent = pct + '%';
   document.getElementById('progress-fill').style.width = pct + '%';
 
@@ -792,7 +864,7 @@ function renderDashboard(issues) {
   document.getElementById('ideal-dot').style.left = idealPct + '%';
   document.getElementById('ideal-lbl').style.left = idealPct + '%';
 
-  buildChart(issues, totalSP, workDays, today);
+  buildBurndownChart(issues, totalSP, workDays, today);
   buildTable(issues);
 }
 
@@ -805,16 +877,16 @@ function getWorkDays() {
   return days;
 }
 
-function buildChart(issues, totalSP, workDays, today) {
-  const labels = [], ideal = [], actual = [];
+function buildBurndownChart(issues, totalSP, workDays, today) {
   const idealBurnPerDay = totalSP / Math.max(1, workDays.length - 1);
+  const labels = [], ideal = [], actual = [];
 
   workDays.forEach((dd, idx) => {
     labels.push(dd.toLocaleDateString('es-CO', { month: 'short', day: 'numeric' }));
     ideal.push(Math.max(0, Math.round((totalSP - idealBurnPerDay * idx) * 10) / 10));
     if (dd <= today) {
       const burned = issues
-        .filter(i => /done|cerrad|closed|complet/i.test(i.status) && i.closedAt && i.closedAt <= new Date(dd.getTime() + 86400000))
+        .filter(i => isDone(i.status) && i.closedAt && i.closedAt < endOfDay(dd))
         .reduce((s, i) => s + i.sp, 0);
       actual.push(totalSP - burned);
     } else {
@@ -826,63 +898,14 @@ function buildChart(issues, totalSP, workDays, today) {
   if (burndownChart) burndownChart.destroy();
   burndownChart = new Chart(ctx, {
     type: 'line',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'Ideal',
-          data: ideal,
-          borderColor: '#6b7068',
-          borderWidth: 1.5,
-          borderDash: [5, 4],
-          pointRadius: 0,
-          tension: 0,
-          fill: false
-        },
-        {
-          label: 'Real',
-          data: actual,
-          borderColor: '#4ade80',
-          backgroundColor: 'rgba(74,222,128,0.06)',
-          borderWidth: 2,
-          pointRadius: 3,
-          pointBackgroundColor: '#4ade80',
-          tension: 0.3,
-          fill: true,
-          spanGaps: false
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#1a1d1a',
-          borderColor: 'rgba(255,255,255,0.1)',
-          borderWidth: 1,
-          titleColor: '#6b7068',
-          bodyColor: '#e8ece8',
-          titleFont: { family: 'IBM Plex Mono', size: 11 },
-          bodyFont: { family: 'IBM Plex Mono', size: 12 },
-          callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y + ' SP' }
-        }
-      },
-      scales: {
-        x: {
-          ticks: { color: '#6b7068', font: { family: 'IBM Plex Mono', size: 10 }, maxRotation: 45, autoSkip: false },
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          border: { color: 'rgba(255,255,255,0.07)' }
-        },
-        y: {
-          min: 0,
-          ticks: { color: '#6b7068', font: { family: 'IBM Plex Mono', size: 10 } },
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          border: { color: 'rgba(255,255,255,0.07)' }
-        }
+    data: { labels, datasets: [idealDataset(ideal), realLineDataset(actual)] },
+    options: baseOptions(
+      ctx => ctx.dataset.label + ': ' + ctx.parsed.y + ' SP',
+      {
+        x: xScale({ ticks: { color: C.muted, font: { family: C.mono, size: 10 }, maxRotation: 45, autoSkip: false }, grid: { display: false } }),
+        y: yScale({ min: 0 })
       }
-    }
+    )
   });
 }
 
@@ -891,15 +914,14 @@ function buildTable(issues) {
   const tbody = document.getElementById('issues-body');
   tbody.innerHTML = '';
   sorted.forEach(i => {
-    const isDone = /done|cerrad|closed|complet/i.test(i.status);
-    const isIn   = /progress|curso|doing/i.test(i.status);
-    const badgeClass = isDone ? 'badge-done' : isIn ? 'badge-in' : 'badge-todo';
-    const badgeText  = isDone ? 'DONE' : isIn ? 'IN PROGRESS' : 'TODO';
-    const avatarsHtml = (i.assignees || []).map(login => {
+    const done = isDone(i.status), inProg = /progress|curso|doing/i.test(i.status);
+    const badgeClass = done ? 'badge-done' : inProg ? 'badge-in' : 'badge-todo';
+    const badgeText  = done ? 'DONE' : inProg ? 'IN PROGRESS' : 'TODO';
+    const avatars = (i.assignees || []).map(login => {
       const a = ASSIGNEES[login] || { name: login, initials: login.slice(0,2).toUpperCase(), bg: '#444441' };
       return `<span style="display:inline-flex;align-items:center;gap:5px;margin-right:8px;">
-        <span style="width:22px;height:22px;border-radius:50%;background:${a.bg};color:#ffffff;font-size:9px;font-weight:500;font-family:var(--mono);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">${a.initials}</span>
-        <span style="font-size:12px;color:var(--muted);white-space:nowrap;">${a.name}</span>
+        <span style="width:22px;height:22px;border-radius:50%;background:${a.bg};color:#fff;font-size:9px;font-weight:500;font-family:var(--mono);display:inline-flex;align-items:center;justify-content:center;">${a.initials}</span>
+        <span style="font-size:12px;color:var(--muted);">${a.name}</span>
       </span>`;
     }).join('');
     tbody.innerHTML += `<tr>
@@ -907,157 +929,71 @@ function buildTable(issues) {
       <td class="issue-title">${i.title}</td>
       <td><span class="sp-val">${i.sp}</span></td>
       <td><span class="badge ${badgeClass}">${badgeText}</span></td>
-      <td>${avatarsHtml || '<span style="color:var(--muted);font-size:12px;">—</span>'}</td>
+      <td>${avatars || '<span style="color:var(--muted);font-size:12px;">—</span>'}</td>
     </tr>`;
   });
   document.getElementById('issue-count').textContent = sorted.length + ' stories · ' + sorted.reduce((s,i)=>s+i.sp,0) + ' SP total';
 }
 
-// ---- VELOCITY CONFIG ----
-const SPRINTS = [
-  { label: 'Semana 1', start: new Date('2026-03-23'), end: new Date('2026-03-29'), planned: 32 },
-  { label: 'Semana 2', start: new Date('2026-03-30'), end: new Date('2026-04-05'), planned: 32 },
-  { label: 'Semana 3', start: new Date('2026-04-06'), end: new Date('2026-04-12'), planned: 33 },
-  { label: 'Semana 4', start: new Date('2026-04-13'), end: new Date('2026-04-19'), planned: 33 },
-  { label: 'Semana 5', start: new Date('2026-04-20'), end: new Date('2026-04-26'), planned: 49 },
-  { label: 'Semana 6', start: new Date('2026-04-27'), end: new Date('2026-05-03'), planned: 49 },
-  { label: 'Semana 7', start: new Date('2026-05-04'), end: new Date('2026-05-10'), planned: 49 },
-  { label: 'Semana 8', start: new Date('2026-05-11'), end: new Date('2026-05-17'), planned: 0  }
-];
-
-let velocityChart = null;
-
+// ---- VELOCITY ----
 function buildVelocityChart(allIssues) {
   const today = new Date();
-  const realPerSprint = SPRINTS.map(s => {
-    if (s.start > today) return null;
-    const endOfSprint = new Date(s.end.getTime() + 86400000);
+  const realData = WEEKS.map(w => {
+    if (w.start > today) return null;
     return allIssues
-      .filter(i => /done|cerrad|closed|complet/i.test(i.status) && i.closedAt && i.closedAt >= s.start && i.closedAt < endOfSprint)
-      .reduce((acc, i) => acc + i.sp, 0);
+      .filter(i => isDone(i.status) && i.closedAt && i.closedAt >= w.start && i.closedAt < endOfDay(w.end))
+      .reduce((s, i) => s + i.sp, 0);
   });
 
-  const weeksWithData = realPerSprint.filter(v => v !== null && v > 0).length;
-  const totalReal = realPerSprint.filter(v => v !== null).reduce((s, v) => s + v, 0);
-  const avgVelocity = weeksWithData > 0 ? Math.round(totalReal / weeksWithData) : 0;
+  const weeksWithData = realData.filter(v => v !== null && v > 0).length;
+  const totalReal = realData.filter(v => v !== null).reduce((s, v) => s + v, 0);
+  const avg = weeksWithData > 0 ? Math.round(totalReal / weeksWithData) : 0;
 
   document.getElementById('v-done').textContent = totalReal;
-  document.getElementById('v-avg').textContent = avgVelocity + ' SP/semana';
-  document.getElementById('v-weeks').textContent = weeksWithData + ' de ' + SPRINTS.length;
+  document.getElementById('v-avg').textContent = avg + ' SP/semana';
+  document.getElementById('v-weeks').textContent = weeksWithData + ' de ' + WEEKS.length;
 
   const ctx = document.getElementById('velocity-chart').getContext('2d');
   if (velocityChart) velocityChart.destroy();
   velocityChart = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: SPRINTS.map(s => s.label),
+      labels: WEEKS.map(w => w.label),
       datasets: [
-        {
-          label: 'Planeado',
-          data: SPRINTS.map(s => s.planned),
-          backgroundColor: '#378ADD',
-          borderRadius: 3,
-          barPercentage: 0.5,
-          categoryPercentage: 0.7
-        },
-        {
-          label: 'Real',
-          data: realPerSprint,
-          backgroundColor: '#4ade80',
-          borderRadius: 3,
-          barPercentage: 0.5,
-          categoryPercentage: 0.7
-        }
+        { label: 'Planeado', data: WEEKS.map(w => w.planned), backgroundColor: C.blue, borderRadius: 3, barPercentage: 0.5, categoryPercentage: 0.7 },
+        { label: 'Real',     data: realData,                   backgroundColor: C.accent, borderRadius: 3, barPercentage: 0.5, categoryPercentage: 0.7 }
       ]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#1a1d1a',
-          borderColor: 'rgba(255,255,255,0.1)',
-          borderWidth: 1,
-          titleColor: '#6b7068',
-          bodyColor: '#e8ece8',
-          titleFont: { family: 'IBM Plex Mono', size: 11 },
-          bodyFont: { family: 'IBM Plex Mono', size: 12 },
-          callbacks: {
-            label: ctx => ctx.dataset.label + ': ' + (ctx.parsed.y !== null ? ctx.parsed.y + ' SP' : '—')
-          }
-        }
-      },
-      scales: {
-        x: {
-          ticks: { color: '#6b7068', font: { family: 'IBM Plex Mono', size: 11 } },
-          grid: { display: false },
-          border: { color: 'rgba(255,255,255,0.07)' }
-        },
-        y: {
-          beginAtZero: true,
-          ticks: { color: '#6b7068', font: { family: 'IBM Plex Mono', size: 10 } },
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          border: { color: 'rgba(255,255,255,0.07)' },
-          title: { display: true, text: 'Story Points', color: '#6b7068', font: { family: 'IBM Plex Mono', size: 10 } }
-        }
+    options: baseOptions(
+      ctx => ctx.dataset.label + ': ' + (ctx.parsed.y !== null ? ctx.parsed.y + ' SP' : '—'),
+      {
+        x: xScale(),
+        y: yScale({ beginAtZero: true, title: { display: true, text: 'Story Points', color: C.muted, font: { family: C.mono, size: 10 } } })
       }
-    }
+    )
   });
 }
 
-function switchTab(name) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
-  document.getElementById('tab-' + name).classList.add('active');
-}
-
-// ---- VALUE CHART ----
-// Project timeline: 23 mar - 17 may = 8 weeks
-const VALUE_WEEKS = [
-  { label: 'Semana 1', start: new Date('2026-03-23'), end: new Date('2026-03-29') },
-  { label: 'Semana 2', start: new Date('2026-03-30'), end: new Date('2026-04-05') },
-  { label: 'Semana 3', start: new Date('2026-04-06'), end: new Date('2026-04-12') },
-  { label: 'Semana 4', start: new Date('2026-04-13'), end: new Date('2026-04-19') },
-  { label: 'Semana 5', start: new Date('2026-04-20'), end: new Date('2026-04-26') },
-  { label: 'Semana 6', start: new Date('2026-04-27'), end: new Date('2026-05-03') },
-  { label: 'Semana 7', start: new Date('2026-05-04'), end: new Date('2026-05-10') },
-  { label: 'Semana 8', start: new Date('2026-05-11'), end: new Date('2026-05-17') }
-];
-
-let valueChart = null;
-
+// ---- VALUE ----
 function buildValueChart(allIssues) {
   const today = new Date();
-  const totalWeeks = VALUE_WEEKS.length;
-  const idealPerWeek = 100 / totalWeeks;
-
-  // Cumulative real value per week
-  const realCumulative = [];
+  const idealPerWeek = 100 / WEEKS.length;
   let accumulated = 0;
-  VALUE_WEEKS.forEach(w => {
-    if (w.start > today) {
-      realCumulative.push(null);
-      return;
-    }
-    const endOfWeek = new Date(w.end.getTime() + 86400000);
+  const realCumulative = WEEKS.map(w => {
+    if (w.start > today) return null;
     const weekBV = allIssues
-      .filter(i => /done|cerrad|closed|complet/i.test(i.status) && i.closedAt && i.closedAt >= w.start && i.closedAt < endOfWeek)
+      .filter(i => isDone(i.status) && i.closedAt && i.closedAt >= w.start && i.closedAt < endOfDay(w.end))
       .reduce((s, i) => s + i.bv, 0);
     accumulated += weekBV;
-    realCumulative.push(Math.round(accumulated * 10) / 10);
+    return Math.round(accumulated * 10) / 10;
   });
+  const idealCumulative = WEEKS.map((_, idx) => Math.round(idealPerWeek * (idx + 1) * 10) / 10);
 
-  // Ideal cumulative line (linear 0 -> 100)
-  const idealCumulative = VALUE_WEEKS.map((_, idx) => Math.round((idealPerWeek * (idx + 1)) * 10) / 10);
-
-  // Metrics
-  const currentReal = realCumulative.filter(v => v !== null).slice(-1)[0] || 0;
+  const currentReal  = realCumulative.filter(v => v !== null).slice(-1)[0] || 0;
   const weeksElapsed = realCumulative.filter(v => v !== null).length;
-  const currentIdeal = weeksElapsed > 0 ? Math.round(idealPerWeek * weeksElapsed * 10) / 10 : 0;
+  const currentIdeal = Math.round(idealPerWeek * weeksElapsed * 10) / 10;
   const diff = Math.round((currentReal - currentIdeal) * 10) / 10;
-  const storiesDone = allIssues.filter(i => /done|cerrad|closed|complet/i.test(i.status) && i.bv > 0).length;
+  const storiesDone = allIssues.filter(i => isDone(i.status) && i.bv > 0).length;
 
   document.getElementById('val-earned').textContent = currentReal;
   document.getElementById('val-ideal').textContent = currentIdeal;
@@ -1071,195 +1007,86 @@ function buildValueChart(allIssues) {
   valueChart = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: ['Inicio', ...VALUE_WEEKS.map(w => w.label)],
+      labels: ['Inicio', ...WEEKS.map(w => w.label)],
       datasets: [
-        {
-          label: 'Ideal',
-          data: [0, ...idealCumulative],
-          borderColor: '#6b7068',
-          borderWidth: 1.5,
-          borderDash: [5, 4],
-          pointRadius: 0,
-          tension: 0,
-          fill: false
-        },
-        {
-          label: 'Real',
-          data: [0, ...realCumulative],
-          borderColor: '#4ade80',
-          backgroundColor: 'rgba(74,222,128,0.06)',
-          borderWidth: 2,
-          pointRadius: 3,
-          pointBackgroundColor: '#4ade80',
-          tension: 0.3,
-          fill: true,
-          spanGaps: false
-        }
+        idealDataset([0, ...idealCumulative]),
+        realLineDataset([0, ...realCumulative])
       ]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#1a1d1a',
-          borderColor: 'rgba(255,255,255,0.1)',
-          borderWidth: 1,
-          titleColor: '#6b7068',
-          bodyColor: '#e8ece8',
-          titleFont: { family: 'IBM Plex Mono', size: 11 },
-          bodyFont: { family: 'IBM Plex Mono', size: 12 },
-          callbacks: {
-            label: ctx => ctx.dataset.label + ': ' + (ctx.parsed.y !== null ? ctx.parsed.y : '—')
-          }
-        }
-      },
-      scales: {
-        x: {
-          ticks: { color: '#6b7068', font: { family: 'IBM Plex Mono', size: 11 } },
-          grid: { display: false },
-          border: { color: 'rgba(255,255,255,0.07)' }
-        },
-        y: {
-          min: 0,
-          max: 100,
-          ticks: {
-            color: '#6b7068',
-            font: { family: 'IBM Plex Mono', size: 10 },
-            callback: v => v + '%'
-          },
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          border: { color: 'rgba(255,255,255,0.07)' },
-          title: { display: true, text: 'Valor de negocio ganado', color: '#6b7068', font: { family: 'IBM Plex Mono', size: 10 } }
-        }
+    options: baseOptions(
+      ctx => ctx.dataset.label + ': ' + (ctx.parsed.y !== null ? ctx.parsed.y : '—'),
+      {
+        x: xScale(),
+        y: yScale({ min: 0, max: 100, ticks: { color: C.muted, font: { family: C.mono, size: 10 }, callback: v => v + '%' }, title: { display: true, text: 'Valor de negocio ganado', color: C.muted, font: { family: C.mono, size: 10 } } })
       }
-    }
+    )
   });
 }
 
 // ---- RELEASE BURNDOWN ----
-const RELEASE_SPRINTS = [
-  { label: 'Sprint 1', start: new Date('2026-03-23'), end: new Date('2026-04-05') },
-  { label: 'Sprint 2', start: new Date('2026-04-06'), end: new Date('2026-04-19') },
-  { label: 'Sprint 3', start: new Date('2026-04-20'), end: new Date('2026-05-10') },
-  { label: 'Entrega',  start: new Date('2026-05-11'), end: new Date('2026-05-17') }
-];
-const TOTAL_SP = 114;
-
-let releaseChart = null;
-
 function buildReleaseChart(allIssues) {
   const today = new Date();
-
-  // SP completed per sprint (cumulative burn)
   let burned = 0;
-  const realRemaining = [TOTAL_SP]; // starts at 114 before Sprint 1
+  const realRemaining = [TOTAL_SP];
   RELEASE_SPRINTS.forEach(s => {
-    const endOfSprint = new Date(s.end.getTime() + 86400000);
-    // Only count if sprint has started
-    if (s.start > today) {
-      realRemaining.push(null);
-      return;
-    }
-    const sprintDone = allIssues
-      .filter(i => /done|cerrad|closed|complet/i.test(i.status) && i.closedAt && i.closedAt >= s.start && i.closedAt < endOfSprint)
+    if (s.start > today) { realRemaining.push(null); return; }
+    const done = allIssues
+      .filter(i => isDone(i.status) && i.closedAt && i.closedAt >= s.start && i.closedAt < endOfDay(s.end))
       .reduce((acc, i) => acc + i.sp, 0);
-    burned += sprintDone;
+    burned += done;
     realRemaining.push(Math.max(0, TOTAL_SP - burned));
   });
 
-  // Ideal: linear from 114 to 0 across sprints
-  const idealRemaining = [TOTAL_SP];
-  const idealBurnPerSprint = TOTAL_SP / RELEASE_SPRINTS.length;
-  RELEASE_SPRINTS.forEach((_, idx) => {
-    idealRemaining.push(Math.max(0, Math.round((TOTAL_SP - idealBurnPerSprint * (idx + 1)) * 10) / 10));
-  });
+  const idealPerSprint = TOTAL_SP / RELEASE_SPRINTS.length;
+  const idealRemaining = [TOTAL_SP, ...RELEASE_SPRINTS.map((_, i) => Math.max(0, Math.round((TOTAL_SP - idealPerSprint * (i + 1)) * 10) / 10))];
 
-  // Metrics
   const currentReal = realRemaining.filter(v => v !== null).slice(-1)[0];
-  const currentDone = TOTAL_SP - currentReal;
-  const currentSprintIdx = RELEASE_SPRINTS.findIndex(s => today >= s.start && today <= s.end);
-  const currentSprintLabel = currentSprintIdx >= 0 ? RELEASE_SPRINTS[currentSprintIdx].label : 'Entrega';
+  const sprintIdx = RELEASE_SPRINTS.findIndex(s => today >= s.start && today <= s.end);
 
-  document.getElementById('rel-done').textContent = currentDone;
+  document.getElementById('rel-done').textContent = TOTAL_SP - currentReal;
   document.getElementById('rel-remaining').textContent = currentReal;
-  document.getElementById('rel-sprint').textContent = currentSprintLabel;
-
-  const labels = ['Inicio', ...RELEASE_SPRINTS.map(s => s.label)];
+  document.getElementById('rel-sprint').textContent = sprintIdx >= 0 ? RELEASE_SPRINTS[sprintIdx].label : 'Entrega';
 
   const ctx = document.getElementById('release-chart').getContext('2d');
   if (releaseChart) releaseChart.destroy();
   releaseChart = new Chart(ctx, {
     type: 'line',
     data: {
-      labels,
+      labels: ['Inicio', ...RELEASE_SPRINTS.map(s => s.label)],
       datasets: [
-        {
-          label: 'Ideal',
-          data: idealRemaining,
-          borderColor: '#6b7068',
-          borderWidth: 1.5,
-          borderDash: [5, 4],
-          pointRadius: 4,
-          pointBackgroundColor: '#6b7068',
-          tension: 0,
-          fill: false
-        },
+        idealDataset(idealRemaining, { pointRadius: 4, pointBackgroundColor: C.muted }),
         {
           label: 'Real',
           data: realRemaining,
-          borderColor: '#4ade80',
+          borderColor: C.accent,
           backgroundColor: 'rgba(74,222,128,0.06)',
           borderWidth: 2,
           pointRadius: 5,
-          pointBackgroundColor: realRemaining.map((v, i) => {
-            if (v === null) return 'transparent';
-            const ideal = idealRemaining[i];
-            return v <= ideal ? '#4ade80' : '#f87171';
-          }),
+          pointBackgroundColor: realRemaining.map((v, i) => v === null ? 'transparent' : v <= idealRemaining[i] ? C.accent : C.danger),
           tension: 0,
           fill: true,
           spanGaps: false
         }
       ]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#1a1d1a',
-          borderColor: 'rgba(255,255,255,0.1)',
-          borderWidth: 1,
-          titleColor: '#6b7068',
-          bodyColor: '#e8ece8',
-          titleFont: { family: 'IBM Plex Mono', size: 11 },
-          bodyFont: { family: 'IBM Plex Mono', size: 12 },
-          callbacks: {
-            label: ctx => ctx.dataset.label + ': ' + (ctx.parsed.y !== null ? ctx.parsed.y + ' SP' : '—')
-          }
-        }
-      },
-      scales: {
-        x: {
-          ticks: { color: '#6b7068', font: { family: 'IBM Plex Mono', size: 11 } },
-          grid: { display: false },
-          border: { color: 'rgba(255,255,255,0.07)' }
-        },
-        y: {
-          min: 0,
-          max: TOTAL_SP + 10,
-          ticks: { color: '#6b7068', font: { family: 'IBM Plex Mono', size: 10 } },
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          border: { color: 'rgba(255,255,255,0.07)' },
-          title: { display: true, text: 'Story Points restantes', color: '#6b7068', font: { family: 'IBM Plex Mono', size: 10 } }
-        }
+    options: baseOptions(
+      ctx => ctx.dataset.label + ': ' + (ctx.parsed.y !== null ? ctx.parsed.y + ' SP' : '—'),
+      {
+        x: xScale(),
+        y: yScale({ min: 0, max: TOTAL_SP + 10, title: { display: true, text: 'Story Points restantes', color: C.muted, font: { family: C.mono, size: 10 } } })
       }
-    }
+    )
   });
 }
+
+// ---- TABS ----
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
 document.addEventListener('DOMContentLoaded', loadData);
 </script>
 </body>
