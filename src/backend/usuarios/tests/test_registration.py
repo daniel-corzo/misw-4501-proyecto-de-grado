@@ -127,7 +127,7 @@ async def test_register_auth_service_unavailable(override_client, mock_db_sessio
         response = await override_client.post("/usuarios", json=VALID_PAYLOAD)
         
         assert response.status_code == 503
-        assert response.json()["detail"] == "Auth MS no está disponible"
+        assert response.json()["detail"] == "Auth MS no esta disponible"
         
         # Verified DB rollback
         assert mock_db_session.rollback.called

@@ -72,7 +72,7 @@ struct LogInView: View {
                                 isSecuredField: true,
                                 text: $viewModel.password
                             )
-                            .textContentType(.newPassword)
+                            .textContentType(.password)
                             .focused($focusedField, equals: .password)
                             .submitLabel(.done)
                             .onSubmit { focusedField = nil }
@@ -92,20 +92,18 @@ struct LogInView: View {
                         
                         // MARK: - Login button
                         Button {
-                            isLoading = true
-                            showError = false
-                            
-                            // 2️⃣ Simulación de login (API)
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                                isLoading = false
-                                
-                                if viewModel.email.isEmpty || viewModel.password.isEmpty {
-                                    // ❌ Error: campos vacíos
-                                    showError = true
-                                } else {
-                                    // ✅ Login OK: navegar
+                            Task {
+                                focusedField = nil
+                                isLoading = true
+                                showError = false
+                                do {
+                                    let _ = try await viewModel.logIn()
                                     isLoggedIn = true
+                                } catch {
+                                    // errorMessage is already set in ViewModel.logIn()
+                                    showError = true
                                 }
+                                isLoading = false
                             }
                         } label: {
                             HStack {
@@ -130,8 +128,10 @@ struct LogInView: View {
                         .alert("Error", isPresented: $showError, actions: {
                             Button("OK", role: .cancel) { }
                         }, message: {
-                            Text(LocalizedStringResource.LogIn.emailAndPasswordError)
+                            Text(viewModel.errorMessage ?? LocalizedStringResource.LogIn.emailAndPasswordError)
                         })
+                        .disabled(!viewModel.canSubmit || isLoading)
+                        .opacity((!viewModel.canSubmit || isLoading) ? 0.6 : 1.0)
                         
                         Divider()
                         
