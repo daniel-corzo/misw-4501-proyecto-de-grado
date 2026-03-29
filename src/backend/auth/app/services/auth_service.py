@@ -9,6 +9,7 @@ from travelhub_common.security import RoleEnum
 
 from app.schemas.auth import RegisterRequest, LoginRequest
 from app.models.user import UserCredentials
+from app.models.revoked_token import RevokedToken
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
@@ -65,3 +66,13 @@ async def authenticate_user(body: LoginRequest, db: AsyncSession, settings: Base
     }
     
     return create_access_token(token_data, settings=settings)
+
+
+async def revoke_token(token: str, db: AsyncSession) -> None:
+    db.add(RevokedToken(token=token))
+    await db.commit()
+
+
+async def is_token_revoked(token: str, db: AsyncSession) -> bool:
+    result = await db.execute(select(RevokedToken).where(RevokedToken.token == token))
+    return result.scalars().first() is not None

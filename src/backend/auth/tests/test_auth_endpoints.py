@@ -109,7 +109,7 @@ async def test_login_invalid_password(override_client, mock_db_session):
     """Test login rejects invalid signatures on existing credentials"""
     from app.services.auth_service import get_password_hash
     hashed = get_password_hash("password123")
-    
+
     mock_result = MagicMock()
     valid_user = UserCredentials(
         id=uuid4(),
@@ -127,3 +127,77 @@ async def test_login_invalid_password(override_client, mock_db_session):
 
     assert response.status_code == 401
     assert response.json()["detail"] == "Credenciales invalidas"
+
+
+# ── Logout ────────────────────────────────────────────────────────────────────
+
+SYMMETRIC_KEY = "test_key_for_logout"
+
+@pytest.fixture
+async def logout_client(mock_db_session):
+    """Client fixture con configuracion simetrica para tests de logout."""
+    async def override_get_db():
+        yield mock_db_session
+
+    test_settings = BaseAppSettings(
+        jwt_private_key=SYMMETRIC_KEY,
+        jwt_public_key=SYMMETRIC_KEY,
+        jwt_algorithm="HS256",
+        jwt_secret="local-secret",
+    )
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_settings] = lambda: test_settings
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+        yield c, test_settings
+
+    app.dependency_overrides.clear()
+
+
+def _make_test_token(settings: BaseAppSettings) -> str:
+    from app.services.auth_service import create_access_token
+    return create_access_token(
+        {"sub": str(uuid4()), "email": "test@test.com", "role": "USER"},
+        settings,
+    )
+
+
+@pytest.mark.asyncio
+async def test_logout_success(logout_client, mock_db_session):
+    """Logout con token valido retorna 200 y persiste la revocacion."""
+    client, settings = logout_client
+    token = _make_test_token(settings)
+
+    response = await client.post(
+        "/auth/logout",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["message"] == "Sesion cerrada correctamente"
+    assert mock_db_session.add.called
+    assert mock_db_session.commit.called
+
+
+@pytest.mark.asyncio
+async def test_logout_invalid_token(logout_client):
+    """Logout con token invalido retorna 401."""
+    client, _ = logout_client
+
+    response = await client.post(
+        "/auth/logout",
+        headers={"Authorization": "Bearer esto.no.es.un.jwt"},
+    )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Token invalido"
+
+
+@pytest.mark.asyncio
+async def test_logout_no_token(logout_client):
+    """Logout sin header Authorization retorna 403."""
+    client, _ = logout_client
+
+    response = await client.post("/auth/logout")
+
+    assert response.status_code == 403
