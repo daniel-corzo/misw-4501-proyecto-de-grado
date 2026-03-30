@@ -9,6 +9,8 @@ import SwiftUI
 
 struct SignUpView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.userService) private var userService
+    @Environment(\.toastManager) private var toastManager
 
     @State private var viewModel = ViewModel()
 
@@ -118,7 +120,20 @@ struct SignUpView: View {
                     }  //: VStack Form
 
                     Button {
-                        // TODO: Implement this
+                        Task {
+                            let newUsuario = NewUsuario(
+                                email: viewModel.email,
+                                password: viewModel.password,
+                                nombre: viewModel.fullName,
+                                telefono: viewModel.phone,
+                                tipo: .viajero
+                            )
+
+                            await self.viewModel.create(
+                                user: newUsuario,
+                                dismiss: self.dismiss
+                            )
+                        }
                     } label: {
                         HStack {
                             Spacer()
@@ -137,7 +152,8 @@ struct SignUpView: View {
                             Spacer()
                         }
                     }
-                    .capsuleButton()
+                    .capsuleButton(disabled: !self.viewModel.formIsValid)
+                    .disabled(!self.viewModel.formIsValid)
 
                     Divider()
 
@@ -169,9 +185,17 @@ struct SignUpView: View {
                 for: nil
             )
         }
+        .task {
+            self.viewModel.userService = self.userService
+            self.viewModel.toastManager = self.toastManager
+        }
     }
 }
 
 #Preview {
     SignUpView()
+        .environment(
+            \.userService,
+            UserServiceImpl(httpService: HttpServiceImpl.shared)
+        )
 }

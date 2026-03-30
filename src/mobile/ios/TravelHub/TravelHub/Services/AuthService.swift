@@ -51,7 +51,7 @@ final class AuthService: AuthServicing {
     private let baseURL: URL
     private let urlSession: URLSession
 
-    init(baseURL: URL = AppConfig.apiBaseURL, urlSession: URLSession = .shared) {
+    init(baseURL: URL = HttpRoutes.auth.url, urlSession: URLSession = .shared) {
         self.baseURL = baseURL
         self.urlSession = urlSession
     }
