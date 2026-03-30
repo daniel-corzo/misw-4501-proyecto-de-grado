@@ -10,7 +10,7 @@ class CrearUsuarioRequest(BaseModel):
     email: str
     password: str
     role: Optional[RoleEnum] = RoleEnum.USER
-    nombre: Optional[str] = None
+    nombre: str
     telefono: Optional[str] = None
     tipo: TipoUsuario
 

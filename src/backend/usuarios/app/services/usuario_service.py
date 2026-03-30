@@ -23,11 +23,7 @@ def _get_password_hash(password: str) -> str:
 async def create_user(
     body: CrearUsuarioRequest, db: AsyncSession, settings: Settings
 ) -> Usuario:
-    result = await db.execute(
-        select(Usuario)
-        .where(Usuario.email == body.email)
-        .where(Usuario.tipo == body.tipo)
-    )
+    result = await db.execute(select(Usuario).where(Usuario.email == body.email))
     if result.scalars().first():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

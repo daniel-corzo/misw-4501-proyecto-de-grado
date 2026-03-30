@@ -25,4 +25,4 @@ class Usuario(BaseModel):
         Enum(RoleEnum), nullable=False, default=RoleEnum.USER
     )
 
-    viajero: Mapped[Viajero | None] = relationship(Viajero)
+    viajero: Mapped[Viajero | None] = relationship(Viajero, uselist=False)
