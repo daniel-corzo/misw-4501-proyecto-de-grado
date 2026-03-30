@@ -1,6 +1,5 @@
 import { Routes } from '@angular/router';
 import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
-import { AuthLayoutComponent } from './layout/auth-layout/auth-layout.component';
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
 
@@ -55,29 +54,6 @@ export const routes: Routes = [
             (m) => m.TermsComponent
           ),
       },
-    ],
-  },
-
-  // ── Auth shell (solo logo + card centrada) ───────────────────────
-  {
-    path: 'auth',
-    component: AuthLayoutComponent,
-    children: [
-      {
-        path: 'login',
-        loadComponent: () =>
-          import('./features/auth/login/login.component').then(
-            (m) => m.LoginComponent
-          ),
-      },
-      {
-        path: 'register',
-        loadComponent: () =>
-          import('./features/auth/register/register.component').then(
-            (m) => m.RegisterComponent
-          ),
-      },
-      { path: '', redirectTo: 'login', pathMatch: 'full' },
     ],
   },
 

@@ -1,3 +1,5 @@
+@use '../auth-shared';
+
 .reg-header {
   margin-bottom: var(--space-lg);
 }
@@ -67,19 +69,8 @@
   }
 }
 
-/* Input with icon */
+/* Input with icon — extends shared base */
 .input-wrapper {
-  position: relative;
-
-  .input-icon {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--color-secondary);
-    pointer-events: none;
-  }
-
   .input-toggle {
     position: absolute;
     right: 10px;
@@ -171,31 +162,6 @@
   transition: background 0.15s;
 
   &:hover { background: var(--color-bg); }
-}
-
-/* Back to login footer */
-.auth-divider {
-  height: 1px;
-  background: var(--color-border);
-  margin: var(--space-md) 0 var(--space-sm);
-}
-
-.auth-footer {
-  text-align: center;
-  font: var(--font-body2);
-  color: var(--color-text-muted);
-}
-
-.link-btn {
-  color: var(--color-primary);
-  font: var(--font-body2);
-  font-weight: 600;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-
-  &:hover { text-decoration: underline; }
 }
 
 .btn-primary {
