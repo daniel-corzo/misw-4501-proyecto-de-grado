@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
 import { AuthLayoutComponent } from './layout/auth-layout/auth-layout.component';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   // ── Authenticated shell (navbar + footer) ───────────────────────
@@ -24,6 +25,7 @@ export const routes: Routes = [
       },
       {
         path: 'settings',
+        canActivate: [authGuard],
         loadComponent: () =>
           import('./features/settings/settings.component').then(
             (m) => m.SettingsComponent

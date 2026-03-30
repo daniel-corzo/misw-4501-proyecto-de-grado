@@ -15,7 +15,7 @@ from travelhub_common.security import RoleEnum
 
 VALID_PAYLOAD = {
     "email": "test@example.com",
-    "password": "strongPassword123",
+    "password": "StrongPass123!",
     "nombre": "Test",
     "telefono": "1234567890",
     "tipo": TipoUsuario.VIAJERO.value,
