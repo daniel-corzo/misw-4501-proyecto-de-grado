@@ -14,6 +14,11 @@ class Politica(BaseModel):
     dias_antelacion = Column(Integer, nullable=False, default=0)
     
     # Internal relationship within the hoteles service
-    hotel_id = Column(UUID(as_uuid=True), ForeignKey("hotel.id"), nullable=False, index=True)
+    hotel_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey(f"{Hotel.__tablename__}.id"),
+        nullable=False,
+        index=True,
+    )
 
     hotel = relationship(Hotel, back_populates="politicas")

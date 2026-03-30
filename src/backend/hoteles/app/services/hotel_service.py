@@ -1,5 +1,4 @@
 import uuid
-from enum import Enum
 from typing import Literal
 
 from fastapi import HTTPException, status
@@ -11,6 +10,7 @@ from app.models.habitacion import Habitacion
 from app.models.hotel import Hotel
 from app.models.politica import Politica
 from app.schemas.hotel import (
+    AmenidadHotel,
     CrearHotelRequest,
     HabitacionDetalleResponse,
     HotelDetalleResponse,
@@ -20,15 +20,15 @@ from app.schemas.hotel import (
 )
 
 
-class AmenidadPopular(str, Enum):
-    WIFI = "Wi-Fi"
-    POOL = "Pool"
-    PET_FRIENDLY = "Pet Friendly"
-    BREAKFAST_INCLUDED = "Breakfast Included"
-    PARKING = "Parking"
-
-
 OrdenHoteles = Literal["precio_asc", "precio_desc", "rating_desc"]
+
+AMENIDADES_POPULARES_PERMITIDAS = {
+    AmenidadHotel.wifi,
+    AmenidadHotel.pool,
+    AmenidadHotel.petFriendly,
+    AmenidadHotel.breakfastIncluded,
+    AmenidadHotel.parking,
+}
 
 
 async def listar_hoteles_service(
@@ -40,7 +40,7 @@ async def listar_hoteles_service(
     precio_max: float | None,
     rango_50_1000: bool,
     estrellas: list[int] | None,
-    amenidades_populares: list[AmenidadPopular] | None,
+    amenidades_populares: list[AmenidadHotel] | None,
 ) -> ListaHotelesResponse:
     precio_por_hotel_subquery = (
         select(
@@ -79,6 +79,15 @@ async def listar_hoteles_service(
             base_query = base_query.where(Hotel.estrellas.in_(estrellas_limpias))
 
     if amenidades_populares:
+        amenidades_no_permitidas = [a.value for a in amenidades_populares if a not in AMENIDADES_POPULARES_PERMITIDAS]
+        if amenidades_no_permitidas:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "Solo se permiten amenidades populares en el filtro: "
+                    "Wi-Fi, Pool, Pet Friendly, Breakfast Included, Parking"
+                ),
+            )
         valores_amenidades = [amenidad.value for amenidad in amenidades_populares]
         base_query = base_query.where(Hotel.amenidades.contains(valores_amenidades))
 

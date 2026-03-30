@@ -4,9 +4,8 @@ from fastapi import APIRouter, status, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.schemas.hotel import CrearHotelRequest, HotelDetalleResponse, ListaHotelesResponse
+from app.schemas.hotel import AmenidadHotel, CrearHotelRequest, HotelDetalleResponse, ListaHotelesResponse
 from app.services.hotel_service import (
-    AmenidadPopular,
     OrdenHoteles,
     crear_hotel_service,
     listar_hoteles_service,
@@ -26,7 +25,7 @@ async def listar_hoteles(
     precio_max: float | None = Query(default=None, ge=0),
     rango_50_1000: bool = Query(default=False),
     estrellas: list[int] | None = Query(default=None),
-    amenidades_populares: list[AmenidadPopular] | None = Query(default=None),
+    amenidades_populares: list[AmenidadHotel] | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):

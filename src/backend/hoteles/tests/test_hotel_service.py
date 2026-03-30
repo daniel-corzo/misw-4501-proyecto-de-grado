@@ -6,9 +6,8 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from fastapi import HTTPException
 
-from app.schemas.hotel import CrearHotelRequest
+from app.schemas.hotel import AmenidadHotel, CrearHotelRequest
 from app.services.hotel_service import (
-    AmenidadPopular,
     crear_hotel_service,
     listar_hoteles_service,
     obtener_hotel_service,
@@ -65,7 +64,7 @@ async def test_listar_hoteles_service_returns_filtered_result():
         precio_max=1000,
         rango_50_1000=True,
         estrellas=[3, 4, 4],
-        amenidades_populares=[AmenidadPopular.WIFI, AmenidadPopular.POOL],
+        amenidades_populares=[AmenidadHotel.wifi, AmenidadHotel.pool],
     )
 
     assert response.total == 1
@@ -98,6 +97,29 @@ async def test_listar_hoteles_service_raises_on_invalid_price_range():
 
     assert exc.value.status_code == 400
     assert "precio_min" in exc.value.detail
+    db.execute.assert_not_awaited()
+
+
+@pytest.mark.anyio
+async def test_listar_hoteles_service_raises_when_amenidad_no_es_popular():
+    db = AsyncMock()
+    db.execute = AsyncMock()
+
+    with pytest.raises(HTTPException) as exc:
+        await listar_hoteles_service(
+            db=db,
+            limit=10,
+            offset=0,
+            orden="rating_desc",
+            precio_min=None,
+            precio_max=None,
+            rango_50_1000=False,
+            estrellas=None,
+            amenidades_populares=[AmenidadHotel.gym],
+        )
+
+    assert exc.value.status_code == 400
+    assert "amenidades populares" in exc.value.detail
     db.execute.assert_not_awaited()
 
 

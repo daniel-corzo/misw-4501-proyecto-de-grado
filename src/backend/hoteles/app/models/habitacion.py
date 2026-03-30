@@ -17,5 +17,10 @@ class Habitacion(BaseModel):
     impuestos = Column(Integer, nullable=False, default=0)
     disponible = Column(Boolean, nullable=False, default=True)
 
-    hotel_id = Column(UUID(as_uuid=True), ForeignKey("hotel.id"), nullable=False, index=True)
+    hotel_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey(f"{Hotel.__tablename__}.id"),
+        nullable=False,
+        index=True,
+    )
     hotel = relationship(Hotel, back_populates="habitaciones")
