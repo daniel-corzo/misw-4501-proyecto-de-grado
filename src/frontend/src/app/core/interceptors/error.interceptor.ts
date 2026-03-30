@@ -14,7 +14,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((error: HttpErrorResponse) => {
       if (error.status === 401 && !req.url.includes('/auth/login')) {
         auth.clearSession();
-        router.navigate(['/auth/login']);
+        router.navigate(['/']).then(() => auth.openLoginModal());
       } else if (error.status === 403) {
         toast.warning('No tienes permisos para realizar esta acción');
       } else if (error.status >= 500) {
