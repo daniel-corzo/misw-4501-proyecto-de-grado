@@ -51,9 +51,7 @@ async def create_user(
     # TODO: Call hoteles to create the hotel profile
 
     await db.commit()
-    await db.refresh(user)
-    if user.viajero is not None:
-        await db.refresh(user.viajero)
+    await db.refresh(user, ["viajero"])
 
     return user
 
