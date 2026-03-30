@@ -11,5 +11,5 @@ class Viajero(BaseModel):
     contacto: Mapped[str] = mapped_column(String(255), nullable=False)
 
     usuario_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("usuarios.id"), nullable=False, unique=True
+        UUID(as_uuid=True), ForeignKey("usuario.id"), nullable=False, unique=True
     )
