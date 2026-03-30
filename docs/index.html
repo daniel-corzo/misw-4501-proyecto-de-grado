@@ -92,7 +92,6 @@ tr:hover td { background: var(--surface2); }
 .footer-link { color: var(--accent); text-decoration: none; font-family: var(--mono); font-size: 11px; }
 .footer-link:hover { text-decoration: underline; }
 </style>
-</style>
 </head>
 <body>
 <header class="header">
@@ -363,6 +362,70 @@ function endOfDay(d) {
   return new Date(d.getTime() + 86400000);
 }
 
+// Returns the effective date to attribute a done issue to a week/sprint.
+// If closedAt exists and is on or after iterStart, use it directly.
+// If closedAt is before iterStart (issue closed before sprint officially started),
+// clamp it to iterStart so it falls in the sprint's first week.
+// If no closedAt, use iterStart (sprint start) as fallback — NOT today.
+// This matches the burndown logic which counts all Done issues regardless of closedAt.
+function effectiveDate(issue, today) {
+  if (issue.closedAt) {
+    const floor = issue.iterStart || new Date(0);
+    return issue.closedAt >= floor ? issue.closedAt : floor;
+  }
+  // No closedAt: issue is Done by status but GitHub didn't record a close date.
+  // Fall back to iterStart so the SP count in the sprint's first week, not pushed
+  // forward to today (which may land in a future week).
+  return issue.iterStart || today;
+}
+
+// Convert any Date to a local YYYY-MM-DD string (avoids UTC offset shifting the date).
+// Return the UTC date string (YYYY-MM-DD) of a Date object.
+// wStart/wEnd are defined as new Date('YYYY-MM-DD') = UTC midnight, so their
+// UTC date string is always the intended calendar date.
+function toUTCDateStr(d) {
+  return d.toISOString().slice(0, 10);
+}
+
+// Return the LOCAL date string (YYYY-MM-DD) for a timestamp.
+// closedAt comes from GitHub as an ISO string like "2026-03-29T02:30:00Z".
+// In Bogotá (UTC-5) that is 2026-03-28 local — but we want to treat it as
+// "the day the developer closed it in their local timezone", so we use local date.
+function toLocalDateStr(d) {
+  return d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
+}
+
+// Check if a Done issue falls within a calendar week [wStart, wEnd] inclusive.
+// wStart/wEnd are UTC-midnight Date objects — use their UTC date as the boundary.
+// closedAt is a UTC timestamp — use local date to reflect the developer's timezone.
+// iterStart is also UTC-midnight — use its UTC date.
+function inWeekLocal(issue, wStart, wEnd) {
+  let ds;
+  if (issue.closedAt) {
+    // Floor: if closedAt is before iterStart, clamp to iterStart.
+    const floorStr = issue.iterStart
+      ? toUTCDateStr(issue.iterStart)
+      : (SPRINT_START ? toUTCDateStr(SPRINT_START) : '1970-01-01');
+    const closedStr = toLocalDateStr(issue.closedAt);
+    ds = closedStr >= floorStr ? closedStr : floorStr;
+  } else {
+    // No closedAt: attribute to the start of the iteration.
+    ds = issue.iterStart
+      ? toUTCDateStr(issue.iterStart)
+      : (SPRINT_START ? toUTCDateStr(SPRINT_START) : '1970-01-01');
+  }
+  const ws = toUTCDateStr(wStart);
+  const we = toUTCDateStr(wEnd);
+  return ds >= ws && ds <= we;
+}
+
+// Same for release sprint ranges.
+function inSprintLocal(issue, sStart, sEnd) {
+  return inWeekLocal(issue, sStart, sEnd);
+}
+
 // Week start dates are stored as UTC midnight (new Date('YYYY-MM-DD')).
 // In UTC-5 that shifts the calendar date back one day, so we must compare
 // the UTC date string of the week against the LOCAL date string of today.
@@ -481,7 +544,9 @@ async function loadData() {
       const stFv = get(statusField);
       const status = stFv ? stFv.name : (item.content.state === 'CLOSED' ? 'Done' : 'Todo');
       const closedAt = item.content.closedAt ? new Date(item.content.closedAt) : null;
-      return { sp, bv, status, closedAt };
+      const iterFv = fvs.find(fv => fv.field && fv.field.id === iterField.id && fv.startDate);
+      const iterStart = iterFv ? new Date(iterFv.startDate + 'T00:00:00') : null;
+      return { sp, bv, status, closedAt, iterStart };
     }
 
     const sprintItems = allItems.filter(item => {
@@ -564,7 +629,11 @@ function buildBurndownChart(issues, totalSP, workDays, today) {
     ideal.push(Math.max(0, Math.round((totalSP - idealBurnPerDay * idx) * 10) / 10));
     if (dd <= today) {
       const burned = issues
-        .filter(i => isDone(i.status) && i.closedAt && i.closedAt < endOfDay(dd))
+        .filter(i => {
+          if (!isDone(i.status)) return false;
+          const d = effectiveDate(i, today);
+          return d < endOfDay(dd);
+        })
         .reduce((s, i) => s + i.sp, 0);
       actual.push(totalSP - burned);
     } else {
@@ -615,10 +684,13 @@ function buildTable(issues) {
 
 function buildVelocityChart(allIssues) {
   const today = new Date();
+
+  // Use inWeekLocal: compares local calendar date strings so UTC midnight
+  // boundaries never shift an issue into the wrong week.
   const realData = WEEKS.map(w => {
     if (isFutureWeek(w.start)) return null;
     return allIssues
-      .filter(i => isDone(i.status) && i.closedAt && i.closedAt >= w.start && i.closedAt < endOfDay(w.end))
+      .filter(i => isDone(i.status) && inWeekLocal(i, w.start, w.end))
       .reduce((s, i) => s + i.sp, 0);
   });
 
@@ -658,7 +730,7 @@ function buildValueChart(allIssues) {
   const realCumulative = WEEKS.map(w => {
     if (isFutureWeek(w.start)) return null;
     const weekBV = allIssues
-      .filter(i => isDone(i.status) && i.closedAt && i.closedAt >= w.start && i.closedAt < endOfDay(w.end))
+      .filter(i => isDone(i.status) && inWeekLocal(i, w.start, w.end))
       .reduce((s, i) => s + i.bv, 0);
     accumulated += weekBV;
     return Math.round(accumulated * 10) / 10;
@@ -706,7 +778,7 @@ function buildReleaseChart(allIssues) {
   RELEASE_SPRINTS.forEach(s => {
     if (isFutureWeek(s.start)) { realRemaining.push(null); return; }
     const done = allIssues
-      .filter(i => isDone(i.status) && i.closedAt && i.closedAt >= s.start && i.closedAt < endOfDay(s.end))
+      .filter(i => isDone(i.status) && inSprintLocal(i, s.start, s.end))
       .reduce((acc, i) => acc + i.sp, 0);
     burned += done;
     realRemaining.push(Math.max(0, TOTAL_SP - burned));
