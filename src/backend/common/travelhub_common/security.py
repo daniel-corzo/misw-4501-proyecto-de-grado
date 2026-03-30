@@ -54,7 +54,7 @@ async def get_current_user(
     factory = get_session_factory(settings.db_url)
     async with factory() as db:
         result = await db.execute(
-            text("SELECT 1 FROM revoked_tokens WHERE token = :token"),
+            text("SELECT 1 FROM revoked_token WHERE token = :token"),
             {"token": token}
         )
         if result.first() is not None:
