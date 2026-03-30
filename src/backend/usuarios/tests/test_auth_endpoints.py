@@ -15,6 +15,7 @@ from travelhub_common.security import RoleEnum
 @pytest.fixture
 def mock_db_session():
     mock_session = AsyncMock()
+    mock_session.add = MagicMock()  # db.add() is synchronous in AsyncSession
     return mock_session
 
 

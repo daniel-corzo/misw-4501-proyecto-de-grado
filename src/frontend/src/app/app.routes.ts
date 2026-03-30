@@ -22,6 +22,13 @@ export const routes: Routes = [
             (m) => m.HomeComponent
           ),
       },
+      {
+        path: 'settings',
+        loadComponent: () =>
+          import('./features/settings/settings.component').then(
+            (m) => m.SettingsComponent
+          ),
+      },
     ],
   },
 

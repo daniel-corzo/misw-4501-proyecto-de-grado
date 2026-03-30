@@ -33,7 +33,7 @@ def mock_db_session():
     mock_result.scalars.return_value.first.return_value = None
     mock_session.execute.return_value = mock_result
     
-    async def mock_refresh(instance):
+    async def mock_refresh(instance, attribute_names=None):
         instance.created_at = datetime.datetime.now(datetime.UTC).isoformat()
     mock_session.refresh.side_effect = mock_refresh
     
