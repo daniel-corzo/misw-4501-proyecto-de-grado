@@ -11,16 +11,16 @@ Este repositorio contiene el MVP desarrollado como proyecto de grado.
 
 ## Stack
 
-| Capa | Tecnología |
-|------|-----------|
-| Web | Angular 19 |
-| Móvil | SwiftUI (iOS) |
-| Backend | FastAPI (Python 3.12) — 5 microservicios |
-| Base de datos | PostgreSQL |
-| Caché | Redis |
-| Cloud | AWS (ECS Fargate, ALB, SQS, RDS Aurora) |
-| IaC | Terraform |
-| CI/CD | GitHub Actions + AWS CodeBuild / CodeDeploy |
+| Capa          | Tecnología                                  |
+| ------------- | ------------------------------------------- |
+| Web           | Angular 19                                  |
+| Móvil         | SwiftUI (iOS)                               |
+| Backend       | FastAPI (Python 3.12) — 5 microservicios    |
+| Base de datos | PostgreSQL                                  |
+| Caché         | Redis                                       |
+| Cloud         | AWS (ECS Fargate, ALB, SQS, RDS Aurora)     |
+| IaC           | Terraform                                   |
+| CI/CD         | GitHub Actions + AWS CodeBuild / CodeDeploy |
 
 ## Estructura del repositorio
 
@@ -49,6 +49,7 @@ src/
 ### Backend
 
 1. Generar llaves JWT:
+
    ```bash
    python generate_keys.py
    ```
@@ -59,6 +60,7 @@ src/
    ```
 
 **Plantilla `.env`:**
+
 ```env
 ENVIRONMENT=local
 POSTGRES_USER=travelhub
@@ -84,14 +86,14 @@ Web en `http://localhost:4200`
 
 ### Puertos
 
-| Servicio | Puerto | Docs |
-|----------|--------|------|
-| API Gateway (nginx) | 8080 | http://localhost:8080/docs |
-| usuarios | 8002 | http://localhost:8002/docs |
-| busquedas | 8003 | http://localhost:8003/docs |
-| hoteles | 8004 | http://localhost:8004/docs |
-| reservas | 8006 | http://localhost:8006/docs |
-| notificaciones | 8007 | http://localhost:8007/docs |
+| Servicio            | Puerto | Docs                       |
+| ------------------- | ------ | -------------------------- |
+| API Gateway (nginx) | 8080   | http://localhost:8080/docs |
+| usuarios            | 8002   | http://localhost:8002/docs |
+| busquedas           | 8003   | http://localhost:8003/docs |
+| hoteles             | 8004   | http://localhost:8004/docs |
+| reservas            | 8006   | http://localhost:8006/docs |
+| notificaciones      | 8007   | http://localhost:8007/docs |
 
 El Swagger UI unificado en `http://localhost:8080/docs` agrupa todos los servicios con un dropdown para navegar entre ellos.
 
@@ -119,9 +121,9 @@ Los scripts se ejecutan desde la raíz del repositorio y aplican/destruyen los s
 
 Proyecto de grado — MISW 4501/4502, Universidad de Los Andes. :goat:
 
-| Integrante | GitHub |
-|-----------|--------|
-| Andrés Donoso | [@afDonosoD](https://github.com/afDonosoD) |
-| Juan Avelido | [@ja-avos](https://github.com/ja-avos) |
-| Germán Martínez | [@DavidMS73](https://github.com/DavidMS73) |
-| Daniel Corzo | [@daniel-corzo](https://github.com/daniel-corzo) |
+| Integrante      | GitHub                                           |
+| --------------- | ------------------------------------------------ |
+| Andrés Donoso   | [@afDonosoD](https://github.com/afDonosoD)       |
+| Juan Avelido    | [@ja-avos](https://github.com/ja-avos)           |
+| Germán Martínez | [@DavidMS73](https://github.com/DavidMS73)       |
+| Daniel Corzo    | [@daniel-corzo](https://github.com/daniel-corzo) |

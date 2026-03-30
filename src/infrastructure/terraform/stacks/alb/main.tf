@@ -1,5 +1,5 @@
 locals {
-  # Mapa de nombre de servicio → prefijo real del router en la app
+  # Mapa de nombre de servicio → prefijos de ruta en la app (mismo TG si hay varios)
   services = {
     usuarios       = "usuarios"
     busquedas      = "busquedas"
@@ -18,9 +18,9 @@ module "alb" {
   vpc_id     = data.terraform_remote_state.network.outputs.vpc_id
   subnet_ids = data.terraform_remote_state.network.outputs.public_subnet_ids
 
-  certificate_arn   = data.terraform_remote_state.dns.outputs.acm_certificate_arn
-  zone_id           = data.terraform_remote_state.dns.outputs.route53_zone_id
-  full_domain       = var.full_domain
+  certificate_arn = data.terraform_remote_state.dns.outputs.acm_certificate_arn
+  zone_id         = data.terraform_remote_state.dns.outputs.route53_zone_id
+  full_domain     = var.full_domain
 
   target_port       = var.target_port
   health_check_path = var.health_check_path
