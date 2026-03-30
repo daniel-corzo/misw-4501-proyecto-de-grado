@@ -1,13 +1,10 @@
 locals {
   # Mapa de nombre de servicio → prefijo real del router en la app
   services = {
-    auth           = "auth"
     usuarios       = "usuarios"
-    busqueda       = "busqueda"
+    busquedas      = "busquedas"
     hoteles        = "hoteles"
-    inventario     = "inventario"
     reservas       = "reservas"
-    pagos          = "pagos"
     notificaciones = "notificaciones"
   }
 }

@@ -9,10 +9,10 @@ graph TB
     subgraph AWS
         subgraph CI_CD [CI/CD]
             CP_FE[CodePipeline\nfrontend\nSource→Build→Deploy→Invalidate]
-            CP_BE[CodePipeline x8\nbackend\nSource→Build→Deploy]
+            CP_BE[CodePipeline x5\nbackend\nSource→Build→Deploy]
             CB_FE[CodeBuild\nAngular build]
-            CB_BE[CodeBuild x8\nDocker build + push ECR]
-            CD[CodeDeploy x8\nBlue/Green ECS]
+            CB_BE[CodeBuild x5\nDocker build + push ECR]
+            CD[CodeDeploy x5\nBlue/Green ECS]
         end
 
         subgraph Frontend [Frontend]
@@ -22,8 +22,8 @@ graph TB
 
         subgraph LoadBalancing [Load Balancing]
             ALB[Application Load Balancer\npath-based routing]
-            TG_BLUE[Target Groups x8\n-blue\nproduction traffic]
-            TG_GREEN[Target Groups x8\n-green\nnew version]
+            TG_BLUE[Target Groups x5\n-blue\nproduction traffic]
+            TG_GREEN[Target Groups x5\n-green\nnew version]
         end
 
         subgraph Network [VPC — us-east-1]
@@ -36,19 +36,16 @@ graph TB
         end
 
         subgraph Compute [ECS Fargate Cluster]
-            SVC_AUTH[auth\nservice]
             SVC_USR[usuarios\nservice]
-            SVC_BSQ[busqueda\nservice]
+            SVC_BSQ[busquedas\nservice]
             SVC_HOT[hoteles\nservice]
-            SVC_INV[inventario\nservice]
             SVC_RES[reservas\nservice]
-            SVC_PAG[pagos\nservice]
             SVC_NOT[notificaciones\nservice]
         end
 
         subgraph Storage [Data Layer]
             RDS[(RDS PostgreSQL 15\ndb.t3.micro)]
-            ECR[ECR\n8 repositorios Docker]
+            ECR[ECR\n5 repositorios Docker]
             SM[Secrets Manager\ndb_url + jwt_secret]
             S3_ART[S3 Artifacts\npipeline artifacts]
         end
@@ -63,30 +60,24 @@ graph TB
 
     %% API flow — CloudFront /api/* behavior → ALB path-based routing
     CF -->|/api/*| ALB
-    ALB -->|/auth/*| TG_BLUE
     ALB -->|/usuarios/*| TG_BLUE
-    ALB -->|/busqueda/*| TG_BLUE
+    ALB -->|/busquedas/*| TG_BLUE
     ALB -->|/hoteles/*| TG_BLUE
-    ALB -->|/inventario/*| TG_BLUE
     ALB -->|/reservas/*| TG_BLUE
-    ALB -->|/pagos/*| TG_BLUE
     ALB -->|/notificaciones/*| TG_BLUE
 
-    TG_BLUE --> SVC_AUTH
     TG_BLUE --> SVC_USR
     TG_BLUE --> SVC_BSQ
     TG_BLUE --> SVC_HOT
-    TG_BLUE --> SVC_INV
     TG_BLUE --> SVC_RES
-    TG_BLUE --> SVC_PAG
     TG_BLUE --> SVC_NOT
 
     %% Green TGs used during deployments
-    TG_GREEN -.->|blue/green\ndeployment| SVC_AUTH
+    TG_GREEN -.->|blue/green\ndeployment| SVC_USR
 
     %% Data
-    SVC_AUTH & SVC_USR & SVC_BSQ & SVC_HOT & SVC_INV & SVC_RES & SVC_PAG & SVC_NOT --> RDS
-    SM -.->|secrets injection| SVC_AUTH
+    SVC_USR & SVC_BSQ & SVC_HOT & SVC_RES & SVC_NOT --> RDS
+    SM -.->|secrets injection| SVC_USR
 
     %% CI/CD backend
     GH -->|push src/backend/**| CP_BE

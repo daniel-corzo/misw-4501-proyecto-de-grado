@@ -4,6 +4,7 @@ import bcrypt
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from app.schemas.usuario import (
     CrearUsuarioRequest,
@@ -51,15 +52,15 @@ async def create_user(
     # TODO: Call hoteles to create the hotel profile
 
     await db.commit()
-    await db.refresh(user)
-    if user.viajero is not None:
-        await db.refresh(user.viajero)
-
     return user
 
 
 async def get_my_profile(current_user: Usuario, db: AsyncSession) -> Usuario:
-    result = await db.execute(select(Usuario).where(Usuario.id == current_user.id))
+    result = await db.execute(
+        select(Usuario)
+        .options(selectinload(Usuario.viajero))
+        .where(Usuario.id == current_user.id)
+    )
     user_profile = result.scalars().first()
 
     if not user_profile:
@@ -71,7 +72,11 @@ async def get_my_profile(current_user: Usuario, db: AsyncSession) -> Usuario:
 
 
 async def get_user_by_id(usuario_id: uuid.UUID, db: AsyncSession) -> Usuario:
-    result = await db.execute(select(Usuario).where(Usuario.id == usuario_id))
+    result = await db.execute(
+        select(Usuario)
+        .options(selectinload(Usuario.viajero))
+        .where(Usuario.id == usuario_id)
+    )
     user_profile = result.scalars().first()
 
     if not user_profile:
@@ -94,7 +99,11 @@ async def update_user_profile(
             detail="No tienes permiso para actualizar este perfil",
         )
 
-    result = await db.execute(select(Usuario).where(Usuario.id == usuario_id))
+    result = await db.execute(
+        select(Usuario)
+        .options(selectinload(Usuario.viajero))
+        .where(Usuario.id == usuario_id)
+    )
     user_profile = result.scalars().first()
 
     if not user_profile:
@@ -111,6 +120,9 @@ async def update_user_profile(
         user_profile.telefono = body.telefono
 
     await db.commit()
-    await db.refresh(user_profile)
-
-    return user_profile
+    result = await db.execute(
+        select(Usuario)
+        .options(selectinload(Usuario.viajero))
+        .where(Usuario.id == usuario_id)
+    )
+    return result.scalars().first()

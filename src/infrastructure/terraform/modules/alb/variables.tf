@@ -36,6 +36,6 @@ variable "health_check_path" {
 }
 
 variable "services" {
-  description = "Mapa de nombre de servicio a prefijo del router (ej. auth = /auth). El orden en el mapa determina la prioridad."
+  description = "Mapa de nombre de servicio a prefijo del router (ej. usuarios = /usuarios). El orden en el mapa determina la prioridad."
   type        = map(string)
 }

@@ -5,10 +5,10 @@ WORKDIR /app
 COPY common /common
 RUN pip install --no-cache-dir -e /common
 
-COPY busqueda/requirements.txt .
+COPY busquedas/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY busqueda/app/ ./app/
+COPY busquedas/app/ ./app/
 
 EXPOSE 8000
 

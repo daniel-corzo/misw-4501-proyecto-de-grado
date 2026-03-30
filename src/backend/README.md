@@ -2,11 +2,11 @@
 
 This is the backend for the TravelHub application, built using FastAPI microservices.
 
-## Authentication and RBAC
+## Access and RBAC
 
 This project uses **JWT (RS256)** for authentication and decentralized validation across microservices.
 
-- **`usuarios`**: Registers users (`POST /usuarios`), stores credentials and profiles, issues JWTs signed with `JWT_PRIVATE_KEY`, and exposes authentication endpoints (`POST /auth/login`, `POST /auth/logout`, etc.) on the same service.
+- **`usuarios`**: Registers users (`POST /usuarios`), stores credentials and profiles, issues JWTs signed with `JWT_PRIVATE_KEY`, and exposes session endpoints on the same service.
 - **Other microservices** validate JWTs using `JWT_PUBLIC_KEY` via the `travelhub_common` library and check revocation against the `revoked_tokens` table on their configured `DB_URL` where applicable.
 
 ### Generate RSA Keys (Local Development)
@@ -28,9 +28,9 @@ JWT_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\nMIIE...\n-----END RSA PRIVATE 
 JWT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\nMIIB...\n-----END PUBLIC KEY-----"
 ```
 
-### Making Authenticated Requests
+### Making Authenticated API Requests
 
-Register with `POST /usuarios`, then obtain an `access_token` via `POST /auth/login` on the **usuarios** service (or through the API gateway prefix your deployment uses).
+Register with `POST /usuarios`, then obtain an `access_token` via the login endpoint on the **usuarios** service (or through the API gateway prefix your deployment uses).
 
 Include the token in requests to protected routes:
 

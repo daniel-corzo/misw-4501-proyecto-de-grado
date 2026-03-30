@@ -29,34 +29,28 @@ jobs:
               - 'src/backend/common/**'
             usuarios:
               - 'src/backend/usuarios/**'
-            busqueda:
-              - 'src/backend/busqueda/**'
+            busquedas:
+              - 'src/backend/busquedas/**'
             hoteles:
               - 'src/backend/hoteles/**'
-            inventario:
-              - 'src/backend/inventario/**'
             reservas:
               - 'src/backend/reservas/**'
-            pagos:
-              - 'src/backend/pagos/**'
             notificaciones:
               - 'src/backend/notificaciones/**'
 
       - name: Build service matrix
         id: build-matrix
         run: |
-          ALL_SERVICES=(usuarios busqueda hoteles inventario reservas pagos notificaciones)
+          ALL_SERVICES=(usuarios busquedas hoteles reservas notificaciones)
 
           if [ "${{ steps.filter.outputs.common }}" == "true" ]; then
             SERVICES=("common" "${ALL_SERVICES[@]}")
           else
             SERVICES=()
             [ "${{ steps.filter.outputs.usuarios }}" == "true" ] && SERVICES+=(usuarios)
-            [ "${{ steps.filter.outputs.busqueda }}" == "true" ] && SERVICES+=(busqueda)
+            [ "${{ steps.filter.outputs.busquedas }}" == "true" ] && SERVICES+=(busquedas)
             [ "${{ steps.filter.outputs.hoteles }}" == "true" ] && SERVICES+=(hoteles)
-            [ "${{ steps.filter.outputs.inventario }}" == "true" ] && SERVICES+=(inventario)
             [ "${{ steps.filter.outputs.reservas }}" == "true" ] && SERVICES+=(reservas)
-            [ "${{ steps.filter.outputs.pagos }}" == "true" ] && SERVICES+=(pagos)
             [ "${{ steps.filter.outputs.notificaciones }}" == "true" ] && SERVICES+=(notificaciones)
           fi
 
