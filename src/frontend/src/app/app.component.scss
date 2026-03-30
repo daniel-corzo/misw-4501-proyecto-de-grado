@@ -17,6 +17,10 @@
   box-shadow: var(--shadow-md);
   max-height: 90vh;
   overflow-y: auto;
+
+  &--wide {
+    max-width: 740px;
+  }
 }
 
 .modal-header {

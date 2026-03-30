@@ -8,6 +8,21 @@ interface LoginResponse {
   expires_in: number;
 }
 
+interface RegisterRequest {
+  email: string;
+  password: string;
+  nombre: string;
+  telefono?: string;
+  tipo: string;
+}
+
+interface RegisterResponse {
+  id: string;
+  email: string;
+  tipo: string;
+  role: string;
+}
+
 const TOKEN_KEY = 'travelhub_token';
 
 @Injectable({ providedIn: 'root' })
@@ -18,8 +33,8 @@ export class AuthService {
 
   readonly isAuthenticated = computed(() => !!this.tokenSignal());
 
-  /** Signal to open/close the login modal from anywhere */
   readonly showLoginModal = signal(false);
+  readonly showRegisterModal = signal(false);
 
   get token(): string | null {
     return this.tokenSignal();
@@ -45,11 +60,23 @@ export class AuthService {
     this.tokenSignal.set(null);
   }
 
+  register(data: RegisterRequest): Observable<RegisterResponse> {
+    return this.api.post<RegisterResponse>('/usuarios', data);
+  }
+
   openLoginModal(): void {
     this.showLoginModal.set(true);
   }
 
   closeLoginModal(): void {
     this.showLoginModal.set(false);
+  }
+
+  openRegisterModal(): void {
+    this.showRegisterModal.set(true);
+  }
+
+  closeRegisterModal(): void {
+    this.showRegisterModal.set(false);
   }
 }

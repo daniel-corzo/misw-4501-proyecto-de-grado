@@ -183,3 +183,15 @@
 .auth-link-sep {
   color: var(--color-border);
 }
+
+.link-btn {
+  color: var(--color-primary);
+  font: var(--font-body2);
+  font-weight: 600;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+
+  &:hover { text-decoration: underline; }
+}

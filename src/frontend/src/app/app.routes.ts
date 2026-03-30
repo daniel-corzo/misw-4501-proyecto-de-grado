@@ -31,6 +31,29 @@ export const routes: Routes = [
             (m) => m.SettingsComponent
           ),
       },
+      {
+        path: 'bookings',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/bookings/bookings.component').then(
+            (m) => m.BookingsComponent
+          ),
+      },
+      {
+        path: 'partner/dashboard',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/partner/dashboard.component').then(
+            (m) => m.PartnerDashboardComponent
+          ),
+      },
+      {
+        path: 'terms',
+        loadComponent: () =>
+          import('./features/terms/terms.component').then(
+            (m) => m.TermsComponent
+          ),
+      },
     ],
   },
 
