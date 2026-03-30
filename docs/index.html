@@ -363,6 +363,18 @@ function endOfDay(d) {
   return new Date(d.getTime() + 86400000);
 }
 
+// Week start dates are stored as UTC midnight (new Date('YYYY-MM-DD')).
+// In UTC-5 that shifts the calendar date back one day, so we must compare
+// the UTC date string of the week against the LOCAL date string of today.
+function isFutureWeek(wStart) {
+  const today = new Date();
+  const todayLocal = today.getFullYear() + '-' +
+    String(today.getMonth() + 1).padStart(2, '0') + '-' +
+    String(today.getDate()).padStart(2, '0');
+  const weekDate = wStart.toISOString().slice(0, 10);
+  return weekDate > todayLocal;
+}
+
 function tooltip(labelFn) {
   return {
     backgroundColor: C.surface,
@@ -604,7 +616,7 @@ function buildTable(issues) {
 function buildVelocityChart(allIssues) {
   const today = new Date();
   const realData = WEEKS.map(w => {
-    if (w.start > today) return null;
+    if (isFutureWeek(w.start)) return null;
     return allIssues
       .filter(i => isDone(i.status) && i.closedAt && i.closedAt >= w.start && i.closedAt < endOfDay(w.end))
       .reduce((s, i) => s + i.sp, 0);
@@ -644,7 +656,7 @@ function buildValueChart(allIssues) {
   const idealPerWeek = 100 / WEEKS.length;
   let accumulated = 0;
   const realCumulative = WEEKS.map(w => {
-    if (w.start > today) return null;
+    if (isFutureWeek(w.start)) return null;
     const weekBV = allIssues
       .filter(i => isDone(i.status) && i.closedAt && i.closedAt >= w.start && i.closedAt < endOfDay(w.end))
       .reduce((s, i) => s + i.bv, 0);
@@ -692,7 +704,7 @@ function buildReleaseChart(allIssues) {
   let burned = 0;
   const realRemaining = [TOTAL_SP];
   RELEASE_SPRINTS.forEach(s => {
-    if (s.start > today) { realRemaining.push(null); return; }
+    if (isFutureWeek(s.start)) { realRemaining.push(null); return; }
     const done = allIssues
       .filter(i => isDone(i.status) && i.closedAt && i.closedAt >= s.start && i.closedAt < endOfDay(s.end))
       .reduce((acc, i) => acc + i.sp, 0);
@@ -742,7 +754,7 @@ function buildReleaseChart(allIssues) {
   });
 }
 
-const COVERAGE_SERVICES = ['auth','busqueda','common','hoteles','inventario','notificaciones','pagos','reservas','usuarios'];
+const COVERAGE_SERVICES = ['busquedas','common','hoteles','notificaciones','reservas','usuarios'];
 const COVERAGE_THRESHOLD = 50;
 
 function covStatus(pct) {
