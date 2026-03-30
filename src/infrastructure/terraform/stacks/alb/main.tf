@@ -1,14 +1,13 @@
 locals {
-  # Mapa de nombre de servicio → prefijo real del router en la app
+  # Mapa de nombre de servicio → prefijos de ruta en la app (mismo TG si hay varios)
   services = {
-    auth           = "auth"
-    usuarios       = "usuarios"
-    busqueda       = "busqueda"
-    hoteles        = "hoteles"
-    inventario     = "inventario"
-    reservas       = "reservas"
-    pagos          = "pagos"
-    notificaciones = "notificaciones"
+    usuarios       = ["auth", "usuarios"]
+    busqueda       = ["busqueda"]
+    hoteles        = ["hoteles"]
+    inventario     = ["inventario"]
+    reservas       = ["reservas"]
+    pagos          = ["pagos"]
+    notificaciones = ["notificaciones"]
   }
 }
 

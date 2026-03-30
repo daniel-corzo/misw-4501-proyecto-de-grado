@@ -1,6 +1,5 @@
 locals {
   services = toset([
-    "auth",
     "usuarios",
     "busqueda",
     "hoteles",

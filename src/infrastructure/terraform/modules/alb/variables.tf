@@ -36,6 +36,6 @@ variable "health_check_path" {
 }
 
 variable "services" {
-  description = "Mapa de nombre de servicio a prefijo del router (ej. auth = /auth). El orden en el mapa determina la prioridad."
-  type        = map(string)
+  description = "Mapa de nombre de servicio a lista de prefijos de ruta HTTP (sin barra inicial). Ej. usuarios puede incluir [\"auth\", \"usuarios\"] para el mismo target group. El orden de las claves determina la prioridad de las reglas del listener."
+  type        = map(list(string))
 }

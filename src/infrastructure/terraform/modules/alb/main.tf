@@ -3,6 +3,13 @@ locals {
   services_with_priority = {
     for idx, svc in keys(var.services) : svc => (idx + 1) * 10
   }
+
+  # Por cada servicio, todos los patrones /prefijo y /prefijo/*
+  path_patterns_for_service = {
+    for svc, prefixes in var.services : svc => distinct(flatten([
+      for p in prefixes : ["/${p}", "/${p}/*"]
+    ]))
+  }
 }
 
 # ===============================
@@ -187,7 +194,7 @@ resource "aws_lb_listener_rule" "service-http" {
 
   condition {
     path_pattern {
-      values = ["/${var.services[each.key]}", "/${var.services[each.key]}/*"]
+      values = local.path_patterns_for_service[each.key]
     }
   }
 }
@@ -205,7 +212,7 @@ resource "aws_lb_listener_rule" "service-https" {
 
   condition {
     path_pattern {
-      values = ["/${var.services[each.key]}", "/${var.services[each.key]}/*"]
+      values = local.path_patterns_for_service[each.key]
     }
   }
 }

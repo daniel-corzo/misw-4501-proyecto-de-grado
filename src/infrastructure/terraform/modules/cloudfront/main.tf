@@ -7,7 +7,7 @@ resource "aws_cloudfront_origin_access_control" "s3" {
 }
 
 # CloudFront Function: strips /api prefix before forwarding to ALB
-# e.g. /api/auth/login → /auth/login
+# e.g. /api/usuarios/usuarios/me → /usuarios/me ; /api/auth/login → /auth/login
 resource "aws_cloudfront_function" "strip_api_prefix" {
   name    = "${var.project_name}-strip-api-prefix"
   runtime = "cloudfront-js-2.0"

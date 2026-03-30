@@ -84,7 +84,6 @@ docker-compose up --build
 
 | Servicio | Puerto | Swagger UI |
 |---|---|---|
-| auth | 8001 | http://localhost:8001/docs |
 | usuarios | 8002 | http://localhost:8002/docs |
 | busqueda | 8003 | http://localhost:8003/docs |
 | hoteles | 8004 | http://localhost:8004/docs |
@@ -96,6 +95,7 @@ docker-compose up --build
 | api gateway | 8080 | http://localhost:8080/api/{microservicio} |
 | api docs | 8080 | http://localhost:8080/docs |
 
+Las rutas `/auth/login`, `/auth/logout`, etc. están expuestas por el microservicio **usuarios** (mismo contenedor que `/usuarios`).
 
 ![Open Api Docs](./assets/images/openapidocs.png)
 > La URL `/docs` expone un **Swagger UI unificado** con todos los microservicios. Usar el dropdown en la parte superior para cambiar entre servicios.
@@ -104,7 +104,7 @@ docker-compose up --build
 
 ```bash
 # Ver logs de un servicio
-docker-compose logs -f auth
+docker-compose logs -f usuarios
 
 # Reiniciar un servicio sin rebuild
 docker-compose restart reservas
