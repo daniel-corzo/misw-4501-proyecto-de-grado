@@ -3,8 +3,8 @@ from travelhub_common.config import BaseAppSettings, load_secrets
 
 
 class Settings(BaseAppSettings):
-    # Agrega aqui settings especificos de pagos
-    service_name: str = "pagos"
+    # Agrega aqui settings especificos de busquedas
+    service_name: str = "busquedas"
 
 
 @lru_cache

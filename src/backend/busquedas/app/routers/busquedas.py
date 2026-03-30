@@ -1,10 +1,10 @@
 import uuid
 from fastapi import APIRouter, Query, status, Depends
 from datetime import date
-from app.schemas.busqueda import BusquedaHotelesResponse, HotelResultado
+from app.schemas.busquedas import BusquedaHotelesResponse, HotelResultado
 from travelhub_common.security import get_current_user, User
 
-router = APIRouter(prefix="/busqueda", tags=["busqueda"])
+router = APIRouter(prefix="/busquedas", tags=["busquedas"])
 
 
 @router.get("/hoteles", response_model=BusquedaHotelesResponse, status_code=status.HTTP_200_OK)
@@ -25,7 +25,7 @@ async def buscar_hoteles(
     - Filtrar por disponibilidad via habitaciones del servicio de hoteles
     - Cachear resultados frecuentes en Redis (TTL 5 min)
     """
-    # TODO: reemplazar con busqueda real contra BD / cache
+    # TODO: reemplazar con busquedas real contra BD / cache
     resultados = [
         HotelResultado(
             id=str(uuid.uuid4()),
