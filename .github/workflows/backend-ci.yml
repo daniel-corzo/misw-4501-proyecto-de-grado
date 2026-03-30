@@ -27,8 +27,6 @@ jobs:
           filters: |
             common:
               - 'src/backend/common/**'
-            auth:
-              - 'src/backend/auth/**'
             usuarios:
               - 'src/backend/usuarios/**'
             busqueda:
@@ -47,13 +45,12 @@ jobs:
       - name: Build service matrix
         id: build-matrix
         run: |
-          ALL_SERVICES=(auth usuarios busqueda hoteles inventario reservas pagos notificaciones)
+          ALL_SERVICES=(usuarios busqueda hoteles inventario reservas pagos notificaciones)
 
           if [ "${{ steps.filter.outputs.common }}" == "true" ]; then
             SERVICES=("common" "${ALL_SERVICES[@]}")
           else
             SERVICES=()
-            [ "${{ steps.filter.outputs.auth }}" == "true" ] && SERVICES+=(auth)
             [ "${{ steps.filter.outputs.usuarios }}" == "true" ] && SERVICES+=(usuarios)
             [ "${{ steps.filter.outputs.busqueda }}" == "true" ] && SERVICES+=(busqueda)
             [ "${{ steps.filter.outputs.hoteles }}" == "true" ] && SERVICES+=(hoteles)

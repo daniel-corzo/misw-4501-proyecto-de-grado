@@ -15,8 +15,7 @@
         SwaggerUIBundle({
           dom_id: "#swagger-ui",
           urls: [
-            { url: "/api/auth/openapi.json",           name: "auth" },
-            { url: "/api/usuarios/openapi.json",       name: "usuarios" },
+            { url: "/api/usuarios/openapi.json",       name: "usuarios (auth + perfiles)" },
             { url: "/api/busqueda/openapi.json",       name: "busqueda" },
             { url: "/api/hoteles/openapi.json",        name: "hoteles" },
             { url: "/api/inventario/openapi.json",     name: "inventario" },
@@ -24,7 +23,7 @@
             { url: "/api/pagos/openapi.json",          name: "pagos" },
             { url: "/api/notificaciones/openapi.json", name: "notificaciones" },
           ],
-          "urls.primaryName": "auth",
+          "urls.primaryName": "usuarios (auth + perfiles)",
           presets: [
             SwaggerUIBundle.presets.apis,
             SwaggerUIStandalonePreset,

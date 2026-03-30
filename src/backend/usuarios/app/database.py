@@ -1,3 +1,5 @@
+import app.models  # noqa: F401 — register SQLAlchemy metadata for create_all
+
 from travelhub_common.database import make_get_db, init_db
 from app.config import get_settings
 
