@@ -5,7 +5,7 @@ from travelhub_common.models import BaseModel
 from uuid import UUID as PyUUID
 
 class Viajero(BaseModel):
-    __tablename__ = "viajeros"
+    __tablename__ = "viajero"
 
     nombre: Mapped[str] = mapped_column(String(255), nullable=False)
     contacto: Mapped[str] = mapped_column(String(255), nullable=False)

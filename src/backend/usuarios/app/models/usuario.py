@@ -14,7 +14,7 @@ class TipoUsuario(enum.Enum):
 
 
 class Usuario(BaseModel):
-    __tablename__ = "usuarios"
+    __tablename__ = "usuario"
 
     email: Mapped[str] = mapped_column(
         String(255), unique=True, index=True, nullable=False
