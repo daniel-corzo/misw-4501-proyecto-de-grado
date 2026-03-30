@@ -50,11 +50,9 @@ services:
       - ./nginx/swagger.html:/usr/share/nginx/html/swagger.html:ro
     depends_on:
       - usuarios
-      - busqueda
+      - busquedas
       - hoteles
-      - inventario
       - reservas
-      - pagos
       - notificaciones
 
   # ── Microservicios ───────────────────────────────────────────────────────────
@@ -80,16 +78,16 @@ services:
       - ./src/backend/usuarios/app:/app/app
       - ./src/backend/common:/common
 
-  busqueda:
+  busquedas:
     build:
       context: ./src/backend
-      dockerfile: busqueda/Dockerfile
+      dockerfile: busquedas/Dockerfile
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8003:8000"
     environment:
       ENVIRONMENT: ${ENVIRONMENT}
-      SERVICE_NAME: busqueda
+      SERVICE_NAME: busquedas
       DB_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
       REDIS_URL: ${REDIS_URL}
       JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
@@ -100,7 +98,7 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - ./src/backend/busqueda/app:/app/app
+      - ./src/backend/busquedas/app:/app/app
       - ./src/backend/common:/common
 
   hoteles:
@@ -121,29 +119,6 @@ services:
         condition: service_healthy
     volumes:
       - ./src/backend/hoteles/app:/app/app
-      - ./src/backend/common:/common
-
-  inventario:
-    build:
-      context: ./src/backend
-      dockerfile: inventario/Dockerfile
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-    ports:
-      - "8005:8000"
-    environment:
-      ENVIRONMENT: ${ENVIRONMENT}
-      SERVICE_NAME: inventario
-      DB_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
-      REDIS_URL: ${REDIS_URL}
-      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
-      AWS_REGION: ${AWS_REGION}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./src/backend/inventario/app:/app/app
       - ./src/backend/common:/common
 
   reservas:
@@ -170,36 +145,13 @@ services:
       - ./src/backend/reservas/app:/app/app
       - ./src/backend/common:/common
 
-  pagos:
-    build:
-      context: ./src/backend
-      dockerfile: pagos/Dockerfile
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-    ports:
-      - "8007:8000"
-    environment:
-      ENVIRONMENT: ${ENVIRONMENT}
-      SERVICE_NAME: pagos
-      DB_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
-      SQS_ENDPOINT: ${SQS_ENDPOINT}
-      SQS_QUEUE_URL: ${SQS_QUEUE_URL}
-      STRIPE_KEY: ${STRIPE_KEY}
-      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
-      AWS_REGION: ${AWS_REGION}
-    depends_on:
-      localstack:
-        condition: service_started
-    volumes:
-      - ./src/backend/pagos/app:/app/app
-      - ./src/backend/common:/common
-
   notificaciones:
     build:
       context: ./src/backend
       dockerfile: notificaciones/Dockerfile
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
-      - "8008:8000"
+      - "8007:8000"
     environment:
       ENVIRONMENT: ${ENVIRONMENT}
       SERVICE_NAME: notificaciones
