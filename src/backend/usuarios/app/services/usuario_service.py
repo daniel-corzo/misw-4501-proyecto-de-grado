@@ -52,14 +52,7 @@ async def create_user(
     # TODO: Call hoteles to create the hotel profile
 
     await db.commit()
-
-    # Return the user with relations eagerly loaded to avoid async lazy-load issues.
-    result = await db.execute(
-        select(Usuario)
-        .options(selectinload(Usuario.viajero))
-        .where(Usuario.id == user.id)
-    )
-    return result.scalars().first()
+    return user
 
 
 async def get_my_profile(current_user: Usuario, db: AsyncSession) -> Usuario:
