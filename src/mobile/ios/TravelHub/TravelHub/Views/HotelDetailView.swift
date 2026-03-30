@@ -288,15 +288,17 @@ struct HotelDetailView: View {
 
                 Spacer()
 
-                Button {
-                    // TODO: Book reservation
-                } label: {
-                    Text(LocalizedStringResource.HotelDetail.bookNow)
-                        .bold()
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 32)
+                if let hotel = self.viewModel.hotel {
+                    NavigationLink {
+                        CreateReservationView(hotel: hotel)
+                    } label: {
+                        Text(LocalizedStringResource.HotelDetail.bookNow)
+                            .bold()
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 32)
+                    }
+                    .capsuleButton()
                 }
-                .capsuleButton()
 
             } //: HStack
             .padding(.horizontal, 32)

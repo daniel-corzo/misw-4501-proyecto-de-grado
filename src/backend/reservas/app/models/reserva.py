@@ -1,5 +1,5 @@
-from sqlalchemy import Column, String, Integer, DateTime, ARRAY
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, Integer, DateTime
+from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from travelhub_common.models import BaseModel
 
 
