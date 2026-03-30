@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -14,7 +14,6 @@ import { ToastService } from '../../../core/services/toast.service';
 })
 export class LoginComponent {
   private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
   private readonly fb = inject(FormBuilder);
 
@@ -33,7 +32,7 @@ export class LoginComponent {
     const { email, password } = this.loginForm.getRawValue();
 
     this.auth.login(email, password).subscribe({
-      next: () => this.router.navigate(['/']),
+      next: () => this.auth.closeLoginModal(),
       error: () => {
         this.loading = false;
         this.toast.danger('Correo o contraseña incorrecta');

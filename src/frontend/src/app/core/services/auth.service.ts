@@ -1,5 +1,4 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
-import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { ApiService } from './api.service';
 
@@ -14,11 +13,13 @@ const TOKEN_KEY = 'travelhub_token';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly api = inject(ApiService);
-  private readonly router = inject(Router);
 
   private readonly tokenSignal = signal<string | null>(localStorage.getItem(TOKEN_KEY));
 
   readonly isAuthenticated = computed(() => !!this.tokenSignal());
+
+  /** Signal to open/close the login modal from anywhere */
+  readonly showLoginModal = signal(false);
 
   get token(): string | null {
     return this.tokenSignal();
@@ -42,6 +43,13 @@ export class AuthService {
   clearSession(): void {
     localStorage.removeItem(TOKEN_KEY);
     this.tokenSignal.set(null);
-    this.router.navigate(['/auth/login']);
+  }
+
+  openLoginModal(): void {
+    this.showLoginModal.set(true);
+  }
+
+  closeLoginModal(): void {
+    this.showLoginModal.set(false);
   }
 }
