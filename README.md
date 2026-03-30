@@ -93,7 +93,7 @@ docker-compose up --build
 | api gateway | 8080 | http://localhost:8080/api/{microservicio} |
 | api docs | 8080 | http://localhost:8080/docs |
 
-Las rutas `/auth/login`, `/auth/logout`, etc. están expuestas por el microservicio **usuarios** (mismo contenedor que `/usuarios`).
+Las rutas de inicio y cierre de sesión están expuestas por el microservicio **usuarios**.
 
 ![Open Api Docs](./assets/images/openapidocs.png)
 > La URL `/docs` expone un **Swagger UI unificado** con todos los microservicios. Usar el dropdown en la parte superior para cambiar entre servicios.
