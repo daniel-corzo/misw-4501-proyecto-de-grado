@@ -14,6 +14,7 @@ enum HttpRoutes {
     case login
     case logout
     case hoteles
+    case reservas
     
     var url: URL {
         switch self {
@@ -31,6 +32,9 @@ enum HttpRoutes {
             
             case .usuarioMe:
                 return AppConfig.baseURL.appendingPathComponent("usuarios/me")
+                
+            case .reservas:
+                return AppConfig.baseURL.appendingPathComponent("reservas")
         }
     }
 }
