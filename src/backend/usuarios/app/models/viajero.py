@@ -8,7 +8,7 @@ class Viajero(BaseModel):
     __tablename__ = "viajero"
 
     nombre: Mapped[str] = mapped_column(String(255), nullable=False)
-    contacto: Mapped[str] = mapped_column(String(255), nullable=True)
+    contacto: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     usuario_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("usuario.id"), nullable=False, unique=True

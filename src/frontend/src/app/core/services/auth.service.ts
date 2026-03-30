@@ -40,6 +40,17 @@ export class AuthService {
     return this.tokenSignal();
   }
 
+  getUserRole(): string | null {
+    const token = this.tokenSignal();
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.role ?? null;
+    } catch {
+      return null;
+    }
+  }
+
   login(email: string, password: string): Observable<LoginResponse> {
     return this.api.post<LoginResponse>('/auth/login', { email, password }).pipe(
       tap((res) => {

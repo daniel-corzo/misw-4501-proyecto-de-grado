@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
 import { AuthLayoutComponent } from './layout/auth-layout/auth-layout.component';
 import { authGuard } from './core/guards/auth.guard';
+import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   // ── Authenticated shell (navbar + footer) ───────────────────────
@@ -41,7 +42,7 @@ export const routes: Routes = [
       },
       {
         path: 'partner/dashboard',
-        canActivate: [authGuard],
+        canActivate: [authGuard, roleGuard('MANAGER', 'ADMIN')],
         loadComponent: () =>
           import('./features/partner/dashboard.component').then(
             (m) => m.PartnerDashboardComponent
