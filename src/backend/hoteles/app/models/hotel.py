@@ -1,6 +1,7 @@
 from enum import Enum as PyEnum
-from sqlalchemy import Column, String, ARRAY, Float, Time, Enum
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, Float, Time, Enum, Integer
+from sqlalchemy.dialects.postgresql import ARRAY, UUID
+from sqlalchemy.orm import relationship
 from travelhub_common.models import BaseModel
 
 
@@ -28,7 +29,7 @@ class AmenidadHotel(str, PyEnum):
     BREAKFAST_INCLUDED = "Breakfast Included"
 
 class Hotel(BaseModel):
-    __tablename__ = "hoteles"
+    __tablename__ = "hotel"
 
     nombre = Column(String(255), nullable=False)
     direccion = Column(String(255), nullable=False)
@@ -38,6 +39,7 @@ class Hotel(BaseModel):
     ciudad = Column(String(100), nullable=False)
     descripcion = Column(String, nullable=True)
     amenidades = Column(ARRAY(Enum(AmenidadHotel, name="hotel_amenity_enum")), nullable=False, default=list)
+    estrellas = Column(Integer, nullable=False, default=3)
     ranking = Column(Float, default=0)
     contacto_celular = Column(String(50), nullable=True)
     contacto_email = Column(String(255), nullable=True)
@@ -48,3 +50,6 @@ class Hotel(BaseModel):
     
     # Cross-service reference (no ForeignKey constraint)
     usuario_id = Column(UUID(as_uuid=True), index=True, nullable=False)
+
+    politicas = relationship("Politica", back_populates="hotel")
+    habitaciones = relationship("Habitacion", back_populates="hotel")

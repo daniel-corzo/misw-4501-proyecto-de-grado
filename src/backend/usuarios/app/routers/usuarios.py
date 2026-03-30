@@ -17,10 +17,11 @@ async def crear_usuario(
     settings: Settings = Depends(get_settings)
 ):
     """
-    Crea un nuevo usuario en el sistema informando al microservicio de auth.
+    Registra un nuevo usuario (credenciales y perfil) en el sistema.
     """
-    return await create_user(body, db, settings)
+    created_user = await create_user(body, db, settings)
 
+    return UsuarioResponse.model_validate(created_user)
 
 @router.get("/me", response_model=UsuarioResponse, status_code=status.HTTP_200_OK)
 async def obtener_mi_perfil(
