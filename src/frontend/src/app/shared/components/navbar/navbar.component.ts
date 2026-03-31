@@ -16,6 +16,17 @@ export class NavbarComponent {
 
   menuOpen = false;
 
+  private readonly roleLabels: Record<string, string> = {
+    USER: 'Viajero',
+    MANAGER: 'Hotelero',
+    ADMIN: 'Administrador',
+  };
+
+  get userRoleLabel(): string {
+    const role = this.auth.getUserRole();
+    return role ? (this.roleLabels[role] ?? role) : '';
+  }
+
   toggleMenu(): void {
     this.menuOpen = !this.menuOpen;
   }

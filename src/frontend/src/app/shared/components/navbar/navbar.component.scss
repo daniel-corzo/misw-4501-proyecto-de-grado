@@ -129,21 +129,55 @@
     cursor: pointer;
   }
 
+  &__user-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  &__user-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1.2;
+  }
+
+  &__user-name {
+    font: var(--font-body2);
+    font-weight: 700;
+    color: var(--color-text);
+    white-space: nowrap;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__user-role {
+    font-size: 11px;
+    color: var(--color-secondary);
+    white-space: nowrap;
+  }
+
   &__avatar {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background: var(--color-bg);
-    border: 2px solid var(--color-border);
+    background: var(--color-primary);
+    border: 2px solid var(--color-primary);
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
-    transition: border-color 0.15s;
+    flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-white);
+    transition: background 0.15s, border-color 0.15s;
+    user-select: none;
 
-    svg { width: 24px; height: 24px; color: var(--color-secondary); }
-
-    &:hover { border-color: var(--color-primary); }
+    &:hover {
+      background: var(--color-primary-dk);
+      border-color: var(--color-primary-dk);
+    }
   }
 
   /* Dropdown */
