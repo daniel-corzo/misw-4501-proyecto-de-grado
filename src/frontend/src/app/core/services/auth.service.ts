@@ -32,13 +32,14 @@ interface UserProfile {
 }
 
 const TOKEN_KEY = 'travelhub_token';
+const PROFILE_KEY = 'travelhub_profile';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly api = inject(ApiService);
 
   private readonly tokenSignal = signal<string | null>(localStorage.getItem(TOKEN_KEY));
-  readonly userProfile = signal<UserProfile | null>(null);
+  readonly userProfile = signal<UserProfile | null>(this.loadStoredProfile());
 
   readonly isAuthenticated = computed(() => !!this.tokenSignal());
 
@@ -84,9 +85,21 @@ export class AuthService {
 
   fetchProfile(): void {
     this.api.get<UserProfile>('/usuarios/me').subscribe({
-      next: (profile) => this.userProfile.set(profile),
+      next: (profile) => {
+        localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+        this.userProfile.set(profile);
+      },
       error: () => {},
     });
+  }
+
+  private loadStoredProfile(): UserProfile | null {
+    try {
+      const raw = localStorage.getItem(PROFILE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
   }
 
   login(email: string, password: string): Observable<LoginResponse> {
@@ -107,6 +120,7 @@ export class AuthService {
 
   clearSession(): void {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(PROFILE_KEY);
     this.tokenSignal.set(null);
     this.userProfile.set(null);
   }

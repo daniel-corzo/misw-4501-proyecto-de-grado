@@ -1,5 +1,7 @@
-import { Component, inject, HostListener, ElementRef } from '@angular/core';
-import { RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { Component, inject, HostListener, ElementRef, DestroyRef } from '@angular/core';
+import { RouterLink, RouterLinkActive, Router, NavigationStart } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -15,6 +17,12 @@ export class NavbarComponent {
   private readonly el = inject(ElementRef);
 
   menuOpen = false;
+
+  constructor() {
+    this.router.events
+      .pipe(filter((e) => e instanceof NavigationStart), takeUntilDestroyed())
+      .subscribe(() => (this.menuOpen = false));
+  }
 
   private readonly roleLabels: Record<string, string> = {
     USER: 'Viajero',
