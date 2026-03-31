@@ -5,13 +5,12 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
-import { localeIdFactory } from './core/services/locale.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes, withInMemoryScrolling({ scrollPositionRestoration: 'top' })),
     provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
-    { provide: LOCALE_ID, useFactory: localeIdFactory },
+    { provide: LOCALE_ID, useValue: 'es-CO' },
   ],
 };

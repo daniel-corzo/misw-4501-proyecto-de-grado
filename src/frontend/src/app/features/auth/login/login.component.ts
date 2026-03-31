@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -8,14 +8,15 @@ import { ToastService } from '../../../core/services/toast.service';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [RouterLink, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })
 export class LoginComponent {
-  private readonly auth = inject(AuthService);
+  readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
   private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
 
   activeRole: 'traveler' | 'partner' = 'traveler';
   loading = false;
@@ -32,7 +33,13 @@ export class LoginComponent {
     const { email, password } = this.loginForm.getRawValue();
 
     this.auth.login(email, password).subscribe({
-      next: () => this.auth.closeLoginModal(),
+      next: () => {
+        this.auth.closeLoginModal();
+        const role = this.auth.getUserRole();
+        if (role === 'MANAGER' || role === 'ADMIN') {
+          this.router.navigate(['/partner/dashboard']);
+        }
+      },
       error: () => {
         this.loading = false;
         this.toast.danger('Correo o contraseña incorrecta');

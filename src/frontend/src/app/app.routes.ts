@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
-import { AuthLayoutComponent } from './layout/auth-layout/auth-layout.component';
+import { authGuard } from './core/guards/auth.guard';
+import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   // ── Authenticated shell (navbar + footer) ───────────────────────
@@ -24,34 +25,35 @@ export const routes: Routes = [
       },
       {
         path: 'settings',
+        canActivate: [authGuard],
         loadComponent: () =>
           import('./features/settings/settings.component').then(
             (m) => m.SettingsComponent
           ),
       },
-    ],
-  },
-
-  // ── Auth shell (solo logo + card centrada) ───────────────────────
-  {
-    path: 'auth',
-    component: AuthLayoutComponent,
-    children: [
       {
-        path: 'login',
+        path: 'bookings',
+        canActivate: [authGuard],
         loadComponent: () =>
-          import('./features/auth/login/login.component').then(
-            (m) => m.LoginComponent
+          import('./features/bookings/bookings.component').then(
+            (m) => m.BookingsComponent
           ),
       },
       {
-        path: 'register',
+        path: 'partner/dashboard',
+        canActivate: [authGuard, roleGuard('MANAGER', 'ADMIN')],
         loadComponent: () =>
-          import('./features/auth/register/register.component').then(
-            (m) => m.RegisterComponent
+          import('./features/partner/dashboard.component').then(
+            (m) => m.PartnerDashboardComponent
           ),
       },
-      { path: '', redirectTo: 'login', pathMatch: 'full' },
+      {
+        path: 'terms',
+        loadComponent: () =>
+          import('./features/terms/terms.component').then(
+            (m) => m.TermsComponent
+          ),
+      },
     ],
   },
 

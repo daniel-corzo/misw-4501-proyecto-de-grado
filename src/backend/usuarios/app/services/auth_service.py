@@ -56,7 +56,7 @@ async def authenticate_user(
         "role": user.role.value,
     }
 
-    return create_access_token(token_data, settings=settings)
+    return create_access_token(token_data, settings=settings), user
 
 
 async def revoke_token(token: str, db: AsyncSession) -> None:

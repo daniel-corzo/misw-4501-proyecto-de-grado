@@ -1,6 +1,6 @@
 import pytest
 from httpx import ASGITransport, AsyncClient
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 from app.config import get_settings
@@ -164,3 +164,72 @@ async def test_logout_no_token(logout_client):
     response = await client.post("/auth/logout")
 
     assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_login_success_emits_audit_log(override_client, mock_db_session):
+    hashed = get_password_hash("password123")
+    mock_result = MagicMock()
+    valid_user = Usuario(
+        id=uuid4(),
+        email="audit@example.com",
+        hashed_contrasena=hashed,
+        tipo=TipoUsuario.VIAJERO,
+        role=RoleEnum.USER,
+    )
+    mock_result.scalars.return_value.first.return_value = valid_user
+    mock_db_session.execute.return_value = mock_result
+
+    with patch("app.routers.auth._emit_audit_log") as mock_audit:
+        response = await override_client.post(
+            "/auth/login",
+            json={"email": "audit@example.com", "password": "password123"},
+        )
+
+    assert response.status_code == 200
+    mock_audit.assert_called_once()
+    call_kwargs = mock_audit.call_args
+    assert call_kwargs.kwargs["event_type"] == "audit.login.success"
+    assert call_kwargs.kwargs["success"] is True
+    assert call_kwargs.kwargs["email"] == "audit@example.com"
+    assert call_kwargs.kwargs["user_id"] is not None
+
+
+@pytest.mark.asyncio
+async def test_login_failure_emits_audit_log(override_client, mock_db_session):
+    mock_result = MagicMock()
+    mock_result.scalars.return_value.first.return_value = None
+    mock_db_session.execute.return_value = mock_result
+
+    with patch("app.routers.auth._emit_audit_log") as mock_audit:
+        response = await override_client.post(
+            "/auth/login",
+            json={"email": "noexiste@example.com", "password": "wrong"},
+        )
+
+    assert response.status_code == 401
+    mock_audit.assert_called_once()
+    call_kwargs = mock_audit.call_args
+    assert call_kwargs.kwargs["event_type"] == "audit.login.failure"
+    assert call_kwargs.kwargs["success"] is False
+    assert call_kwargs.kwargs["email"] == "noexiste@example.com"
+    assert call_kwargs.kwargs["reason"] == "invalid_credentials"
+
+
+@pytest.mark.asyncio
+async def test_logout_emits_audit_log(logout_client, mock_db_session):
+    client, settings = logout_client
+    token = _make_test_token(settings)
+
+    with patch("app.routers.auth._emit_audit_log") as mock_audit:
+        response = await client.post(
+            "/auth/logout",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+    assert response.status_code == 200
+    mock_audit.assert_called_once()
+    call_kwargs = mock_audit.call_args
+    assert call_kwargs.kwargs["event_type"] == "audit.logout.success"
+    assert call_kwargs.kwargs["success"] is True
+    assert call_kwargs.kwargs["email"] == "test@test.com"
