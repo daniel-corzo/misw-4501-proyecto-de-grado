@@ -12,7 +12,7 @@ class CrearUsuarioRequest(BaseModel):
     password: str
     role: Optional[RoleEnum] = RoleEnum.USER
     nombre: str
-    telefono: Optional[str] = None
+    telefono: str
     tipo: TipoUsuario
 
     @field_validator('password')
@@ -38,7 +38,7 @@ class ActualizarUsuarioRequest(BaseModel):
 class ViajeroResponse(BaseModel):
     id: UUID
     nombre: str
-    contacto: Optional[str]
+    contacto: str
 
     model_config = ConfigDict(from_attributes=True)
 

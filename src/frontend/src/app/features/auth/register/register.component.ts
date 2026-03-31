@@ -24,7 +24,7 @@ export class RegisterComponent {
     email:    ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, passwordStrengthValidator()]],
     nombre:   ['', [Validators.required]],
-    telefono: [''],
+    telefono: ['', [Validators.required]],
     consent:  [false, [Validators.requiredTrue]],
   });
 
@@ -50,6 +50,12 @@ export class RegisterComponent {
     return 'El nombre es requerido';
   }
 
+  get telefonoError(): string | null {
+    const ctrl = this.registerForm.get('telefono');
+    if (!ctrl?.invalid || !ctrl.touched) return null;
+    return 'El teléfono es requerido';
+  }
+
   onSubmit(): void {
     if (this.registerForm.invalid || this.loading) {
       this.registerForm.markAllAsTouched();
@@ -63,7 +69,7 @@ export class RegisterComponent {
       email,
       password,
       nombre,
-      telefono: telefono || undefined,
+      telefono,
       tipo: 'viajero',
     }).subscribe({
       next: () => {

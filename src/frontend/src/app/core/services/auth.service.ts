@@ -12,7 +12,7 @@ interface RegisterRequest {
   email: string;
   password: string;
   nombre: string;
-  telefono?: string;
+  telefono: string;
   tipo: string;
 }
 
@@ -28,7 +28,7 @@ interface UserProfile {
   tipo: string;
   email: string;
   role: string;
-  viajero: { id: string; nombre: string; contacto: string | null } | null;
+  viajero: { id: string; nombre: string; contacto: string } | null;
 }
 
 const TOKEN_KEY = 'travelhub_token';

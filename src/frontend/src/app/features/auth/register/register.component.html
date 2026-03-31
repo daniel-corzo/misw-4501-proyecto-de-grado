@@ -84,14 +84,18 @@
       </div>
 
       <div class="reg-field">
-        <label for="telefono">Teléfono</label>
+        <label for="telefono">Teléfono <span class="req">*</span></label>
         <input
           id="telefono"
           type="tel"
           formControlName="telefono"
           placeholder="ej. 3012354341"
           autocomplete="tel"
+          [class.input--error]="telefonoError"
         />
+        @if (telefonoError) {
+          <span class="field-error">{{ telefonoError }}</span>
+        }
       </div>
     </div>
   </div>
