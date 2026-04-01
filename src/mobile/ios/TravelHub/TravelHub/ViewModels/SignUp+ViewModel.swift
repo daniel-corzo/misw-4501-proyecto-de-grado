@@ -19,7 +19,6 @@ extension SignUpView {
         var email: String = ""
         var password: String = ""
         var agreeToTerms: Bool = false
-        var errorMessage: String? = nil
 
         // MARK: - Computed Properties
 
@@ -37,7 +36,7 @@ extension SignUpView {
 
         var phoneError: LocalizedStringResource? {
             if rawPhone.isEmpty {
-                return .UserData.emailIsEmptyError
+                return .UserData.phoneIsEmptyError
             }
 
             if rawPhone.count < 10 {

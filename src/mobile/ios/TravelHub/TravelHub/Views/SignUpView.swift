@@ -13,6 +13,7 @@ struct SignUpView: View {
     @Environment(\.toastManager) private var toastManager
 
     @State private var viewModel = ViewModel()
+    @State private var isLoading: Bool = false
 
     var agreementText: AttributedString {
         var text = AttributedString(
@@ -120,40 +121,50 @@ struct SignUpView: View {
                     }  //: VStack Form
 
                     Button {
-                        Task {
-                            let newUsuario = NewUsuario(
-                                email: viewModel.email,
-                                password: viewModel.password,
-                                nombre: viewModel.fullName,
-                                telefono: viewModel.phone,
-                                tipo: .viajero
-                            )
-
-                            await self.viewModel.create(
-                                user: newUsuario,
-                                dismiss: self.dismiss
-                            )
+                        if !self.isLoading {
+                            self.isLoading = true
+                            Task {
+                                let newUsuario = NewUsuario(
+                                    email: viewModel.email,
+                                    password: viewModel.password,
+                                    nombre: viewModel.fullName,
+                                    telefono: viewModel.phone,
+                                    tipo: .viajero
+                                )
+                                
+                                await self.viewModel.create(
+                                    user: newUsuario,
+                                    dismiss: self.dismiss
+                                )
+                                
+                                self.isLoading = false
+                            }
                         }
                     } label: {
                         HStack {
                             Spacer()
-
-                            Text(
-                                LocalizedStringResource.SignUp
-                                    .createAccountButton
-                            )
-                            .foregroundStyle(.white)
-                            .bold()
-
-                            Image(systemName: "arrow.right")
+                            
+                            if isLoading {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            } else {
+                                Text(
+                                    LocalizedStringResource.SignUp
+                                        .createAccountButton
+                                )
                                 .foregroundStyle(.white)
                                 .bold()
+                                
+                                Image(systemName: "arrow.right")
+                                    .foregroundStyle(.white)
+                                    .bold()
+                            }
 
                             Spacer()
                         }
                     }
                     .capsuleButton(disabled: !self.viewModel.formIsValid)
-                    .disabled(!self.viewModel.formIsValid)
+                    .disabled(!self.viewModel.formIsValid || self.isLoading)
 
                     Divider()
 

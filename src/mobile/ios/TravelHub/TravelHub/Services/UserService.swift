@@ -36,11 +36,12 @@ final class UserServiceImpl: UserService {
             url: HttpRoutes.usuarios.url,
             body: body
         )
-        
-        if response.tipo == .viajero {
-            return Viajero(id: response.id, email: response.email, nombre: response.viajero.nombre, contacto: response.viajero.contacto)
-        }
-        
-        return Usuario(id: response.id, email: response.email, tipo: response.tipo)
+
+        return Viajero(
+            id: response.id,
+            email: response.email,
+            nombre: response.viajero.nombre,
+            contacto: response.viajero.contacto
+        )
     }
 }
