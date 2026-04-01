@@ -28,6 +28,7 @@
           routerLinkActive="sidebar__nav-item--active"
           [routerLinkActiveOptions]="{ exact: item.path === '/admin' }"
           [attr.title]="sidebarCollapsed() ? item.label : null"
+          [attr.aria-label]="sidebarCollapsed() ? item.label : null"
         >
           <span class="sidebar__nav-icon">
             @switch (item.icon) {

@@ -30,6 +30,7 @@ class CrearUsuarioRequest(BaseModel):
 
 class ActualizarUsuarioRequest(BaseModel):
     nombre: Optional[str] = None
+    apellido: Optional[str] = None
     telefono: Optional[str] = None
 
 

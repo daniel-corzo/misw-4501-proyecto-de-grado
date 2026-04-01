@@ -53,7 +53,9 @@ async def login(
     """
     Autentica un usuario y retorna un JWT de acceso.
     """
-    if login_rate_limiter.is_locked(body.email):
+    email_key = body.email.strip().lower()
+
+    if login_rate_limiter.is_locked(email_key):
         _emit_audit_log(
             request,
             event_type="audit.login.rate_limited",
@@ -69,7 +71,7 @@ async def login(
     try:
         access_token, user = await authenticate_user(body, db, settings)
     except HTTPException:
-        login_rate_limiter.record_failure(body.email)
+        login_rate_limiter.record_failure(email_key)
         _emit_audit_log(
             request,
             event_type="audit.login.failure",
@@ -79,7 +81,7 @@ async def login(
         )
         raise
 
-    login_rate_limiter.reset(body.email)
+    login_rate_limiter.reset(email_key)
     _emit_audit_log(
         request,
         event_type="audit.login.success",
