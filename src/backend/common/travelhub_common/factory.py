@@ -3,6 +3,7 @@ from fastapi import FastAPI, APIRouter, Depends
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from travelhub_common.middleware import logging_middleware
@@ -46,9 +47,20 @@ def create_app(
             title=f"TravelHub - {service_name} - Swagger UI",
         )
 
+    app.add_middleware(GZipMiddleware, minimum_size=500)
     app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
     app.add_middleware(BaseHTTPMiddleware, dispatch=logging_middleware)
     register_exception_handlers(app)
+
+    @app.middleware("http")
+    async def security_headers(request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        return response
 
     health_router = APIRouter()
 

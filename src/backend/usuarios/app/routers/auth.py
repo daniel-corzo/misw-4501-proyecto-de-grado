@@ -9,6 +9,7 @@ from app.config import Settings, get_settings
 from app.database import get_db
 from app.schemas.auth import LoginRequest, LoginResponse, RefreshRequest
 from app.services.auth_service import authenticate_user, revoke_token
+from app.services.rate_limiter import login_rate_limiter
 from travelhub_common.logger import get_logger
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -52,9 +53,23 @@ async def login(
     """
     Autentica un usuario y retorna un JWT de acceso.
     """
+    if login_rate_limiter.is_locked(body.email):
+        _emit_audit_log(
+            request,
+            event_type="audit.login.rate_limited",
+            success=False,
+            email=body.email,
+            reason="rate_limited",
+        )
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Demasiados intentos fallidos. Intenta de nuevo en 15 minutos.",
+        )
+
     try:
         access_token, user = await authenticate_user(body, db, settings)
     except HTTPException:
+        login_rate_limiter.record_failure(body.email)
         _emit_audit_log(
             request,
             event_type="audit.login.failure",
@@ -64,6 +79,7 @@ async def login(
         )
         raise
 
+    login_rate_limiter.reset(body.email)
     _emit_audit_log(
         request,
         event_type="audit.login.success",

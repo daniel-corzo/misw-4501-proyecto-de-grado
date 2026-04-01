@@ -19,7 +19,6 @@ VALID_PAYLOAD = {
     "nombre": "Test",
     "telefono": "1234567890",
     "tipo": TipoUsuario.VIAJERO.value,
-    "role": RoleEnum.USER.value,
 }
 
 @pytest.fixture
@@ -65,11 +64,21 @@ async def test_register_viajero_success(override_client, mock_db_session):
     assert data["id"] is not None
     assert data["email"] == VALID_PAYLOAD["email"]
     assert data["tipo"] == VALID_PAYLOAD["tipo"]
-    assert data["role"] == VALID_PAYLOAD["role"]
+    assert data["role"] == RoleEnum.USER.value
     assert data["viajero"] is not None
     assert data["viajero"]["id"] is not None
     assert data["viajero"]["nombre"] == VALID_PAYLOAD["nombre"]
     assert data["viajero"]["contacto"] == VALID_PAYLOAD["telefono"]
+
+
+@pytest.mark.asyncio
+async def test_register_role_elevation_is_ignored(override_client, mock_db_session):
+    """Sending role=ADMIN in the body must not elevate the user's role."""
+    payload = {**VALID_PAYLOAD, "role": "ADMIN"}
+    response = await override_client.post("/usuarios", json=payload)
+
+    assert response.status_code == 201
+    assert response.json()["role"] == RoleEnum.USER.value
 
 
 @pytest.mark.asyncio

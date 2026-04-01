@@ -1,0 +1,90 @@
+<div class="admin-shell" [class.admin-shell--collapsed]="sidebarCollapsed()">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar__header">
+      <a class="sidebar__logo" routerLink="/">
+        <img src="/logo.svg" alt="TravelHub" class="sidebar__logo-icon" />
+        @if (!sidebarCollapsed()) {
+          <span class="sidebar__logo-text">TravelHub</span>
+        }
+      </a>
+      <button class="sidebar__toggle" type="button" (click)="toggleSidebar()" aria-label="Colapsar menú">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          @if (sidebarCollapsed()) {
+            <path d="M9 18l6-6-6-6"/>
+          } @else {
+            <path d="M15 18l-6-6 6-6"/>
+          }
+        </svg>
+      </button>
+    </div>
+
+    <nav class="sidebar__nav">
+      @for (item of visibleNavItems; track item.path) {
+        <a
+          class="sidebar__nav-item"
+          [routerLink]="item.path"
+          routerLinkActive="sidebar__nav-item--active"
+          [routerLinkActiveOptions]="{ exact: item.path === '/admin' }"
+          [attr.title]="sidebarCollapsed() ? item.label : null"
+        >
+          <span class="sidebar__nav-icon">
+            @switch (item.icon) {
+              @case ('dashboard') {
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              }
+              @case ('hotel') {
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              }
+              @case ('calendar') {
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              }
+              @case ('users') {
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              }
+              @case ('chart') {
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
+              }
+            }
+          </span>
+          @if (!sidebarCollapsed()) {
+            <span class="sidebar__nav-label">{{ item.label }}</span>
+          }
+        </a>
+      }
+    </nav>
+
+    <div class="sidebar__footer">
+      @if (!sidebarCollapsed()) {
+        <div class="sidebar__user">
+          <div class="sidebar__avatar">{{ auth.userInitials() }}</div>
+          <div class="sidebar__user-info">
+            <span class="sidebar__user-name">{{ auth.userName() }}</span>
+            <span class="sidebar__user-role">{{ auth.getUserRole() }}</span>
+          </div>
+        </div>
+      }
+      <button class="sidebar__logout" type="button" (click)="onLogout()" aria-label="Cerrar sesión">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main content area -->
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div class="admin-topbar__breadcrumb">
+        <span class="admin-topbar__title">Panel de administración</span>
+      </div>
+      <a class="admin-topbar__back" routerLink="/">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        Ir al portal
+      </a>
+    </header>
+    <main class="admin-content">
+      <router-outlet />
+    </main>
+  </div>
+
+</div>

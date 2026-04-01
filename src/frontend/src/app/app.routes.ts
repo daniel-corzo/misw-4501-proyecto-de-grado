@@ -1,10 +1,11 @@
 import { Routes } from '@angular/router';
 import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
+import { AdminLayoutComponent } from './layout/admin-layout/admin-layout.component';
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
-  // ── Authenticated shell (navbar + footer) ───────────────────────
+  // ── Portal público (navbar + footer) ────────────────────────────
   {
     path: '',
     component: MainLayoutComponent,
@@ -40,14 +41,6 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'partner/dashboard',
-        canActivate: [authGuard, roleGuard('MANAGER', 'ADMIN')],
-        loadComponent: () =>
-          import('./features/partner/dashboard.component').then(
-            (m) => m.PartnerDashboardComponent
-          ),
-      },
-      {
         path: 'terms',
         loadComponent: () =>
           import('./features/terms/terms.component').then(
@@ -57,7 +50,52 @@ export const routes: Routes = [
     ],
   },
 
-  // ── 404 – página independiente (sin layout shell) ─────────────────
+  // ── Panel de administración (layout propio con sidebar) ──────────
+  {
+    path: 'admin',
+    component: AdminLayoutComponent,
+    canActivate: [authGuard, roleGuard('ADMIN', 'MANAGER')],
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/admin/dashboard/admin-dashboard.component').then(
+            (m) => m.AdminDashboardComponent
+          ),
+      },
+      {
+        path: 'hoteles',
+        loadComponent: () =>
+          import('./features/admin/hoteles/admin-hoteles.component').then(
+            (m) => m.AdminHotelesComponent
+          ),
+      },
+      {
+        path: 'reservas',
+        loadComponent: () =>
+          import('./features/admin/reservas/admin-reservas.component').then(
+            (m) => m.AdminReservasComponent
+          ),
+      },
+      {
+        path: 'usuarios',
+        canActivate: [roleGuard('ADMIN')],
+        loadComponent: () =>
+          import('./features/admin/usuarios/admin-usuarios.component').then(
+            (m) => m.AdminUsuariosComponent
+          ),
+      },
+      {
+        path: 'reportes',
+        loadComponent: () =>
+          import('./features/admin/reportes/admin-reportes.component').then(
+            (m) => m.AdminReportesComponent
+          ),
+      },
+    ],
+  },
+
+  // ── 404 ──────────────────────────────────────────────────────────
   {
     path: '**',
     loadComponent: () =>

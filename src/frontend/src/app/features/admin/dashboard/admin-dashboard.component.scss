@@ -1,0 +1,51 @@
+@use '../admin-page-shared';
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-md);
+  margin-top: var(--space-xl);
+}
+
+.stat-card {
+  background: var(--color-white);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+  padding: var(--space-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  box-shadow: var(--shadow-sm);
+
+  &__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    &--blue   { background: #EBF5FF; color: var(--color-primary); }
+    &--green  { background: #EDFAF3; color: var(--color-success); }
+    &--purple { background: #F3EEFF; color: #7C3AED; }
+    &--orange { background: #FFF7ED; color: #EA580C; }
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__label {
+    font: var(--font-body3);
+    color: var(--color-text-muted);
+  }
+
+  &__value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+}

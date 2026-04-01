@@ -18,8 +18,8 @@ export class LoginComponent {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
 
-  activeRole: 'traveler' | 'partner' = 'traveler';
   loading = false;
+  showPassword = false;
 
   loginForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -36,13 +36,18 @@ export class LoginComponent {
       next: () => {
         this.auth.closeLoginModal();
         const role = this.auth.getUserRole();
-        if (role === 'MANAGER' || role === 'ADMIN') {
-          this.router.navigate(['/partner/dashboard']);
+        if (role === 'ADMIN' || role === 'MANAGER') {
+          this.router.navigate(['/admin']);
         }
+        // USER stays on current page (home)
       },
-      error: () => {
+      error: (err) => {
         this.loading = false;
-        this.toast.danger('Correo o contraseña incorrecta');
+        if (err?.status === 429) {
+          this.toast.danger('Demasiados intentos fallidos. Intenta de nuevo en 15 minutos.');
+        } else {
+          this.toast.danger('Correo o contraseña incorrecta');
+        }
       },
     });
   }

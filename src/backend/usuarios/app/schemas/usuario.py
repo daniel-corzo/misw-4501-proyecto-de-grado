@@ -10,7 +10,6 @@ from travelhub_common.security import RoleEnum
 class CrearUsuarioRequest(BaseModel):
     email: EmailStr
     password: str
-    role: Optional[RoleEnum] = RoleEnum.USER
     nombre: str
     telefono: str
     tipo: TipoUsuario
@@ -31,7 +30,6 @@ class CrearUsuarioRequest(BaseModel):
 
 class ActualizarUsuarioRequest(BaseModel):
     nombre: Optional[str] = None
-    apellido: Optional[str] = None
     telefono: Optional[str] = None
 
 

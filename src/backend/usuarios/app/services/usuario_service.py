@@ -31,13 +31,12 @@ async def create_user(
             detail="Usuario ya existe con este email",
         )
 
-    role = body.role if body.role is not None else RoleEnum.USER
     user = Usuario(
         id=uuid.uuid4(),
         email=body.email,
         hashed_contrasena=_get_password_hash(body.password),
         tipo=body.tipo,
-        role=role,
+        role=RoleEnum.USER,
     )
 
     if body.tipo == TipoUsuario.VIAJERO:
@@ -114,12 +113,11 @@ async def update_user_profile(
             detail="Perfil de usuario no encontrado",
         )
 
-    if body.nombre is not None:
-        user_profile.nombre = body.nombre
-    if body.apellido is not None:
-        user_profile.apellido = body.apellido
-    if body.telefono is not None:
-        user_profile.telefono = body.telefono
+    if user_profile.viajero:
+        if body.nombre is not None:
+            user_profile.viajero.nombre = body.nombre
+        if body.telefono is not None:
+            user_profile.viajero.contacto = body.telefono
 
     await db.commit()
     result = await db.execute(

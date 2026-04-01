@@ -1,0 +1,228 @@
+$sidebar-width: 240px;
+$sidebar-collapsed-width: 64px;
+$topbar-height: 56px;
+
+.admin-shell {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--color-bg);
+
+  &--collapsed {
+    .sidebar { width: $sidebar-collapsed-width; }
+    .admin-main { margin-left: $sidebar-collapsed-width; }
+  }
+}
+
+/* ── Sidebar ────────────────────────────────────────────────── */
+.sidebar {
+  width: $sidebar-width;
+  background: var(--color-text);
+  color: var(--color-white);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  transition: width 0.2s ease;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 100;
+}
+
+.sidebar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-md);
+  height: $topbar-height;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  flex-shrink: 0;
+}
+
+.sidebar__logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.sidebar__logo-icon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  filter: brightness(0) invert(1);
+}
+
+.sidebar__logo-text {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-white);
+}
+
+.sidebar__toggle {
+  color: rgba(255,255,255,0.6);
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+
+  &:hover { color: var(--color-white); background: rgba(255,255,255,0.1); }
+}
+
+/* Nav items */
+.sidebar__nav {
+  flex: 1;
+  padding: var(--space-sm) var(--space-xs);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+}
+
+.sidebar__nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 10px var(--space-sm);
+  border-radius: var(--border-radius);
+  color: rgba(255,255,255,0.7);
+  font: var(--font-body2);
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover {
+    background: rgba(255,255,255,0.1);
+    color: var(--color-white);
+  }
+
+  &--active {
+    background: var(--color-primary);
+    color: var(--color-white);
+  }
+}
+
+.sidebar__nav-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.sidebar__nav-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Footer */
+.sidebar__footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-top: 1px solid rgba(255,255,255,0.1);
+  flex-shrink: 0;
+}
+
+.sidebar__user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex: 1;
+  overflow: hidden;
+}
+
+.sidebar__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.sidebar__user-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar__user-name {
+  font: var(--font-body2);
+  font-weight: 600;
+  color: var(--color-white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar__user-role {
+  font: var(--font-body3);
+  color: rgba(255,255,255,0.5);
+}
+
+.sidebar__logout {
+  color: rgba(255,255,255,0.5);
+  display: flex;
+  align-items: center;
+  padding: 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+
+  &:hover { color: var(--color-danger); background: rgba(255,255,255,0.05); }
+}
+
+/* ── Main area ──────────────────────────────────────────────── */
+.admin-main {
+  margin-left: $sidebar-width;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  transition: margin-left 0.2s ease;
+  overflow: auto;
+}
+
+.admin-topbar {
+  height: $topbar-height;
+  background: var(--color-white);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-xl);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.admin-topbar__title {
+  font: var(--font-body2);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.admin-topbar__back {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font: var(--font-body3);
+  color: var(--color-text-muted);
+  transition: color 0.15s;
+
+  &:hover { color: var(--color-primary); }
+}
+
+.admin-content {
+  flex: 1;
+  padding: var(--space-xl);
+}
