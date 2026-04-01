@@ -10,6 +10,9 @@ import SwiftUI
 extension SignUpView {
     @Observable
     class ViewModel {
+        var userService: UserService = UserServiceKey.defaultValue
+        var toastManager: ToastManager = ToastManagerKey.defaultValue
+
         // MARK: - State Variables
         var fullName: String = ""
         var phone: String = ""
@@ -23,60 +26,88 @@ extension SignUpView {
             phone.filter { $0.isNumber }
         }
 
-        var fullNameSmallText: AttributedString {
-            let errors: [LocalizedStringResource] = [
-                fullName.isEmpty ? .UserData.fullNameEmptyError : nil
-            ].compactMap(\.self)
+        var fullNameError: LocalizedStringResource? {
+            if fullName.isEmpty {
+                return .UserData.fullNameEmptyError
+            }
 
-            var smallText = errors.joinToAttributedString(with: "")
+            return nil
+        }
+
+        var phoneError: LocalizedStringResource? {
+            if rawPhone.isEmpty {
+                return .UserData.phoneIsEmptyError
+            }
+
+            if rawPhone.count < 10 {
+                return .UserData.phoneIsInvalidError
+            }
+
+            return nil
+        }
+
+        var emailError: LocalizedStringResource? {
+            if email.isEmpty {
+                return .UserData.emailIsEmptyError
+            }
+
+            if !email.isEmpty && !email.isValidEmail {
+                return .UserData.emailFormatIsInvalidError
+            }
+
+            return nil
+        }
+
+        var passwordErrors: [PasswordError] {
+            return [
+                password.contains(/\d+/) ? nil : .noNumbers,
+                password.contains(/[\.\-\_]+/) ? nil : .noSymbols,
+                password.count >= 8 ? nil : .tooShort,
+                password.contains(/[a-z]+/) ? nil : .noLowercase,
+                password.contains(/[A-Z]+/) ? nil : .noUppercase,
+                password.isEmpty ? .empty : nil,
+            ].compactMap(\.self)
+        }
+
+        var formIsValid: Bool {
+            return fullNameError == nil && phoneError == nil
+                && emailError == nil && passwordErrors.isEmpty && agreeToTerms
+        }
+
+        var fullNameSmallText: AttributedString {
+            guard let fullNameError else {
+                return ""
+            }
+
+            var smallText = AttributedString(localized: fullNameError)
             smallText.foregroundColor = .danger
 
             return smallText
         }
 
         var phoneSmallText: AttributedString {
-            var error: LocalizedStringResource = ""
-            
-            if rawPhone.isEmpty {
-                error = .UserData.emailIsEmptyError
-            }
-            
-            if rawPhone.count < 10 {
-                error = .UserData.phoneIsInvalidError
+            guard let phoneError else {
+                return ""
             }
 
-            var smallText = AttributedString(localized: error)
+            var smallText = AttributedString(localized: phoneError)
             smallText.foregroundColor = .danger
 
             return smallText
         }
 
         var emailSmallText: AttributedString {
-            var error: LocalizedStringResource = ""
-            
-            if email.isEmpty {
-                error = .UserData.emailIsEmptyError
-            }
-            
-            if !email.isEmpty && !email.isValidEmail {
-                error = .UserData.emailFormatIsInvalidError
+            guard let emailError else {
+                return ""
             }
 
-            var smallText = AttributedString(localized: error)
+            var smallText = AttributedString(localized: emailError)
             smallText.foregroundColor = .danger
 
             return smallText
         }
 
         var passwordSmallText: AttributedString {
-            let errors: [PasswordError] = [
-                password.contains(/\d+/) ? nil : .noNumbers,
-                password.contains(/[\.\-\_]+/) ? nil : .noSymbols,
-                password.count >= 8 ? nil : .tooShort,
-                password.contains(/[a-z]+/) ? nil : .noLowercase,
-                password.contains(/[A-Z]+/) ? nil : .noUppercase,
-            ].compactMap(\.self)
-
             var smallText: AttributedString = ""
 
             if password.isEmpty {
@@ -87,15 +118,26 @@ extension SignUpView {
 
                 smallText += errorText + "\n\n"
             }
-            
-            smallText += buildPasswordRequirementsText(errors: errors)
+
+            smallText += buildPasswordRequirementsText()
 
             return smallText
         }
 
         // MARK: - Functions
 
-        private func buildPasswordRequirementsText(errors: [PasswordError])
+        @MainActor
+        func create(user: NewUsuario, dismiss: DismissAction) async {
+            do {
+                let _ = try await self.userService.create(user: user)
+                toastManager.success(String(localized: .SignUp.userCreated))
+                dismiss()
+            } catch {
+                toastManager.error(error.localizedDescription, title: "Error")
+            }
+        }
+
+        private func buildPasswordRequirementsText()
             -> AttributedString
         {
             var description = AttributedString(
@@ -105,23 +147,23 @@ extension SignUpView {
 
             let minCharsText = formatPasswordRequirement(
                 .UserData.passwordMinChar,
-                isError: errors.contains(where: { $0 == .tooShort })
+                isError: passwordErrors.contains(where: { $0 == .tooShort })
             )
             let numbersText = formatPasswordRequirement(
                 .UserData.passwordNumber,
-                isError: errors.contains(where: { $0 == .noNumbers })
+                isError: passwordErrors.contains(where: { $0 == .noNumbers })
             )
             let symbolsText = formatPasswordRequirement(
                 .UserData.passwordSymbol,
-                isError: errors.contains(where: { $0 == .noSymbols })
+                isError: passwordErrors.contains(where: { $0 == .noSymbols })
             )
             let lowerCaseText = formatPasswordRequirement(
                 .UserData.passwordLowerCase,
-                isError: errors.contains(where: { $0 == .noLowercase })
+                isError: passwordErrors.contains(where: { $0 == .noLowercase })
             )
             let upperCaseText = formatPasswordRequirement(
                 .UserData.passwordUpperCase,
-                isError: errors.contains(where: { $0 == .noUppercase })
+                isError: passwordErrors.contains(where: { $0 == .noUppercase })
             )
 
             return description
