@@ -12,10 +12,12 @@ struct LogInView: View {
         case email, password
     }
     
+    @Environment(\.authService) private var authService: AuthServicing
+    @Environment(\.toastManager) private var toastManager: ToastManager
+    
     @FocusState private var focusedField: Field?
     @State private var viewModel = ViewModel()
     @State private var isHidingPassword: Bool = true
-    @State private var showError = false
     @State private var isLoading = false
     
     @Binding var isLoggedIn: Bool
@@ -95,13 +97,12 @@ struct LogInView: View {
                             Task {
                                 focusedField = nil
                                 isLoading = true
-                                showError = false
+                                
                                 do {
                                     let _ = try await viewModel.logIn()
                                     isLoggedIn = true
                                 } catch {
-                                    // errorMessage is already set in ViewModel.logIn()
-                                    showError = true
+                                    self.toastManager.error(error.localizedDescription, title: "Error")
                                 }
                                 isLoading = false
                             }
@@ -125,11 +126,6 @@ struct LogInView: View {
                         .glassEffect(.regular.tint(.accent).interactive())
                         .clipShape(Capsule())
                         .shadow(color: .accent.opacity(0.2), radius: 15, y: 10)
-                        .alert("Error", isPresented: $showError, actions: {
-                            Button("OK", role: .cancel) { }
-                        }, message: {
-                            Text(viewModel.errorMessage ?? LocalizedStringResource.LogIn.emailAndPasswordError)
-                        })
                         .disabled(!viewModel.canSubmit || isLoading)
                         .opacity((!viewModel.canSubmit || isLoading) ? 0.6 : 1.0)
                         
@@ -158,9 +154,14 @@ struct LogInView: View {
             }
         }
         .onTapGesture { focusedField = nil }
+        .task {
+            self.viewModel.authService = self.authService
+        }
     }
 }
 
 #Preview {
     LogInView(isLoggedIn: .constant(false))
+        // TODO: Change injected service for a mock
+        .environment(\.authService, AuthService(httpService: HttpServiceImpl.shared))
 }
