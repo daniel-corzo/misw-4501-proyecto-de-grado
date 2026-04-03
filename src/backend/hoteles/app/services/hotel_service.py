@@ -1,6 +1,10 @@
 import uuid
 from typing import Literal
 
+import httpx
+
+from travelhub_common.security import RoleEnum
+from app.config import get_settings
 from fastapi import HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
@@ -194,6 +198,46 @@ async def obtener_hotel_service(db: AsyncSession, hotel_id):
 
 
 async def crear_hotel_service(db: AsyncSession, body: CrearHotelRequest):
+
+    # Create the user, calling the users service
+    print("Creando usuario para el hotel...")
+    print(f"Enviando solicitud a {get_settings().backend_api_url}/usuarios con email {body.email}")
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"{get_settings().backend_api_url}/usuarios",
+            json={
+                "email": body.email,
+                "password": body.password,
+                "nombre": body.nombre,
+                "telefono": body.contacto_celular,
+                "tipo": "hotel",
+                "role": RoleEnum.USER.value,
+            },
+        )
+
+        print(f"Respuesta del servicio de usuarios: {response.status_code} - {response.text}")
+
+        if response.status_code == 400:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=response.json().get("detail", "Error al crear el usuario para el hotel"),
+            )
+
+        if response.status_code != 201:
+            try:
+                error_detail = response.json().get("detail", "Error desconocido")
+            except Exception:
+                error_detail = "Error desconocido"
+            
+            raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al crear el usuario para el hotel: {error_detail}",
+            )
+
+        usuario_data = response.json()
+        body.usuario_id = usuario_data["id"]
+
+
     hotel = Hotel(
         id=uuid.uuid4(),
         nombre=body.nombre,
@@ -207,7 +251,7 @@ async def crear_hotel_service(db: AsyncSession, body: CrearHotelRequest):
         estrellas=body.estrellas,
         ranking=body.ranking,
         contacto_celular=body.contacto_celular,
-        contacto_email=body.contacto_email,
+        contacto_email=body.email,
         imagenes=body.imagenes,
         check_in=body.check_in,
         check_out=body.check_out,

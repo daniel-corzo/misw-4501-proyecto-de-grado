@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, UTC, time
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import HTTPException
@@ -196,7 +196,16 @@ async def test_obtener_hotel_service_raises_404_when_not_found():
 
 
 @pytest.mark.anyio
-async def test_crear_hotel_service_returns_created_hotel_response():
+@patch("app.services.hotel_service.httpx.AsyncClient")
+async def test_crear_hotel_service_returns_created_hotel_response(mock_async_client):
+    mock_response = MagicMock()
+    mock_response.status_code = 201
+    mock_response.json.return_value = {"id": str(uuid.uuid4())}
+    mock_client_instance = AsyncMock()
+    mock_client_instance.post.return_value = mock_response
+    mock_client_instance.__aenter__.return_value = mock_client_instance
+    mock_async_client.return_value = mock_client_instance
+
     usuario_id = uuid.uuid4()
     body = CrearHotelRequest(
         nombre="Hotel Nuevo",
@@ -211,6 +220,8 @@ async def test_crear_hotel_service_returns_created_hotel_response():
         ranking=4.6,
         contacto_celular="3000000000",
         contacto_email="hotel@nuevo.com",
+        email="hotel@nuevo.com",
+        password="secretpassword",
         imagenes=["hotel1.jpg"],
         check_in=time(15, 0),
         check_out=time(12, 0),
@@ -299,3 +310,75 @@ async def test_crear_hotel_service_returns_created_hotel_response():
     assert len(response.habitaciones) == 1
     db.flush.assert_awaited_once()
     db.commit.assert_awaited_once()
+
+
+@pytest.mark.anyio
+@patch("app.services.hotel_service.httpx.AsyncClient")
+async def test_crear_hotel_service_raises_400_on_user_creation_error(mock_async_client):
+    mock_response = MagicMock()
+    mock_response.status_code = 400
+    mock_response.json.return_value = {"detail": "El email ya existe"}
+    mock_client_instance = AsyncMock()
+    mock_client_instance.post.return_value = mock_response
+    mock_client_instance.__aenter__.return_value = mock_client_instance
+    mock_async_client.return_value = mock_client_instance
+
+    body = CrearHotelRequest(
+        nombre="Hotel",
+        direccion="Calle 10",
+        pais="Colombia",
+        estado="Cundinamarca",
+        departamento="Cundinamarca",
+        ciudad="Medellin",
+        amenidades=[],
+        estrellas=5,
+        ranking=4.6,
+        email="duplicado@hotel.com",
+        password="pass",
+        check_in=time(15, 0),
+        check_out=time(12, 0),
+        valor_minimo_modificacion=100.0,
+    )
+    db = AsyncMock()
+
+    with pytest.raises(HTTPException) as exc:
+        await crear_hotel_service(db=db, body=body)
+
+    assert exc.value.status_code == 400
+    assert exc.value.detail == "El email ya existe"
+
+
+@pytest.mark.anyio
+@patch("app.services.hotel_service.httpx.AsyncClient")
+async def test_crear_hotel_service_raises_500_on_unknown_user_creation_error(mock_async_client):
+    mock_response = MagicMock()
+    mock_response.status_code = 502
+    mock_response.json.side_effect = ValueError("Not JSON")
+    mock_client_instance = AsyncMock()
+    mock_client_instance.post.return_value = mock_response
+    mock_client_instance.__aenter__.return_value = mock_client_instance
+    mock_async_client.return_value = mock_client_instance
+
+    body = CrearHotelRequest(
+        nombre="Hotel",
+        direccion="Calle 10",
+        pais="Colombia",
+        estado="Cundinamarca",
+        departamento="Cundinamarca",
+        ciudad="Medellin",
+        amenidades=[],
+        estrellas=5,
+        ranking=4.6,
+        email="error@hotel.com",
+        password="pass",
+        check_in=time(15, 0),
+        check_out=time(12, 0),
+        valor_minimo_modificacion=100.0,
+    )
+    db = AsyncMock()
+
+    with pytest.raises(HTTPException) as exc:
+        await crear_hotel_service(db=db, body=body)
+
+    assert exc.value.status_code == 500
+    assert "Error al crear el usuario para el hotel" in exc.value.detail

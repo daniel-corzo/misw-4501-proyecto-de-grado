@@ -1,7 +1,7 @@
 import uuid
 from datetime import UTC, datetime
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -59,7 +59,16 @@ async def override_client(mock_db_session):
 
 
 @pytest.mark.asyncio
-async def test_post_hoteles_creates_with_politicas_and_habitaciones(override_client, mock_db_session):
+@patch("app.services.hotel_service.httpx.AsyncClient")
+async def test_post_hoteles_creates_with_politicas_and_habitaciones(mock_async_client, override_client, mock_db_session):
+    mock_response = MagicMock()
+    mock_response.status_code = 201
+    mock_response.json.return_value = {"id": str(uuid.uuid4())}
+    mock_client_instance = AsyncMock()
+    mock_client_instance.post.return_value = mock_response
+    mock_client_instance.__aenter__.return_value = mock_client_instance
+    mock_async_client.return_value = mock_client_instance
+
     hotel_id = uuid.uuid4()
     usuario_id = uuid.uuid4()
     created_at = datetime.now(UTC)
@@ -123,6 +132,8 @@ async def test_post_hoteles_creates_with_politicas_and_habitaciones(override_cli
         "ranking": 4.8,
         "contacto_celular": "3000000000",
         "contacto_email": "hotel@nuevo.com",
+        "email": "hotel@nuevo.com",
+        "password": "secretpassword",
         "imagenes": ["hotel1.jpg"],
         "check_in": "15:00:00",
         "check_out": "12:00:00",
@@ -163,7 +174,16 @@ async def test_post_hoteles_creates_with_politicas_and_habitaciones(override_cli
 
 
 @pytest.mark.asyncio
-async def test_post_hoteles_creates_without_optional_lists(override_client, mock_db_session):
+@patch("app.services.hotel_service.httpx.AsyncClient")
+async def test_post_hoteles_creates_without_optional_lists(mock_async_client, override_client, mock_db_session):
+    mock_response = MagicMock()
+    mock_response.status_code = 201
+    mock_response.json.return_value = {"id": str(uuid.uuid4())}
+    mock_client_instance = AsyncMock()
+    mock_client_instance.post.return_value = mock_response
+    mock_client_instance.__aenter__.return_value = mock_client_instance
+    mock_async_client.return_value = mock_client_instance
+
     hotel_id = uuid.uuid4()
     usuario_id = uuid.uuid4()
     created_at = datetime.now(UTC)
@@ -208,6 +228,8 @@ async def test_post_hoteles_creates_without_optional_lists(override_client, mock
         "estrellas": 4,
         "ranking": 4.2,
         "imagenes": [],
+        "email": "hotel@nuevo.com",
+        "password": "secretpassword",
         "check_in": "15:00:00",
         "check_out": "12:00:00",
         "valor_minimo_modificacion": 50.0,

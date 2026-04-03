@@ -1,0 +1,27 @@
+<div class="amenities-container" [class.editable]="editable" [class.has-error]="error">
+  @if (editable) {
+    <div class="tags-grid">
+      @for (item of availableAmenities; track item.value) {
+        <button 
+          type="button"
+          class="tag-button"
+          [class.selected]="isSelected(item.value)"
+          [disabled]="disabled"
+          (click)="toggleAmenity(item.value)">
+          {{ item.label }}
+        </button>
+      }
+    </div>
+    @if (error) {
+      <span class="field-error">{{ error }}</span>
+    }
+  } @else {
+    <div class="tags-list">
+      @for (item of availableAmenities; track item.value) {
+        @if (isSelected(item.value)) {
+          <span class="tag-badge">{{ item.label }}</span>
+        }
+      }
+    </div>
+  }
+</div>
