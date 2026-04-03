@@ -29,3 +29,12 @@ struct CreateUserResponse: Decodable {
     let tipo: TipoUsuario
     let viajero: CreateViajeroResponse
 }
+
+// MARK: - User Me
+
+struct MeResponse: Decodable {
+    let id: UUID
+    let tipo: String
+    let email: String
+    let role: String
+}

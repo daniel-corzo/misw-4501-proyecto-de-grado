@@ -17,7 +17,11 @@ struct UserServiceKey: EnvironmentKey {
 }
 
 struct AuthServiceKey: EnvironmentKey {
-    static let defaultValue: AuthServicing = AuthService(httpService: HttpServiceImpl.shared)
+    static let defaultValue: AuthService = AuthServiceImpl(httpService: HttpServiceImpl.shared)
+}
+
+struct HotelServiceKey: EnvironmentKey {
+    static let defaultValue: HotelService = HotelServiceImpl(httpService: HttpServiceImpl.shared)
 }
 
 // MARK: - Environment Values
@@ -35,8 +39,14 @@ extension EnvironmentValues {
     }
     
     // MARK: Auth Service
-    var authService: AuthServicing {
+    var authService: AuthService {
         get { self[AuthServiceKey.self] }
         set { self[AuthServiceKey.self] = newValue }
+    }
+    
+    // MARK: Hotel Service
+    var hotelService: HotelService {
+        get { self[HotelServiceKey.self] }
+        set { self[HotelServiceKey.self] = newValue }
     }
 }

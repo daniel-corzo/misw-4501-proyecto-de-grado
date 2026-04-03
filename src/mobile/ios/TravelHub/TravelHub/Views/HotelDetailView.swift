@@ -238,7 +238,7 @@ struct HotelDetailView: View {
 #Preview {
     HotelDetailView(
         hotel: Hotel(
-            id: 1,
+            id: UUID(),
             nombre: "Grand Hotel",
             direccion: "123 Fifth Ave",
             pais: "United States",

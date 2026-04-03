@@ -10,7 +10,7 @@ import SwiftUI
 extension LogInView {
     @Observable
     class ViewModel {
-        var authService: AuthServicing = AuthServiceKey.defaultValue
+        var authService: AuthService = AuthServiceKey.defaultValue
         
         // MARK: - State Variables
         var email: String = ""
@@ -37,7 +37,7 @@ extension LogInView {
             do {
                 let response = try await authService.logIn(email: email, password: password)
                 do {
-                    try tokenStore.save(token: response.token)
+                    try tokenStore.save(token: response.accessToken)
                 } catch {
                     throw HttpError.server("No se pudo guardar el token de sesión")
                 }
