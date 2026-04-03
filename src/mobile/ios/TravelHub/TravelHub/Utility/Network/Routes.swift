@@ -10,15 +10,24 @@ import Foundation
 /// A bookmark of the available routes
 enum HttpRoutes {
     case usuarios
+    case usuarioMe
     case login
+    case hoteles
     
     var url: URL {
         switch self {
             case .login:
                 return AppConfig.baseURL.appendingPathComponent("auth/login")
+            
+            case .hoteles:
+                return AppConfig.baseURL.appendingPathComponent("hoteles")
                 
             case .usuarios:
                 return AppConfig.baseURL.appendingPathComponent("usuarios")
+            
+            case .usuarioMe:
+                return AppConfig.baseURL.appendingPathComponent("usuarios/me")
         }
     }
 }
+

@@ -135,7 +135,7 @@ enum HotelAmenity: String, Codable {
 }
 
 struct Hotel: Identifiable, Codable {
-    var id: Int
+    var id: UUID
     var nombre: String
     var direccion: String
     var pais: String

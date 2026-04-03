@@ -1,30 +1,10 @@
 import Foundation
 
-struct LoginRequest: Codable {
-    let email: String
-    let password: String
-}
-
-struct LoginResponse: Codable {
-    let accessToken: String
-    let tokenType: String
-    let expiresIn: Int
-
-    // Keep compatibility with existing code using `response.token`
-    var token: String { accessToken }
-
-    enum CodingKeys: String, CodingKey {
-        case accessToken = "access_token"
-        case tokenType = "token_type"
-        case expiresIn = "expires_in"
-    }
-}
-
-protocol AuthServicing {
+protocol AuthService {
     func logIn(email: String, password: String) async throws -> LoginResponse
 }
 
-final class AuthService: AuthServicing {
+final class AuthServiceImpl: AuthService {
     private let httpService: HttpService
     
     init(httpService: HttpService) {

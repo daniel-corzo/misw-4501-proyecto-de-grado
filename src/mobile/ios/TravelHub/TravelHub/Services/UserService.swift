@@ -14,13 +14,18 @@ protocol UserService {
     /// - Parameters:
     ///     - user: The information of the user to create
     func create(user: NewUsuario) async throws -> Usuario
+
+    /// Fetches the current authenticated user's profile
+    func getMe() async throws -> MeResponse
 }
 
 final class UserServiceImpl: UserService {
     private let httpService: HttpService
+    private let tokenStore: TokenStoring
 
-    init(httpService: HttpService) {
+    init(httpService: HttpService, tokenStore: TokenStoring = KeychainTokenStore.shared) {
         self.httpService = httpService
+        self.tokenStore = tokenStore
     }
 
     func create(user: NewUsuario) async throws -> Usuario {
@@ -43,5 +48,10 @@ final class UserServiceImpl: UserService {
             nombre: response.viajero.nombre,
             contacto: response.viajero.contacto
         )
+    }
+
+    func getMe() async throws -> MeResponse {
+        let token = try tokenStore.readToken()
+        return try await httpService.get(url: HttpRoutes.usuarioMe.url, token: token)
     }
 }

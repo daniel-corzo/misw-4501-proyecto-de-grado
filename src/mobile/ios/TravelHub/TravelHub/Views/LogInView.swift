@@ -12,7 +12,8 @@ struct LogInView: View {
         case email, password
     }
     
-    @Environment(\.authService) private var authService: AuthServicing
+    @Environment(\.authService) private var authService: AuthService
+    @Environment(\.userService) private var userService: UserService
     @Environment(\.toastManager) private var toastManager: ToastManager
     
     @FocusState private var focusedField: Field?
@@ -100,9 +101,14 @@ struct LogInView: View {
                                 
                                 do {
                                     let _ = try await viewModel.logIn()
-                                    isLoggedIn = true
+                                    let me = try await userService.getMe()
+                                    if me.tipo == TipoUsuario.viajero.rawValue {
+                                        isLoggedIn = true
+                                    } else {
+                                        toastManager.warning("No se puede acceder a la aplicación con este tipo de usuario")
+                                    }
                                 } catch {
-                                    self.toastManager.error(error.localizedDescription, title: "Error")
+                                    toastManager.error(error.localizedDescription, title: "Error")
                                 }
                                 isLoading = false
                             }
@@ -163,5 +169,5 @@ struct LogInView: View {
 #Preview {
     LogInView(isLoggedIn: .constant(false))
         // TODO: Change injected service for a mock
-        .environment(\.authService, AuthService(httpService: HttpServiceImpl.shared))
+        .environment(\.authService, AuthServiceImpl(httpService: HttpServiceImpl.shared))
 }

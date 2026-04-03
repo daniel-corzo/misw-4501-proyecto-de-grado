@@ -38,4 +38,12 @@ protocol HttpService {
     ///     - body: The request's body
     ///
     func post<T: Encodable, V: Decodable>(url: URL, body: T) async throws -> V
+
+    /// Sends a GET request
+    ///
+    /// - Parameters:
+    ///     - url: The URL to which the request will be made
+    ///
+    func get<V: Decodable>(url: URL, token: String?) async throws -> V
 }
+

@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from travelhub_common.logger import correlation_id_var, get_logger
@@ -23,12 +24,13 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(RequestValidationError)
     async def validation_error_handler(request: Request, exc: RequestValidationError):
         logger.warning("validation_error", extra={"errors": str(exc.errors())})
+        safe_details = jsonable_encoder(exc.errors())
         return JSONResponse(
             status_code=422,
             content={
                 "error": "validation_error",
                 "message": "Los datos enviados no son validos",
-                "details": exc.errors(),
+                "details": safe_details,
                 "correlation_id": correlation_id_var.get(),
             },
         )

@@ -15,7 +15,8 @@ struct TravelHubApp: App {
         WindowGroup {
             ContentView()
                 .environment(\.userService, UserServiceImpl(httpService: HttpServiceImpl.shared))
-                .environment(\.authService, AuthService(httpService: HttpServiceImpl.shared))
+                .environment(\.authService, AuthServiceImpl(httpService: HttpServiceImpl.shared))
+                .environment(\.hotelService, HotelServiceImpl(httpService: HttpServiceImpl.shared))
                 .environment(\.toastManager, toastManager)
                 .toastOverlay(toastManager: toastManager)
         }
