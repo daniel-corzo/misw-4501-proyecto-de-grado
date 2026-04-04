@@ -588,7 +588,7 @@ function renderDashboard(issues) {
   const remaining = totalSP - doneSP;
   const pct = totalSP > 0 ? Math.round(doneSP / totalSP * 100) : 0;
   const today = new Date();
-  const sprintDays = Math.round((SPRINT_END - SPRINT_START) / 86400000) + 1;
+  const sprintDays = Math.floor((SPRINT_END - SPRINT_START) / 86400000) + 1;
   const daysPassed = Math.max(0, Math.min(sprintDays, Math.round((today - SPRINT_START) / 86400000)));
   const spPerDay = daysPassed > 0 ? (doneSP / daysPassed).toFixed(1) : '—';
 
@@ -614,7 +614,7 @@ function renderDashboard(issues) {
 
 function getWorkDays() {
   const days = [];
-  for (let d = 0; d <= Math.round((SPRINT_END - SPRINT_START) / 86400000); d++) {
+  for (let d = 0; d <= Math.floor((SPRINT_END - SPRINT_START) / 86400000); d++) {
     days.push(new Date(SPRINT_START.getTime() + d * 86400000));
   }
   return days;
