@@ -6,8 +6,7 @@
 <title>TravelHub — Sprint Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }:root { --bg: #0d0f0e; --surface: #141614; --surface2: #1a1d1a; --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.13); --text: #e8ece8; --muted: #6b7068; --accent: #4ade80; --accent2: #86efac; --accent-dim: rgba(74,222,128,0.12); --mono: 'IBM Plex Mono', monospace; --sans: 'DM Sans', sans-serif; --warn: #fbbf24; --danger: #f87171; }
 body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; min-height: 100vh; padding: 0; }
@@ -503,10 +502,11 @@ async function loadData() {
   setStatus('Conectando con GitHub Projects...', 'loading');
 
   try {
-    const q1 = `query($login:String!,$number:Int!){user(login:$login){projectV2(number:$number){id title fields(first:30){nodes{...on ProjectV2Field{id name}...on ProjectV2SingleSelectField{id name options{id name}}...on ProjectV2IterationField{id name configuration{iterations{id title startDate duration}}}}}}}}`;
-    const d1 = await gql(token, q1, { login: OWNER, number: PROJECT_NUM });
+    const itemsFrag = `items(first:100,after:$cursor){pageInfo{hasNextPage endCursor}nodes{id content{...on Issue{number title state closedAt assignees(first:5){nodes{login}}}}fieldValues(first:20){nodes{...on ProjectV2ItemFieldNumberValue{field{...on ProjectV2Field{id name}}number}...on ProjectV2ItemFieldSingleSelectValue{field{...on ProjectV2SingleSelectField{id name}}name}...on ProjectV2ItemFieldIterationValue{field{...on ProjectV2IterationField{id name}}title startDate duration}}}}}`;
+    const q1 = `query($login:String!,$number:Int!,$cursor:String){user(login:$login){projectV2(number:$number){id title fields(first:30){nodes{...on ProjectV2Field{id name}...on ProjectV2SingleSelectField{id name options{id name}}...on ProjectV2IterationField{id name configuration{iterations{id title startDate duration}}}}}${itemsFrag}}}}`;
+    const d1 = await gql(token, q1, { login: OWNER, number: PROJECT_NUM, cursor: null });
     const project = d1.user.projectV2;
-    setStatus('Proyecto: ' + project.title + ' — cargando items...', 'loading');
+    setStatus('Proyecto: ' + project.title + ' — procesando...', 'loading');
 
     const fields = project.fields.nodes;
     const spField     = fields.find(f => f.name === 'Estimate');
@@ -524,14 +524,14 @@ async function loadData() {
     const fmtDate = d => d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }).toUpperCase();
     document.getElementById('sprint-badge').textContent = SPRINT_NAME.toUpperCase() + ' · ' + fmtDate(SPRINT_START) + ' – ' + fmtDate(SPRINT_END);
 
-    const q2 = `query($projectId:ID!,$cursor:String){node(id:$projectId){...on ProjectV2{items(first:100,after:$cursor){pageInfo{hasNextPage endCursor}nodes{id content{...on Issue{number title state closedAt assignees(first:5){nodes{login}}}}fieldValues(first:20){nodes{...on ProjectV2ItemFieldNumberValue{field{...on ProjectV2Field{id name}}number}...on ProjectV2ItemFieldSingleSelectValue{field{...on ProjectV2SingleSelectField{id name}}name}...on ProjectV2ItemFieldIterationValue{field{...on ProjectV2IterationField{id name}}title startDate duration}}}}}}}}`;
-    let allItems = [], cursor = null, hasMore = true;
-    while (hasMore) {
+    const q2 = `query($projectId:ID!,$cursor:String){node(id:$projectId){...on ProjectV2{${itemsFrag}}}}`;
+    let allItems = project.items.nodes;
+    let cursor = project.items.pageInfo.hasNextPage ? project.items.pageInfo.endCursor : null;
+    while (cursor) {
       const d2 = await gql(token, q2, { projectId: project.id, cursor });
       const page = d2.node.items;
       allItems = allItems.concat(page.nodes);
-      hasMore = page.pageInfo.hasNextPage;
-      cursor = page.pageInfo.endCursor;
+      cursor = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null;
     }
 
     setStatus('Procesando ' + allItems.length + ' items...', 'loading');
@@ -847,7 +847,20 @@ function barColor(pct) {
   return C.accent;
 }
 
+let coverageLoaded = false;
+
+async function loadJSZip() {
+  if (window.JSZip) return;
+  await new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+    s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
 async function loadCoverage() {
+  if (coverageLoaded) return;
   const loading = document.getElementById('cov-loading');
   const content = document.getElementById('cov-content');
   const errEl   = document.getElementById('cov-error');
@@ -857,6 +870,7 @@ async function loadCoverage() {
   errEl.style.display = 'none';
 
   try {
+    await loadJSZip();
 
     const res = await fetch(
       `https://api.github.com/repos/${OWNER}/${REPO}/actions/artifacts?per_page=100`,
@@ -923,6 +937,7 @@ async function loadCoverage() {
     renderCoverage(results);
     loading.style.display = 'none';
     content.style.display = 'block';
+    coverageLoaded = true;
   } catch(e) {
     loading.style.display = 'none';
     errEl.style.display = 'block';
