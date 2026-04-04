@@ -1,32 +1,8 @@
-from enum import Enum
 from pydantic import BaseModel, Field
 from uuid import UUID
 from datetime import datetime, time
 from typing import List, Optional
-
-
-class AmenidadHotel(str, Enum):
-    POOL = "POOL"
-    GYM = "GYM"
-    SPA = "SPA"
-    RESTAURANT = "RESTAURANT"
-    BAR = "BAR"
-    WIFI = "WIFI"
-    PARKING = "PARKING"
-    AIR_CONDITIONING = "AIR_CONDITIONING"
-    ROOM_SERVICE = "ROOM_SERVICE"
-    LAUNDRY = "LAUNDRY"
-    CONCIERGE = "CONCIERGE"
-    BEACH_ACCESS = "BEACH_ACCESS"
-    SKI_ACCESS = "SKI_ACCESS"
-    PET_FRIENDLY = "PET_FRIENDLY"
-    SMOKING_AREA = "SMOKING_AREA"
-    EV_CHARGING = "EV_CHARGING"
-    BUSINESS_CENTER = "BUSINESS_CENTER"
-    CONFERENCE_ROOM = "CONFERENCE_ROOM"
-    CHILDREN_PLAYGROUND = "CHILDREN_PLAYGROUND"
-    SHUTTLE = "SHUTTLE"
-    BREAKFAST_INCLUDED = "BREAKFAST_INCLUDED"
+from app.enums.hotel import AmenidadHotel
 
 
 class CrearPoliticaRequest(BaseModel):
