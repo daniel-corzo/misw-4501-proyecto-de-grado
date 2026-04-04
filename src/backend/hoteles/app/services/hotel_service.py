@@ -23,11 +23,11 @@ from app.schemas.hotel import (
 OrdenHoteles = Literal["precio_asc", "precio_desc", "rating_desc"]
 
 AMENIDADES_POPULARES_PERMITIDAS = {
-    AmenidadHotel.wifi,
-    AmenidadHotel.pool,
-    AmenidadHotel.petFriendly,
-    AmenidadHotel.breakfastIncluded,
-    AmenidadHotel.parking,
+    AmenidadHotel.WIFI,
+    AmenidadHotel.POOL,
+    AmenidadHotel.PET_FRIENDLY,
+    AmenidadHotel.BREAKFAST_INCLUDED,
+    AmenidadHotel.PARKING,
 }
 
 
@@ -85,7 +85,7 @@ async def listar_hoteles_service(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=(
                     "Solo se permiten amenidades populares en el filtro: "
-                    "Wi-Fi, Pool, Pet Friendly, Breakfast Included, Parking"
+                    "WIFI, POOL, PET_FRIENDLY, BREAKFAST_INCLUDED, PARKING"
                 ),
             )
         valores_amenidades = [amenidad.value for amenidad in amenidades_populares]

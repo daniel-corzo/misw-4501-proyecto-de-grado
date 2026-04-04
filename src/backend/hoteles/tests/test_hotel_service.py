@@ -64,7 +64,7 @@ async def test_listar_hoteles_service_returns_filtered_result():
         precio_max=1000,
         rango_50_1000=True,
         estrellas=[3, 4, 4],
-        amenidades_populares=[AmenidadHotel.wifi, AmenidadHotel.pool],
+        amenidades_populares=[AmenidadHotel.WIFI, AmenidadHotel.POOL],
     )
 
     assert response.total == 1
@@ -115,7 +115,7 @@ async def test_listar_hoteles_service_raises_when_amenidad_no_es_popular():
             precio_max=None,
             rango_50_1000=False,
             estrellas=None,
-            amenidades_populares=[AmenidadHotel.gym],
+            amenidades_populares=[AmenidadHotel.GYM],
         )
 
     assert exc.value.status_code == 400
@@ -155,7 +155,7 @@ async def test_obtener_hotel_service_returns_hotel_detail_response():
         departamento="Cundinamarca",
         ciudad="Bogota",
         descripcion="Descripcion",
-        amenidades=["Wi-Fi", "Pool"],
+        amenidades=["WIFI", "POOL"],
         estrellas=4,
         ranking=4.7,
         contacto_celular="3000000000",
