@@ -34,7 +34,7 @@ export class RegisterComponent {
     email:        ['', [Validators.required, Validators.email]],
     password:     ['', [Validators.required, passwordStrengthValidator()]],
     nombre:    ['', [Validators.required]],
-    estrellas: [0, [Validators.required]],
+    estrellas: [1, [Validators.required, Validators.min(1), Validators.max(5)]],
     descripcion: ['', [Validators.required]],
     pais:      ['', [Validators.required]],
     departamento: ['', [Validators.required]],
@@ -44,8 +44,8 @@ export class RegisterComponent {
     contacto_email: ['', [Validators.required, Validators.email]],
     check_in: ['', [Validators.required]],
     check_out: ['', [Validators.required]],
-    valor_minimo_modificacion: [0],
-    amenidades: [''],
+    valor_minimo_modificacion: [0, [Validators.required, Validators.min(0)]],
+    amenidades: ['', [Validators.required]],
     imagenes: this.fb.array([
       this.fb.control('', [Validators.required, Validators.pattern(/^(https?:\/\/.*\.(?:png|jpg|jpeg|gif|svg))$/i)])
     ]),
@@ -236,7 +236,7 @@ export class RegisterComponent {
       };
     }
 
-    const { email, password, nombre, estrellas, descripcion, pais, departamento, ciudad, direccion, contacto_celular, check_in, check_out, valor_minimo_modificacion, amenidades, imagenes } = this.partnerForm.getRawValue();
+    const { email, password, nombre, estrellas, descripcion, pais, departamento, ciudad, direccion, contacto_celular, contacto_email, check_in, check_out, valor_minimo_modificacion, amenidades, imagenes } = this.partnerForm.getRawValue();
     
     // Validate empty inputs dynamically appended
     const validImages = (imagenes as string[]).filter(img => img && img.trim() !== '');
@@ -253,6 +253,7 @@ export class RegisterComponent {
       ciudad,
       direccion,
       contacto_celular,
+      contacto_email,
       check_in,
       check_out,
       valor_minimo_modificacion,

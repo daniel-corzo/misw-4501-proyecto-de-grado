@@ -200,8 +200,6 @@ async def obtener_hotel_service(db: AsyncSession, hotel_id):
 async def crear_hotel_service(db: AsyncSession, body: CrearHotelRequest):
 
     # Create the user, calling the users service
-    print("Creando usuario para el hotel...")
-    print(f"Enviando solicitud a {get_settings().backend_api_url}/usuarios con email {body.email}")
     async with httpx.AsyncClient() as client:
         response = await client.post(
             f"{get_settings().backend_api_url}/usuarios",
@@ -214,8 +212,6 @@ async def crear_hotel_service(db: AsyncSession, body: CrearHotelRequest):
                 "role": RoleEnum.USER.value,
             },
         )
-
-        print(f"Respuesta del servicio de usuarios: {response.status_code} - {response.text}")
 
         if response.status_code == 400:
             raise HTTPException(
@@ -235,7 +231,7 @@ async def crear_hotel_service(db: AsyncSession, body: CrearHotelRequest):
             )
 
         usuario_data = response.json()
-        body.usuario_id = usuario_data["id"]
+        body.usuario_id = uuid.UUID(usuario_data["id"])
 
 
     hotel = Hotel(
@@ -251,7 +247,7 @@ async def crear_hotel_service(db: AsyncSession, body: CrearHotelRequest):
         estrellas=body.estrellas,
         ranking=body.ranking,
         contacto_celular=body.contacto_celular,
-        contacto_email=body.email,
+        contacto_email=body.contacto_email,
         imagenes=body.imagenes,
         check_in=body.check_in,
         check_out=body.check_out,

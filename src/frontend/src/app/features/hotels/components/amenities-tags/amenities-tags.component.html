@@ -6,6 +6,7 @@
           type="button"
           class="tag-button"
           [class.selected]="isSelected(item.value)"
+          [attr.aria-pressed]="isSelected(item.value)"
           [disabled]="disabled"
           (click)="toggleAmenity(item.value)">
           {{ item.label }}

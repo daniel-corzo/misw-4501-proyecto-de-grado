@@ -33,7 +33,7 @@ class CrearHotelRequest(BaseModel):
     descripcion: Optional[str] = None
     amenidades: List[AmenidadHotel] = Field(default_factory=list)
     estrellas: int
-    ranking: Optional[float] = None
+    ranking: float = 0
     contacto_celular: Optional[str] = None
     contacto_email: Optional[str] = None
     email: str

@@ -27,11 +27,12 @@ interface PartnerRegisterRequest {
   ciudad: string;
   direccion: string;
   contacto_celular: string;
+  contacto_email: string;
   check_in: string;
   check_out: string;
   valor_minimo_modificacion: number;
-  amenidades: string;
-  imagenes: string;
+  amenidades: string[];
+  imagenes: string[];
   tipo: string;
 }
 
