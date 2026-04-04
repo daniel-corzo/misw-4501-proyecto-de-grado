@@ -784,7 +784,8 @@ function buildReleaseChart(allIssues) {
     realRemaining.push(Math.max(0, TOTAL_SP - burned));
   });
 
-  const idealPerSprint = TOTAL_SP / RELEASE_SPRINTS.length;
+  const devSprints = RELEASE_SPRINTS.filter(s => s.label !== 'Entrega').length;
+  const idealPerSprint = TOTAL_SP / devSprints;
   const idealRemaining = [TOTAL_SP, ...RELEASE_SPRINTS.map((_, i) => Math.max(0, Math.round((TOTAL_SP - idealPerSprint * (i + 1)) * 10) / 10))];
 
   const currentReal = realRemaining.filter(v => v !== null).slice(-1)[0];
