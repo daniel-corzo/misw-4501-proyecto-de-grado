@@ -1,72 +1,70 @@
 import uuid
-import httpx
+
+import bcrypt
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
-from app.schemas.usuario import CrearUsuarioRequest, ActualizarUsuarioRequest
-from app.models.profile import UserProfile
-from travelhub_common.security import User, RoleEnum
+from app.schemas.usuario import (
+    CrearUsuarioRequest,
+    ActualizarUsuarioRequest,
+)
+from app.models.usuario import Usuario
+from app.models.usuario import TipoUsuario
+from app.models.viajero import Viajero
+from travelhub_common.security import RoleEnum
 from app.config import Settings
 
-async def create_user(body: CrearUsuarioRequest, db: AsyncSession, settings: Settings) -> UserProfile:
-    user_id = body.id if body.id else uuid.uuid4()
 
-    result = await db.execute(select(UserProfile).where(UserProfile.id == user_id))
+def _get_password_hash(password: str) -> str:
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+
+async def create_user(
+    body: CrearUsuarioRequest, db: AsyncSession, settings: Settings
+) -> Usuario:
+    result = await db.execute(select(Usuario).where(Usuario.email == body.email))
     if result.scalars().first():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Perfil ya existe con este id",
+            detail="Usuario ya existe con este email",
         )
 
-    user_profile = UserProfile(
-        id=user_id,
-        nombre=body.nombre,
-        apellido=body.apellido,
-        telefono=body.telefono,
+    role = body.role if body.role is not None else RoleEnum.USER
+    user = Usuario(
+        id=uuid.uuid4(),
+        email=body.email,
+        hashed_contrasena=_get_password_hash(body.password),
+        tipo=body.tipo,
+        role=role,
     )
-    db.add(user_profile)
-    await db.flush()
 
-    # Call Auth MS to register the credentials
-    async with httpx.AsyncClient(base_url=settings.auth_service_url) as client:
-        try:
-            auth_response = await client.post(
-                "/auth/register",
-                json={
-                    "id": str(user_id),
-                    "email": body.email,
-                    "password": body.password,
-                    "role": body.role.value
-                }
-            )
-            auth_response.raise_for_status()
-        except httpx.HTTPStatusError as e:
-            await db.rollback()
-            try:
-                error_detail = e.response.json().get("detail", "Error en Auth MS")
-            except Exception:
-                error_detail = "Error de comunicación con Auth MS"
-            raise HTTPException(
-                status_code=e.response.status_code,
-                detail=error_detail
-            )
-        except httpx.RequestError as e:
-            await db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Auth MS no está disponible"
-            )
+    if body.tipo == TipoUsuario.VIAJERO:
+        user.viajero = Viajero(
+            id=uuid.uuid4(),
+            nombre=body.nombre,
+            contacto=body.telefono,
+        )
+
+    db.add(user)
+
+    # TODO: Call hoteles to create the hotel profile
 
     await db.commit()
-    await db.refresh(user_profile)
+    await db.refresh(user, ["viajero"])
 
-    return user_profile
+    return user
 
-async def get_my_profile(current_user: User, db: AsyncSession) -> UserProfile:
-    result = await db.execute(select(UserProfile).where(UserProfile.id == current_user.id))
+
+async def get_my_profile(current_user: Usuario, db: AsyncSession) -> Usuario:
+    result = await db.execute(
+        select(Usuario)
+        .options(selectinload(Usuario.viajero))
+        .where(Usuario.id == current_user.id)
+    )
     user_profile = result.scalars().first()
-    
+
     if not user_profile:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -74,10 +72,15 @@ async def get_my_profile(current_user: User, db: AsyncSession) -> UserProfile:
         )
     return user_profile
 
-async def get_user_by_id(usuario_id: uuid.UUID, db: AsyncSession) -> UserProfile:
-    result = await db.execute(select(UserProfile).where(UserProfile.id == usuario_id))
+
+async def get_user_by_id(usuario_id: uuid.UUID, db: AsyncSession) -> Usuario:
+    result = await db.execute(
+        select(Usuario)
+        .options(selectinload(Usuario.viajero))
+        .where(Usuario.id == usuario_id)
+    )
     user_profile = result.scalars().first()
-    
+
     if not user_profile:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -85,30 +88,43 @@ async def get_user_by_id(usuario_id: uuid.UUID, db: AsyncSession) -> UserProfile
         )
     return user_profile
 
-async def update_user_profile(usuario_id: uuid.UUID, body: ActualizarUsuarioRequest, current_user: User, db: AsyncSession) -> UserProfile:
+
+async def update_user_profile(
+    usuario_id: uuid.UUID,
+    body: ActualizarUsuarioRequest,
+    current_user: Usuario,
+    db: AsyncSession,
+) -> Usuario:
     if current_user.role != RoleEnum.ADMIN and current_user.id != usuario_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permiso para actualizar este perfil",
         )
 
-    result = await db.execute(select(UserProfile).where(UserProfile.id == usuario_id))
+    result = await db.execute(
+        select(Usuario)
+        .options(selectinload(Usuario.viajero))
+        .where(Usuario.id == usuario_id)
+    )
     user_profile = result.scalars().first()
-    
+
     if not user_profile:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Perfil de usuario no encontrado",
         )
-        
+
     if body.nombre is not None:
         user_profile.nombre = body.nombre
     if body.apellido is not None:
         user_profile.apellido = body.apellido
     if body.telefono is not None:
         user_profile.telefono = body.telefono
-        
+
     await db.commit()
-    await db.refresh(user_profile)
-    
-    return user_profile
+    result = await db.execute(
+        select(Usuario)
+        .options(selectinload(Usuario.viajero))
+        .where(Usuario.id == usuario_id)
+    )
+    return result.scalars().first()

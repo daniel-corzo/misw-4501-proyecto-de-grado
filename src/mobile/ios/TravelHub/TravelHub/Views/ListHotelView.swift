@@ -13,6 +13,8 @@ struct ListHotelView: View {
     @State private var filterIsActive = false
     @State private var showFilterSheet = false
     
+    @Environment(\.toastManager) private var toastManager: ToastManager
+    
     var filteredHotels: [Hotel] {
         if searchText.isEmpty {
             return viewModel.hotels
@@ -26,7 +28,6 @@ struct ListHotelView: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            
             Text("Hotels")
                 .font(.title3)
                 .fontWeight(.bold)
@@ -89,14 +90,14 @@ struct ListHotelView: View {
                     ForEach(filteredHotels) { hotel in
                         
                         NavigationLink {
-                            HotelDetailView(hotel: hotel)
+                            HotelDetailView(hotelId: hotel.id)
                         } label: {
                             ListElementView(
-                                imageURL: hotel.images[0],
+                                imageURL: hotel.images.first ?? "",
                                 title: hotel.nombre,
                                 location: hotel.ciudad,
                                 price: "100",
-                                rating: hotel.ranking
+                                rating: hotel.estrellas
                             )
                         }
                         .buttonStyle(.plain)
@@ -107,7 +108,11 @@ struct ListHotelView: View {
                 .padding(.bottom, 20)
             }
         }
+        .task {
+            await viewModel.fetchHotels(toastManager: toastManager)
+        }
     }
+    
 }
 
 #Preview {

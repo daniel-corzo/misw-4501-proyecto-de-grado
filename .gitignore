@@ -6,6 +6,7 @@ __pychache__/
 .Python
 *.coverage
 env/
+claude.md
 
 # Local .terraform directories
 .terraform/

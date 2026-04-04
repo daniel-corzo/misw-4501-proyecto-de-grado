@@ -21,10 +21,10 @@ async def crear_reserva(
     Crea una nueva reserva de habitacion.
 
     En la implementacion real:
-    - Verificar disponibilidad via servicio de inventario
+    - Verificar disponibilidad via habitaciones del servicio de hoteles
     - Calcular total (noches * precio_noche)
     - Persistir en PostgreSQL
-    - Publicar evento 'reserva_creada' en SQS para notificaciones y pagos
+    - Publicar evento 'reserva_creada' en SQS para notificaciones
     """
     noches = (body.fecha_salida - body.fecha_entrada).days
     precio_ejemplo = 350_000.0

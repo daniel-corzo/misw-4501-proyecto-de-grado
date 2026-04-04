@@ -14,7 +14,7 @@ def test_correlation_id_var_default():
 def test_get_logger_returns_logger():
     logger = get_logger("test.module", "test-service")
     assert isinstance(logger, logging.Logger)
-    assert logger.level == logging.INFO
+    assert logger.level == logging.DEBUG
     assert len(logger.handlers) >= 1
 
 

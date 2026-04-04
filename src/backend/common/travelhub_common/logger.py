@@ -30,5 +30,5 @@ def get_logger(name: str, service_name: str = "travelhub") -> logging.Logger:
         handler = logging.StreamHandler()
         handler.setFormatter(CloudWatchFormatter(service_name))
         logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
     return logger

@@ -3,9 +3,7 @@
 
     <!-- Logo -->
     <a class="navbar__logo" routerLink="/">
-      <svg class="navbar__logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M2 20v-8a2 2 0 0 1 2-2h1V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2h1a2 2 0 0 1 2 2v8h-2v-2H4v2H2zm4-10h12V8H6v2zm-2 6h16v-4a.5.5 0 0 0-.5-.5H4.5A.5.5 0 0 0 4 12v4z"/>
-      </svg>
+      <img class="navbar__logo-icon" src="/logo.svg" alt="" aria-hidden="true" />
       <span class="navbar__logo-text">TravelHub</span>
     </a>
 
@@ -14,18 +12,51 @@
       <svg class="navbar__search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
         <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9z" clip-rule="evenodd"/>
       </svg>
-      <input class="navbar__search-input" type="text" placeholder="Search bookings..." />
+      <input class="navbar__search-input" type="text" placeholder="Buscar alojamientos..." />
     </div>
 
     <!-- Actions -->
     <div class="navbar__actions">
-      <a class="navbar__link" routerLink="/bookings" routerLinkActive="navbar__link--active">Mis reservas</a>
-      <a class="navbar__link" routerLink="/favorites" routerLinkActive="navbar__link--active">Favoritos</a>
+      @if (auth.isAuthenticated()) {
+        <!-- Authenticated state -->
+        <a class="navbar__link" routerLink="/bookings" routerLinkActive="navbar__link--active">Mis Reservas</a>
 
-      <div class="navbar__auth">
-        <a class="navbar__link" routerLink="/auth/login">Iniciar sesión</a>
-        <a class="navbar__btn-primary" routerLink="/auth/register">Registrarse</a>
-      </div>
+        <!-- Notification bell -->
+        <button class="navbar__icon-btn" type="button" aria-label="Notificaciones">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        </button>
+
+        <!-- Avatar + dropdown -->
+        <div class="navbar__avatar-wrap" (click)="toggleMenu()" #avatarWrap>
+          <div class="navbar__user-info">
+            <div class="navbar__user-text">
+              <span class="navbar__user-name">{{ auth.userName() }}</span>
+              <span class="navbar__user-role">{{ userRoleLabel }}</span>
+            </div>
+            <div class="navbar__avatar">{{ auth.userInitials() }}</div>
+          </div>
+
+          @if (menuOpen) {
+            <div class="navbar__dropdown" (click)="$event.stopPropagation()">
+              <a class="navbar__dropdown-item" routerLink="/settings" (click)="menuOpen = false">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Configuración
+              </a>
+              <button class="navbar__dropdown-item navbar__dropdown-item--danger" type="button" (click)="onLogout()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Cerrar sesión
+              </button>
+            </div>
+          }
+        </div>
+
+      } @else {
+        <!-- Unauthenticated state -->
+        <div class="navbar__auth">
+          <button class="navbar__link" type="button" (click)="auth.openLoginModal()">Iniciar sesión</button>
+          <button class="navbar__btn-primary" type="button" (click)="auth.openRegisterModal()">Registrarse</button>
+        </div>
+      }
     </div>
 
   </div>
