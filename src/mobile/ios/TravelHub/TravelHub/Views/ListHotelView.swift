@@ -90,14 +90,14 @@ struct ListHotelView: View {
                     ForEach(filteredHotels) { hotel in
                         
                         NavigationLink {
-                            HotelDetailView(hotel: hotel)
+                            HotelDetailView(hotelId: hotel.id)
                         } label: {
                             ListElementView(
                                 imageURL: hotel.images[0],
                                 title: hotel.nombre,
                                 location: hotel.ciudad,
                                 price: "100",
-                                rating: hotel.ranking
+                                rating: hotel.estrellas
                             )
                         }
                         .buttonStyle(.plain)

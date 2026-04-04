@@ -46,13 +46,15 @@ private extension HotelDTO {
             ciudad: ciudad,
             descripcion: "",
             amenidades: [],
-            ranking: estrellas,
+            estrellas: estrellas,
+            ranking: Double(estrellas),
             contactoCelular: "",
             contactoEmail: "",
             images: imagenes,
             checkInHour: "",
             checkOutHour: "",
-            valorMinimoModificacion: precioMinimo
+            valorMinimoModificacion: Double(precioMinimo),
+            habitaciones: []
         )
     }
 }
