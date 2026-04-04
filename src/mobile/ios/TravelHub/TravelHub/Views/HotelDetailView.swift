@@ -38,11 +38,28 @@ struct HotelDetailView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if let hotel = viewModel.hotel {
                 hotelContent(hotel)
+            } else {
+                ContentUnavailableView {
+                    Label(LocalizedStringResource.HotelDetail.errorTitle, systemImage: "exclamationmark.triangle")
+                } description: {
+                    Text(LocalizedStringResource.HotelDetail.errorDescription)
+                } actions: {
+                    Button {
+                        Task {
+                            await viewModel.fetchHotelDetail(hotelId: hotelId, toastManager: toastManager)
+                        }
+                    } label: {
+                        Label(LocalizedStringResource.HotelDetail.retry, systemImage: "arrow.clockwise")
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 32)
+                    }
+                    .capsuleButton()
+                }
             }
         }
         .toolbar(.hidden, for: .tabBar)
         .task {
-            viewModel.fetchHotelDetail(hotelId: hotelId, toastManager: toastManager)
+            await viewModel.fetchHotelDetail(hotelId: hotelId, toastManager: toastManager)
         }
     }
 

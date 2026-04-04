@@ -15,21 +15,15 @@ extension ListHotelView {
         var hotels: [Hotel] = []
         var hotelService: HotelService = HotelServiceKey.defaultValue
 
-        func fetchHotels(toastManager: ToastManager) {
-            Task { [weak self] in
-                guard let self else { return }
-                
-                do {
-                    let response: HotelsResponseDTO = try await hotelService.getHotels()
-                    let mapped = response.hoteles.map { $0.toDomain() }
-                    await MainActor.run {
-                        self.hotels = mapped
-                    }
-                } catch {
-                    await MainActor.run {
-                        toastManager.error("Error")
-                    }
-                }
+        @MainActor
+        func fetchHotels(toastManager: ToastManager) async {
+            do {
+                let response: HotelsResponseDTO = try await hotelService.getHotels()
+                hotels = response.hoteles.map { $0.toDomain() }
+            } catch is CancellationError {
+                return
+            } catch {
+                toastManager.error(error.localizedDescription)
             }
         }
     }

@@ -93,7 +93,7 @@ struct ListHotelView: View {
                             HotelDetailView(hotelId: hotel.id)
                         } label: {
                             ListElementView(
-                                imageURL: hotel.images[0],
+                                imageURL: hotel.images.first ?? "",
                                 title: hotel.nombre,
                                 location: hotel.ciudad,
                                 price: "100",
@@ -109,7 +109,7 @@ struct ListHotelView: View {
             }
         }
         .task {
-            viewModel.fetchHotels(toastManager: toastManager)
+            await viewModel.fetchHotels(toastManager: toastManager)
         }
     }
     

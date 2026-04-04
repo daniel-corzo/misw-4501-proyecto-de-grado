@@ -23,6 +23,28 @@
         }
       }
     },
+    "errorDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Something went wrong. Please try again."
+          }
+        }
+      }
+    },
+    "errorTitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unable to load hotel"
+          }
+        }
+      }
+    },
     "freeCancellation" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -52,6 +74,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Read more"
+          }
+        }
+      }
+    },
+    "retry" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retry"
           }
         }
       }

@@ -14,24 +14,20 @@ extension HotelDetailView {
         var isLoading = true
         var hotelService: HotelService = HotelServiceKey.defaultValue
 
-        func fetchHotelDetail(hotelId: UUID, toastManager: ToastManager) {
-            Task { [weak self] in
-                guard let self else { return }
+        @MainActor
+        func fetchHotelDetail(hotelId: UUID, toastManager: ToastManager) async {
+            isLoading = true
 
-                do {
-                    let response = try await hotelService.getHotelDetail(id: hotelId)
-                    let mapped = response.toDomain()
-                    await MainActor.run {
-                        self.hotel = mapped
-                        self.isLoading = false
-                    }
-                } catch {
-                    await MainActor.run {
-                        toastManager.error(error.localizedDescription)
-                        self.isLoading = false
-                    }
-                }
+            do {
+                let response = try await hotelService.getHotelDetail(id: hotelId)
+                hotel = response.toDomain()
+            } catch is CancellationError {
+                return
+            } catch {
+                toastManager.error(error.localizedDescription)
             }
+
+            isLoading = false
         }
     }
 }
