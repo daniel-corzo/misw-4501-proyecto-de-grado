@@ -66,7 +66,7 @@ async def test_crear_habitacion_endpoint_authenticated(override_client, mock_db_
         "impuestos": 10
     }
 
-    mock_db_session.execute = AsyncMock(return_value=_ScalarResult(True))
+    mock_db_session.execute = AsyncMock(return_value=_ScalarResult(User(id=hotel_id, email="hotel@test.com", role=RoleEnum.USER)))
 
     with patch("app.services.habitacion_service.Habitacion", autospec=True) as MockHabitacion:
         mock_instance = MockHabitacion.return_value

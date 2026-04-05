@@ -85,7 +85,7 @@ async def test_post_hoteles_creates_with_politicas_and_habitaciones(mock_async_c
     habitacion = SimpleNamespace(
         id=uuid.uuid4(),
         capacidad=2,
-        numero=101,
+        numero="101",
         descripcion="Vista ciudad",
         imagenes=["h1.jpg"],
         monto=250,
@@ -151,7 +151,7 @@ async def test_post_hoteles_creates_with_politicas_and_habitaciones(mock_async_c
         "habitaciones": [
             {
                 "capacidad": 2,
-                "numero": 101,
+                "numero": "101",
                 "descripcion": "Vista ciudad",
                 "imagenes": ["h1.jpg"],
                 "monto": 250,
@@ -292,7 +292,7 @@ async def test_get_hotel_detalle_returns_hotel_with_politicas_and_habitaciones(o
     habitacion = SimpleNamespace(
         id=uuid.uuid4(),
         capacidad=2,
-        numero=201,
+        numero="201",
         descripcion="Suite",
         imagenes=["suite.jpg"],
         monto=500,
