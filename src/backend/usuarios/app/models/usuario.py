@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import Enum, String
+from sqlalchemy import UUID, Enum, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.viajero import Viajero
@@ -26,3 +26,5 @@ class Usuario(BaseModel):
     )
 
     viajero: Mapped[Viajero | None] = relationship(Viajero, uselist=False)
+
+    hotel_id: Mapped[UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)

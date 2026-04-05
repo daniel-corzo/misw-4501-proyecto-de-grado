@@ -139,7 +139,7 @@ async def test_obtener_hotel_service_returns_hotel_detail_response():
     habitacion = SimpleNamespace(
         id=uuid.uuid4(),
         capacidad=2,
-        numero=101,
+        numero="101",
         descripcion="Vista al mar",
         imagenes=["hab1.jpg"],
         monto=300,
@@ -239,7 +239,7 @@ async def test_crear_hotel_service_returns_created_hotel_response(mock_async_cli
         habitaciones=[
             {
                 "capacidad": 2,
-                "numero": 101,
+                "numero": "101",
                 "descripcion": "Vista ciudad",
                 "imagenes": ["h1.jpg"],
                 "monto": 250,
@@ -263,7 +263,7 @@ async def test_crear_hotel_service_returns_created_hotel_response(mock_async_cli
     habitacion = SimpleNamespace(
         id=uuid.uuid4(),
         capacidad=2,
-        numero=101,
+        numero="101",
         descripcion="Vista ciudad",
         imagenes=["h1.jpg"],
         monto=250,

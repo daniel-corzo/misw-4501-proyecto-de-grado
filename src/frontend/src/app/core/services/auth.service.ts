@@ -104,6 +104,17 @@ export class AuthService {
     }
   }
 
+  getUserType(): string | null {
+    const token = this.tokenSignal();
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.tipo ?? null;
+    } catch {
+      return null;
+    }
+  }
+
   fetchProfile(): void {
     this.api.get<UserProfile>('/usuarios/me').subscribe({
       next: (profile) => {

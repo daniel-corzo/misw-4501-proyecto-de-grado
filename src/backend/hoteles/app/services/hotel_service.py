@@ -3,9 +3,10 @@ from typing import Literal
 
 import httpx
 
-from travelhub_common.security import RoleEnum
+from travelhub_common.security import RoleEnum, get_current_user, User
 from app.config import get_settings
-from fastapi import HTTPException, status
+from app.database import get_db
+from fastapi import Depends, HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -289,3 +290,15 @@ async def crear_hotel_service(db: AsyncSession, body: CrearHotelRequest):
 
     await db.commit()
     return await obtener_hotel_service(db=db, hotel_id=hotel.id)
+
+async def get_hotel_by_user(db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)) -> Hotel:
+    result = await db.execute(select(Hotel).where(Hotel.usuario_id == user.id))
+    hotel = result.scalar_one_or_none()
+    
+    if hotel is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Usuario no tiene un hotel asociado",
+        )
+    
+    return hotel

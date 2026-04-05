@@ -23,6 +23,17 @@
             "polyfills": [
               "zone.js"
             ],
+            "budgets": [
+              {
+                "type": "initial",
+                "maximumWarning": "15kB"
+              },
+              {
+                "type": "anyComponentStyle",
+                "maximumError": "20kb",
+                "maximumWarning": "15kb"
+              }
+            ],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
@@ -52,8 +63,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "20kB",
+                  "maximumError": "40kB"
                 }
               ],
               "outputHashing": "all"

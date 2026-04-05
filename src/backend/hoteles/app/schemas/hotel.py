@@ -15,7 +15,7 @@ class CrearPoliticaRequest(BaseModel):
 
 class CrearHabitacionRequest(BaseModel):
     capacidad: int
-    numero: int
+    numero: str
     descripcion: Optional[str] = None
     imagenes: List[str] = Field(default_factory=list)
     monto: int
@@ -84,7 +84,7 @@ class PoliticaDetalleResponse(BaseModel):
 class HabitacionDetalleResponse(BaseModel):
     id: UUID
     capacidad: int
-    numero: int
+    numero: str
     descripcion: Optional[str] = None
     imagenes: List[str] = Field(default_factory=list)
     monto: int

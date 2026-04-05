@@ -57,3 +57,4 @@ async def actualizar_usuario(
     Regla: O eres admin, o eres tú mismo.
     """
     return await update_user_profile(usuario_id, body, current_user, db)
+
