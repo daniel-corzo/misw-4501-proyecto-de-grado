@@ -8,13 +8,34 @@ interface LoginResponse {
   expires_in: number;
 }
 
-interface RegisterRequest {
+interface TravelerRegisterRequest {
   email: string;
   password: string;
   nombre: string;
   telefono: string;
   tipo: string;
 }
+
+interface PartnerRegisterRequest {
+  email: string;
+  password: string;
+  nombre: string;
+  estrellas: number;
+  descripcion: string;
+  pais: string;
+  departamento: string;
+  ciudad: string;
+  direccion: string;
+  contacto_celular: string;
+  contacto_email: string;
+  check_in: string;
+  check_out: string;
+  valor_minimo_modificacion: number;
+  amenidades: string[];
+  imagenes: string[];
+  tipo: string;
+}
+
 
 interface RegisterResponse {
   id: string;
@@ -125,8 +146,12 @@ export class AuthService {
     this.userProfile.set(null);
   }
 
-  register(data: RegisterRequest): Observable<RegisterResponse> {
-    return this.api.post<RegisterResponse>('/usuarios', data);
+  register(data: TravelerRegisterRequest | PartnerRegisterRequest): Observable<RegisterResponse> {
+    if (data.tipo === 'viajero') {
+      return this.api.post<RegisterResponse>('/usuarios', data);
+    } else {
+      return this.api.post<RegisterResponse>('/hoteles', data);
+    }
   }
 
   openLoginModal(): void {

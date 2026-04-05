@@ -54,7 +54,6 @@ async def obtener_hotel(
 @router.post("", response_model=HotelDetalleResponse, status_code=status.HTTP_201_CREATED)
 async def crear_hotel(
     body: CrearHotelRequest,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(RoleChecker([RoleEnum.ADMIN, RoleEnum.MANAGER]))
+    db: AsyncSession = Depends(get_db)
 ):
     return await crear_hotel_service(db=db, body=body)

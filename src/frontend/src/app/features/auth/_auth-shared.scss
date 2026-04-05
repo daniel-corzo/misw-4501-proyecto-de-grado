@@ -1,5 +1,36 @@
 /* Shared styles for auth forms (login + register) */
 
+/* Role tabs */
+.role-tabs {
+  display: flex;
+  background: var(--color-bg);
+  border-radius: var(--border-radius);
+  padding: 4px;
+  gap: 4px;
+  margin-bottom: var(--space-xl);
+}
+
+.role-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  height: 38px;
+  border-radius: 6px;
+  font: var(--font-body2);
+  font-weight: 400;
+  color: var(--color-text-muted);
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+
+  &--active {
+    background: var(--color-white);
+    color: var(--color-primary);
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+  }
+}
+
 .input-wrapper {
   position: relative;
 

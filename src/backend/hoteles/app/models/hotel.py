@@ -10,7 +10,7 @@ class Hotel(BaseModel):
     nombre = Column(String(255), nullable=False)
     direccion = Column(String(255), nullable=False)
     pais = Column(String(100), nullable=False)
-    estado = Column(String(100), nullable=False)
+    estado = Column(String(100), nullable=True)
     departamento = Column(String(100), nullable=False)
     ciudad = Column(String(100), nullable=False)
     descripcion = Column(String, nullable=True)

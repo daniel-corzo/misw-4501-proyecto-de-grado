@@ -49,8 +49,6 @@ async def create_user(
 
     db.add(user)
 
-    # TODO: Call hoteles to create the hotel profile
-
     await db.commit()
     await db.refresh(user, ["viajero"])
 

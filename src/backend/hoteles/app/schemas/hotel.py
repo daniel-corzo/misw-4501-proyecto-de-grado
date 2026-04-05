@@ -27,22 +27,24 @@ class CrearHotelRequest(BaseModel):
     nombre: str
     direccion: str
     pais: str
-    estado: str
+    estado: Optional[str] = None
     departamento: str
     ciudad: str
     descripcion: Optional[str] = None
     amenidades: List[AmenidadHotel] = Field(default_factory=list)
     estrellas: int
-    ranking: float
+    ranking: float = 0
     contacto_celular: Optional[str] = None
     contacto_email: Optional[str] = None
+    email: str
+    password: str
     imagenes: List[str] = Field(default_factory=list)
     check_in: time
     check_out: time
     valor_minimo_modificacion: float
-    usuario_id: UUID
     politicas: Optional[List[CrearPoliticaRequest]] = None
     habitaciones: Optional[List[CrearHabitacionRequest]] = None
+    usuario_id: Optional[UUID] = None
 
 
 class HotelResponse(BaseModel):
@@ -95,7 +97,7 @@ class HotelDetalleResponse(BaseModel):
     nombre: str
     direccion: str
     pais: str
-    estado: str
+    estado: Optional[str] = None
     departamento: str
     ciudad: str
     descripcion: Optional[str] = None
