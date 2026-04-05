@@ -326,16 +326,16 @@ const ASSIGNEES = {
 const WEEKS = [
   { label: 'Semana 1', start: new Date('2026-03-23'), end: new Date('2026-03-29'), planned: 32 },
   { label: 'Semana 2', start: new Date('2026-03-30'), end: new Date('2026-04-05'), planned: 32 },
-  { label: 'Semana 3', start: new Date('2026-04-06'), end: new Date('2026-04-12'), planned: 33 },
+  { label: 'Semana 3', start: new Date('2026-04-06'), end: new Date('2026-04-12'), planned: 32 },
   { label: 'Semana 4', start: new Date('2026-04-13'), end: new Date('2026-04-19'), planned: 33 },
-  { label: 'Semana 5', start: new Date('2026-04-20'), end: new Date('2026-04-26'), planned: 49 },
+  { label: 'Semana 5', start: new Date('2026-04-20'), end: new Date('2026-04-26'), planned: 33 },
   { label: 'Semana 6', start: new Date('2026-04-27'), end: new Date('2026-05-03'), planned: 49 },
   { label: 'Semana 7', start: new Date('2026-05-04'), end: new Date('2026-05-10'), planned: 49 },
   { label: 'Semana 8', start: new Date('2026-05-11'), end: new Date('2026-05-17'), planned: 0  }
 ];
 
 const RELEASE_SPRINTS = [
-  { label: 'Sprint 1', start: new Date('2026-03-23'), end: new Date('2026-04-05') },
+  { label: 'Sprint 1', start: new Date('2026-03-23'), end: new Date('2026-04-12') },
   { label: 'Sprint 2', start: new Date('2026-04-06'), end: new Date('2026-04-19') },
   { label: 'Sprint 3', start: new Date('2026-04-20'), end: new Date('2026-05-10') },
   { label: 'Entrega',  start: new Date('2026-05-11'), end: new Date('2026-05-17') }
@@ -789,7 +789,8 @@ function buildReleaseChart(allIssues) {
   const idealRemaining = [TOTAL_SP, ...RELEASE_SPRINTS.map((_, i) => Math.max(0, Math.round((TOTAL_SP - idealPerSprint * (i + 1)) * 10) / 10))];
 
   const currentReal = realRemaining.filter(v => v !== null).slice(-1)[0];
-  const sprintIdx = RELEASE_SPRINTS.findIndex(s => today >= s.start && today <= s.end);
+  const todayStr = toLocalDateStr(today);
+  const sprintIdx = RELEASE_SPRINTS.findIndex(s => todayStr >= toUTCDateStr(s.start) && todayStr <= toUTCDateStr(s.end));
 
   document.getElementById('rel-done').textContent = TOTAL_SP - currentReal;
   document.getElementById('rel-remaining').textContent = currentReal;
