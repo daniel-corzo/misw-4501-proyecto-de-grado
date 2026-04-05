@@ -86,8 +86,8 @@ struct HotelDetailView: View {
                         HStack(spacing: 4) {
                             Image(systemName: "star")
 
-                            Text(String(format: "%.1f", hotel.ranking))
-                        }  //: HStack Ranking
+                            Text("\(hotel.estrellas)")
+                        }  //: HStack Estrellas
                         .foregroundStyle(.accent)
 
                         Text(hotel.nombre)

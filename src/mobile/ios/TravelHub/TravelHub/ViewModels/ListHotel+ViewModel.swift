@@ -14,7 +14,7 @@ extension ListHotelView {
     class ViewModel {
         var hotels: [Hotel] = []
         var hotelService: HotelService = HotelServiceKey.defaultValue
-
+        
         @MainActor
         func fetchHotels(toastManager: ToastManager) async {
             do {
@@ -28,7 +28,7 @@ extension ListHotelView {
         }
     }
 }
-private extension HotelDTO {
+private extension HotelListDTO {
     func toDomain() -> Hotel {
         return Hotel(
             id: id,
@@ -41,13 +41,13 @@ private extension HotelDTO {
             descripcion: "",
             amenidades: [],
             estrellas: estrellas,
-            ranking: Double(estrellas),
+            ranking: 0,
             contactoCelular: "",
             contactoEmail: "",
             images: imagenes,
             checkInHour: "",
             checkOutHour: "",
-            valorMinimoModificacion: Double(precioMinimo),
+            valorMinimoModificacion: 0,
             habitaciones: []
         )
     }

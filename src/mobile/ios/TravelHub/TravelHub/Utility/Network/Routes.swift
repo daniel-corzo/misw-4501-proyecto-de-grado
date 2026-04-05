@@ -12,12 +12,16 @@ enum HttpRoutes {
     case usuarios
     case usuarioMe
     case login
+    case logout
     case hoteles
     
     var url: URL {
         switch self {
             case .login:
                 return AppConfig.baseURL.appendingPathComponent("auth/login")
+            
+            case .logout:
+                return AppConfig.baseURL.appendingPathComponent("auth/logout")
             
             case .hoteles:
                 return AppConfig.baseURL.appendingPathComponent("hoteles")

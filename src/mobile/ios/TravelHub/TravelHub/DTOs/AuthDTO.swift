@@ -23,3 +23,7 @@ struct LoginResponse: Decodable {
         case expiresIn = "expires_in"
     }
 }
+
+struct LogoutResponse: Decodable {
+    let message: String
+}
