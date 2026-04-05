@@ -41,25 +41,25 @@ struct ProfileView: View {
                         .padding(.top, 8)
 
                         // MARK: - Account Overview
-                        ProfileSectionView(header: "ACCOUNT OVERVIEW") {
-                            ProfileRowView(icon: "person", title: "Personal Information")
+                        ProfileSectionView(header: .Profile.accountOverview) {
+                            ProfileRowView(icon: "person", title: .Profile.personalInformation)
                             Divider().padding(.leading, 48)
                             ProfileRowView(
                                 icon: "clock.arrow.circlepath",
-                                title: "Booking History",
-                                subtitle: "View your past stays"
+                                title: .Profile.bookingHistory,
+                                subtitle: .Profile.viewYourPastStays
                             )
                             Divider().padding(.leading, 48)
-                            ProfileRowView(icon: "creditcard", title: "Payment Methods")
+                            ProfileRowView(icon: "creditcard", title: .Profile.paymentMethods)
                         }
 
                         // MARK: - Preferences
-                        ProfileSectionView(header: "PREFERENCES") {
-                            ProfileRowView(icon: "bell", title: "Notifications")
+                        ProfileSectionView(header: .Profile.preferences) {
+                            ProfileRowView(icon: "bell", title: .Profile.notifications)
                             Divider().padding(.leading, 48)
-                            ProfileRowView(icon: "lock.shield", title: "Privacy & Security")
+                            ProfileRowView(icon: "lock.shield", title: .Profile.privacyAndSecurity)
                             Divider().padding(.leading, 48)
-                            ProfileRowView(icon: "questionmark.circle", title: "Support & FAQ")
+                            ProfileRowView(icon: "questionmark.circle", title: .Profile.supportAndFaq)
                         }
 
                         // MARK: - Log Out
@@ -75,7 +75,7 @@ struct ProfileView: View {
                         } label: {
                             HStack {
                                 Image(systemName: "rectangle.portrait.and.arrow.right")
-                                Text("Log Out")
+                                Text(LocalizedStringResource.Profile.logOut)
                                     .fontWeight(.semibold)
                             }
                             .foregroundStyle(.red)
@@ -98,7 +98,7 @@ struct ProfileView: View {
                 }
             }
         }
-        .navigationTitle("Profile")
+        .navigationTitle(LocalizedStringResource.Profile.title)
         .navigationBarTitleDisplayMode(.inline)
         .task {
             viewModel.userService = userService
@@ -111,7 +111,7 @@ struct ProfileView: View {
 // MARK: - Profile Section
 
 private struct ProfileSectionView<Content: View>: View {
-    let header: String
+    let header: LocalizedStringResource
     @ViewBuilder let content: Content
 
     var body: some View {
@@ -140,8 +140,8 @@ private struct ProfileSectionView<Content: View>: View {
 
 private struct ProfileRowView: View {
     let icon: String
-    let title: String
-    var subtitle: String? = nil
+    let title: LocalizedStringResource
+    var subtitle: LocalizedStringResource? = nil
 
     var body: some View {
         HStack(spacing: 14) {

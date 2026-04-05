@@ -28,6 +28,7 @@ extension ProfileView {
         @MainActor
         func fetchProfile(toastManager: ToastManager) async {
             isLoading = true
+            defer { isLoading = false }
             do {
                 let response = try await userService.getMe()
                 userName = response.viajero?.nombre ?? ""
@@ -38,13 +39,14 @@ extension ProfileView {
             } catch {
                 toastManager.error(error.localizedDescription)
             }
-            isLoading = false
         }
 
         @MainActor
         func logOut() async throws {
             let token = try tokenStore.readToken()
-            let _ = try await authService.logOut(token: token)
+            if let token {
+                _ = try? await authService.logOut(token: token)
+            }
             try tokenStore.deleteToken()
         }
     }
