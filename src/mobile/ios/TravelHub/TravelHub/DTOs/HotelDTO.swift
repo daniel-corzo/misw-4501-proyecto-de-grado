@@ -3,11 +3,11 @@ import Foundation
 /// Respuesta para el listado de hoteles
 struct HotelsResponseDTO: Decodable {
     let total: Int
-    let hoteles: [HotelDTO]
+    let hoteles: [HotelListDTO]
 }
 
 /// DTO que representa un hotel según la respuesta del backend
-struct HotelDTO: Decodable {
+struct HotelListDTO: Decodable {
     let id: UUID
     let nombre: String
     let ciudad: String
