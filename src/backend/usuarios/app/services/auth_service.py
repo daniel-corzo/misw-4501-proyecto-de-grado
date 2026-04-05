@@ -54,6 +54,7 @@ async def authenticate_user(
         "sub": str(user.id),
         "email": user.email,
         "role": user.role.value,
+        "tipo": user.tipo.value
     }
 
     return create_access_token(token_data, settings=settings), user

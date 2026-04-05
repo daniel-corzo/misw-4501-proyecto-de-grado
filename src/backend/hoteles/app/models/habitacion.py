@@ -10,7 +10,7 @@ class Habitacion(BaseModel):
     __tablename__ = "habitacion"
 
     capacidad = Column(Integer, nullable=False, default=1)
-    numero = Column(Integer, nullable=False)
+    numero = Column(String, nullable=False)
     descripcion = Column(String, nullable=True)
     imagenes = Column(ARRAY(String), default=list)
     monto = Column(Integer, nullable=False, default=0)

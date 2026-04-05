@@ -7,19 +7,27 @@
       <span class="navbar__logo-text">TravelHub</span>
     </a>
 
-    <!-- Search -->
-    <div class="navbar__search">
-      <svg class="navbar__search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-        <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9z" clip-rule="evenodd"/>
-      </svg>
-      <input class="navbar__search-input" type="text" placeholder="Buscar alojamientos..." />
-    </div>
+    <!-- Search. Only for travelers -->
+     @if (auth.getUserType() === 'viajero') {
+       <div class="navbar__search">
+         <svg class="navbar__search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+           <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9z" clip-rule="evenodd"/>
+         </svg>
+         <input class="navbar__search-input" type="text" placeholder="Buscar alojamientos..." />
+       </div>
+     }
 
     <!-- Actions -->
     <div class="navbar__actions">
       @if (auth.isAuthenticated()) {
-        <!-- Authenticated state -->
+        @if (auth.getUserType() === 'viajero') {
+        <!-- My bookings -->
         <a class="navbar__link" routerLink="/bookings" routerLinkActive="navbar__link--active">Mis Reservas</a>
+        } @else if (auth.getUserType() === 'hotel') {
+        <!-- Partner dashboard -->
+        <a class="navbar__link" routerLink="/partner/dashboard" routerLinkActive="navbar__link--active">Dashboard</a>
+        <a class="navbar__link" routerLink="/partner/hotel" routerLinkActive="navbar__link--active">Mi Hotel</a>
+        }
 
         <!-- Notification bell -->
         <button class="navbar__icon-btn" type="button" aria-label="Notificaciones">

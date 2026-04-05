@@ -33,6 +33,10 @@ class ActualizarUsuarioRequest(BaseModel):
     nombre: Optional[str] = None
     apellido: Optional[str] = None
     telefono: Optional[str] = None
+    hotel_id: Optional[UUID] = None
+
+class VincularHotelRequest(BaseModel):
+    hotel_id: UUID
 
 
 class ViajeroResponse(BaseModel):
@@ -49,5 +53,6 @@ class UsuarioResponse(BaseModel):
     email: str
     role: RoleEnum
     viajero: Optional[ViajeroResponse]
+    hotel_id: Optional[UUID]
 
     model_config = ConfigDict(from_attributes=True)

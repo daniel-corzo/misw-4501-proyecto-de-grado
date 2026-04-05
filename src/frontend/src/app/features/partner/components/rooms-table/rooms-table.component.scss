@@ -1,0 +1,103 @@
+.rooms-table-container {
+  background: var(--color-white);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+
+  .rooms-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-lg) var(--space-lg);
+    
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--color-text);
+      margin: 0;
+    }
+
+    .btn-primary {
+      background-color: var(--color-primary);
+      color: var(--color-white);
+      padding: var(--space-sm) var(--space-md);
+      border-radius: var(--border-radius);
+      font-weight: 600;
+      font-size: 14px;
+      transition: background-color 0.2s;
+
+      &:hover {
+        background-color: var(--color-primary-dk);
+      }
+    }
+  }
+
+  .rooms-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    
+    thead {
+      background-color: #f8f9fa;
+      border-top: 1px solid var(--color-border);
+      border-bottom: 1px solid var(--color-border);
+      
+      th {
+        padding: var(--space-md) var(--space-lg);
+        color: var(--color-secondary-dk);
+        font-weight: 600;
+        font-size: 14px;
+
+        &.col-center {
+          text-align: center;
+        }
+
+        &.col-right {
+          text-align: right;
+        }
+      }
+    }
+
+    tbody {
+      tr {
+        border-bottom: 1px solid var(--color-border);
+        &:last-child {
+          border-bottom: none;
+        }
+
+        td {
+          padding: var(--space-md) var(--space-lg);
+          font-size: 14px;
+          color: var(--color-text);
+          vertical-align: middle;
+
+          &.col-center {
+            text-align: center;
+          }
+
+          &.col-right {
+            text-align: right;
+          }
+
+          &.col-number {
+            font-weight: 700;
+          }
+
+          &.col-desc {
+            color: var(--color-secondary-dk);
+          }
+
+          &.col-price {
+            font-weight: 700;
+          }
+
+          &.col-dates {
+            color: var(--color-text);
+            line-height: 1.4;
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,7 +1,7 @@
 import uuid
 from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.schemas.usuario import CrearUsuarioRequest, ActualizarUsuarioRequest, UsuarioResponse
+from app.schemas.usuario import CrearUsuarioRequest, ActualizarUsuarioRequest, UsuarioResponse, VincularHotelRequest
 from app.database import get_db
 from travelhub_common.security import get_current_user, User, RoleChecker, RoleEnum
 from app.config import get_settings, Settings
@@ -57,3 +57,15 @@ async def actualizar_usuario(
     Regla: O eres admin, o eres tú mismo.
     """
     return await update_user_profile(usuario_id, body, current_user, db)
+
+@router.post("/vincular_hotel", response_model=UsuarioResponse, status_code=status.HTTP_200_OK)
+async def vincular_usuario_a_hotel(
+    body: VincularHotelRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(RoleChecker([RoleEnum.ADMIN, RoleEnum.MANAGER]))
+):
+    """
+    Vincula un usuario a un hotel específico. Solo para Admins y Managers.
+    """
+    hotel_id = uuid.UUID(str(body.hotel_id))
+    return await update_user_profile(current_user.id, ActualizarUsuarioRequest(hotel_id=hotel_id), current_user, db)

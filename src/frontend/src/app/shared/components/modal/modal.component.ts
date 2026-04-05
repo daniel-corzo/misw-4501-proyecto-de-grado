@@ -8,5 +8,6 @@ import { Component, input, output } from '@angular/core';
 })
 export class ModalComponent {
   wide = input(false);
+  title = input<string>();
   closed = output();
 }

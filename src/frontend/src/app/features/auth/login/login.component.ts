@@ -35,8 +35,8 @@ export class LoginComponent {
     this.auth.login(email, password).subscribe({
       next: () => {
         this.auth.closeLoginModal();
-        const role = this.auth.getUserRole();
-        if (role === 'MANAGER' || role === 'ADMIN') {
+        const type = this.auth.getUserType();
+        if (type === 'hotel') {
           this.router.navigate(['/partner/dashboard']);
         }
       },

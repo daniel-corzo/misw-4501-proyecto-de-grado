@@ -25,14 +25,13 @@ export class NavbarComponent {
   }
 
   private readonly roleLabels: Record<string, string> = {
-    USER: 'Viajero',
-    MANAGER: 'Hotelero',
-    ADMIN: 'Administrador',
+    viajero: 'Viajero',
+    hotel: 'Hotelero',
   };
 
   get userRoleLabel(): string {
-    const role = this.auth.getUserRole();
-    return role ? (this.roleLabels[role] ?? role) : '';
+    const type = this.auth.getUserType();
+    return type ? (this.roleLabels[type] ?? type) : 'NA';
   }
 
   toggleMenu(): void {
