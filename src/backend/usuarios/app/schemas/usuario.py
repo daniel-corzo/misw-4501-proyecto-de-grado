@@ -35,9 +35,6 @@ class ActualizarUsuarioRequest(BaseModel):
     telefono: Optional[str] = None
     hotel_id: Optional[UUID] = None
 
-class VincularHotelRequest(BaseModel):
-    hotel_id: UUID
-
 
 class ViajeroResponse(BaseModel):
     id: UUID

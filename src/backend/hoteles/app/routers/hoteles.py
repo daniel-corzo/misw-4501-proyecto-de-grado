@@ -68,7 +68,7 @@ async def crear_hotel(body: CrearHotelRequest, db: AsyncSession = Depends(get_db
     response_model=HabitacionDetalleResponse,
     status_code=status.HTTP_201_CREATED,
     dependencies=[
-        Depends(RoleChecker([RoleEnum.MANAGER.value, RoleEnum.USER.value]))
+        Depends(RoleChecker([RoleEnum.MANAGER, RoleEnum.USER]))
     ],
 )
 async def crear_habitacion(
@@ -84,7 +84,7 @@ async def crear_habitacion(
     response_model=list[HabitacionDetalleResponse],
     status_code=status.HTTP_200_OK,
     dependencies=[
-        Depends(RoleChecker([RoleEnum.MANAGER.value, RoleEnum.USER.value]))
+        Depends(RoleChecker([RoleEnum.MANAGER, RoleEnum.USER]))
     ],
 )
 async def listar_habitaciones(

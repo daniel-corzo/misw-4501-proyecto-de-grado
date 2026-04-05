@@ -1,5 +1,4 @@
 from enum import Enum
-import enum
 from typing import List, Optional
 from uuid import UUID
 from fastapi import Depends, HTTPException
