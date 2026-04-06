@@ -1,7 +1,8 @@
 import uuid
 from fastapi import HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.habitacion import Habitacion
 from app.models.hotel import Hotel
@@ -10,6 +11,18 @@ from app.schemas.hotel import (
     HabitacionDetalleResponse,
     ListaHabitacionesResponse,
 )
+
+_HABITACION_NUMERO_UQ = "uq_habitacion_hotel_numero"
+
+
+def _is_duplicate_habitacion_numero_error(exc: IntegrityError) -> bool:
+    orig = exc.orig
+    if orig is not None:
+        if getattr(orig, "constraint_name", None) == _HABITACION_NUMERO_UQ:
+            return True
+        if _HABITACION_NUMERO_UQ in str(orig):
+            return True
+    return _HABITACION_NUMERO_UQ in str(exc)
 
 
 async def crear_habitacion_service(
@@ -20,6 +33,7 @@ async def crear_habitacion_service(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Hotel no encontrado"
         )
+
     habitacion = Habitacion(
         id=uuid.uuid4(),
         capacidad=body.capacidad,
@@ -33,8 +47,17 @@ async def crear_habitacion_service(
     )
 
     db.add(habitacion)
-    await db.commit()
-    await db.refresh(habitacion)
+    try:
+        await db.commit()
+        await db.refresh(habitacion)
+    except IntegrityError as exc:
+        await db.rollback()
+        if _is_duplicate_habitacion_numero_error(exc):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Ya existe una habitación con ese número en este hotel",
+            ) from None
+        raise
 
     return HabitacionDetalleResponse(
         id=habitacion.id,

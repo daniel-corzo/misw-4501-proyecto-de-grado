@@ -1,10 +1,13 @@
 import uuid
+from datetime import time
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 from app.main import app
 from app.database import get_db
 from unittest.mock import AsyncMock, patch
 from travelhub_common.security import RoleEnum, User, get_current_user
+from app.models.hotel import Hotel
 
 class _ScalarResult:
     def __init__(self, value):
@@ -12,6 +15,17 @@ class _ScalarResult:
 
     def scalar_one_or_none(self):
         return self._value
+
+
+class _DuplicateCheckResult:
+    def __init__(self, first_value):
+        self._first_value = first_value
+
+    def scalars(self):
+        return self
+
+    def first(self):
+        return self._first_value
 
 @pytest.fixture
 async def mock_db_session():
@@ -66,20 +80,25 @@ async def test_crear_habitacion_endpoint_authenticated(override_client, mock_db_
         "impuestos": 10
     }
 
-    mock_db_session.execute = AsyncMock(return_value=_ScalarResult(User(id=hotel_id, email="hotel@test.com", role=RoleEnum.USER)))
+    mock_hotel = Hotel(
+        id=hotel_id,
+        nombre="Hotel Test",
+        direccion="Calle 1",
+        pais="CO",
+        departamento="Cundinamarca",
+        ciudad="Bogotá",
+        check_in=time(14, 0),
+        check_out=time(11, 0),
+        usuario_id=uuid.uuid4(),
+    )
+    mock_db_session.execute = AsyncMock(
+        side_effect=[
+            _ScalarResult(mock_hotel),
+            _DuplicateCheckResult(None),
+        ]
+    )
 
-    with patch("app.services.habitacion_service.Habitacion", autospec=True) as MockHabitacion:
-        mock_instance = MockHabitacion.return_value
-        mock_instance.id = uuid.uuid4()
-        mock_instance.numero = body["numero"]
-        mock_instance.capacidad = body["capacidad"]
-        mock_instance.descripcion = body["descripcion"]
-        mock_instance.monto = body["monto"]
-        mock_instance.impuestos = body["impuestos"]
-        mock_instance.disponible = True
-        mock_instance.imagenes = []
-
-        response = await override_client.post("/hoteles/habitaciones", json=body)
+    response = await override_client.post("/hoteles/habitaciones", json=body)
 
     assert response.status_code == 201
     data = response.json()

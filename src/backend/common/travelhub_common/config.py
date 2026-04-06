@@ -16,7 +16,9 @@ class BaseAppSettings(BaseSettings):
     redis_url: str = "redis://localhost:6379"
     sqs_endpoint: str = "http://localhost:4566"
 
-    model_config = SettingsConfigDict(env_file=".env")
+    # Ignore undeclared env vars (e.g. docker-compose postgres_*, stripe_key) so each
+    # service can share a root .env without pydantic extra_forbidden at import time.
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
 def get_secret(secret_name: str, region: str) -> dict:
