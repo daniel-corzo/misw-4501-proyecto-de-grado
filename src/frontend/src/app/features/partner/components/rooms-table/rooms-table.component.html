@@ -19,7 +19,7 @@
     <tbody>
       @if (loading) {
         <tr>
-          <td colspan="6" class="col-center">Cargando hospedajes...</td>
+          <td colspan="5" class="col-center">Cargando hospedajes...</td>
         </tr>
       }
       @for (room of rooms; track room.id) {
@@ -33,7 +33,7 @@
       }
       @if (!loading && rooms.length === 0) {
         <tr>
-          <td colspan="6" class="col-center">No hay hospedajes registrados.</td>
+          <td colspan="5" class="col-center">No hay hospedajes registrados.</td>
         </tr>
       }
     </tbody>
