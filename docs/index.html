@@ -17,6 +17,9 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); font
 .logo-sub { font-family: var(--mono); font-size: 13px; color: var(--muted); }
 .header-right { display: flex; align-items: center; gap: 8px; }
 .sprint-badge { font-family: var(--mono); font-size: 11px; color: var(--accent2); background: var(--accent-dim); border: 1px solid rgba(74,222,128,0.25); border-radius: 4px; padding: 3px 10px; letter-spacing: 0.05em; }
+.sprint-select { font-family: var(--mono); font-size: 11px; color: var(--accent2); background: var(--accent-dim); border: 1px solid rgba(74,222,128,0.25); border-radius: 4px; padding: 3px 10px; letter-spacing: 0.05em; cursor: pointer; outline: none; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg width='8' height='5' viewBox='0 0 8 5' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l3 3 3-3' stroke='%2386efac' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; padding-right: 22px; }
+.sprint-select:focus { border-color: var(--accent); }
+.sprint-select option { background: var(--surface); color: var(--text); }
 .main { padding: 2rem; max-width: 1100px; margin: 0 auto; }
 .auth-panel { background: var(--surface); border: 1px solid var(--border2); border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 2rem; }
 .auth-label { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
@@ -100,6 +103,11 @@ tr:hover td { background: var(--surface2); }
   <span class="logo-sub">sprint-dashboard</span>
   </div>
   <div class="header-right">
+  <select class="sprint-select" id="sprint-select" onchange="switchSprint(this.value)" disabled>
+    <option value="Sprint 1">SPRINT 1</option>
+    <option value="Sprint 2">SPRINT 2</option>
+    <option value="Sprint 3">SPRINT 3</option>
+  </select>
   <span class="sprint-badge" id="sprint-badge">Cargando...</span>
   </div>
 </header>
@@ -313,7 +321,7 @@ const OWNER = 'daniel-corzo';
 const REPO  = 'misw-4501-proyecto-de-grado';
 const PROJECT_NUM = 3;
 const PAT = 'gh' + 'p_7cJmeG26RpL6xRjj' + 'dwfTEnlCEpcZdd3FAhFw';
-const SPRINT_NAME = 'Sprint 1';
+let currentSprintName = 'Sprint 1';
 const TOTAL_SP = 114;
 
 const ASSIGNEES = {
@@ -477,6 +485,7 @@ function baseOptions(tooltipFn, scaleOverrides) {
 
 let SPRINT_START = null, SPRINT_END = null;
 let burndownChart = null, velocityChart = null, valueChart = null, releaseChart = null;
+let cachedAllItems = null, cachedIterField = null, cachedSpField = null, cachedBvField = null, cachedStatusField = null;
 
 function setStatus(msg, type) {
   const el = document.getElementById('status-line');
@@ -515,14 +524,6 @@ async function loadData() {
     const iterField   = fields.find(f => f.configuration && f.configuration.iterations);
 
     if (!iterField) throw new Error('No se encontro campo de iteracion.');
-    const iteration = iterField.configuration.iterations.find(it => it.title === SPRINT_NAME);
-    if (!iteration) throw new Error('Iteracion "' + SPRINT_NAME + '" no encontrada.');
-
-    SPRINT_START = new Date(iteration.startDate + 'T00:00:00');
-    SPRINT_END   = new Date(SPRINT_START.getTime() + iteration.duration * 86400000 - 1000);
-
-    const fmtDate = d => d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }).toUpperCase();
-    document.getElementById('sprint-badge').textContent = SPRINT_NAME.toUpperCase() + ' · ' + fmtDate(SPRINT_START) + ' – ' + fmtDate(SPRINT_END);
 
     const q2 = `query($projectId:ID!,$cursor:String){node(id:$projectId){...on ProjectV2{${itemsFrag}}}}`;
     let allItems = project.items.nodes;
@@ -536,50 +537,79 @@ async function loadData() {
 
     setStatus('Procesando ' + allItems.length + ' items...', 'loading');
 
-    function mapItem(item) {
-      const fvs = item.fieldValues.nodes;
-      const get = field => field ? fvs.find(fv => fv.field && fv.field.id === field.id) : null;
-      const sp  = get(spField)?.number || 0;
-      const bv  = get(bvField)?.number || 0;
-      const stFv = get(statusField);
-      const status = stFv ? stFv.name : (item.content.state === 'CLOSED' ? 'Done' : 'Todo');
-      const closedAt = item.content.closedAt ? new Date(item.content.closedAt) : null;
-      const iterFv = fvs.find(fv => fv.field && fv.field.id === iterField.id && fv.startDate);
-      const iterStart = iterFv ? new Date(iterFv.startDate + 'T00:00:00') : null;
-      return { sp, bv, status, closedAt, iterStart };
-    }
+    cachedAllItems   = allItems;
+    cachedIterField  = iterField;
+    cachedSpField    = spField;
+    cachedBvField    = bvField;
+    cachedStatusField = statusField;
 
-    const sprintItems = allItems.filter(item => {
-      if (!item.content?.title) return false;
-      const iterFv = item.fieldValues.nodes.find(fv => fv.field && fv.field.id === iterField.id);
-      return iterFv && iterFv.title === SPRINT_NAME;
-    });
+    const sel = document.getElementById('sprint-select');
+    sel.value = currentSprintName;
+    sel.disabled = false;
 
-    if (sprintItems.length === 0) {
-      setStatus('No se encontraron issues en "' + SPRINT_NAME + '".', 'err');
-      document.getElementById('empty-state').style.display = 'block';
-      return;
-    }
-
-    const sprintIssues = sprintItems.map(item => ({
-      ...mapItem(item),
-      number: item.content.number,
-      title: item.content.title,
-      assignees: (item.content.assignees?.nodes || []).map(a => a.login)
-    }));
-
-    const allMapped = allItems.filter(i => i.content?.title).map(mapItem);
-
-    renderDashboard(sprintIssues);
-    buildVelocityChart(allMapped);
-    buildValueChart(allMapped);
-    buildReleaseChart(allMapped);
+    renderForSprint(currentSprintName);
     setStatus('Datos cargados · ' + new Date().toLocaleTimeString('es-CO'), 'ok');
     document.getElementById('dashboard').style.display = 'block';
   } catch(e) {
     setStatus('Error: ' + e.message, 'err');
     document.getElementById('empty-state').style.display = 'block';
   }
+}
+
+function switchSprint(sprintName) {
+  if (!cachedAllItems) return;
+  currentSprintName = sprintName;
+  renderForSprint(sprintName);
+}
+
+function renderForSprint(sprintName) {
+  const iterField    = cachedIterField;
+  const spField      = cachedSpField;
+  const bvField      = cachedBvField;
+  const statusField  = cachedStatusField;
+  const allItems     = cachedAllItems;
+
+  const iteration = iterField.configuration.iterations.find(it => it.title === sprintName);
+  if (!iteration) { setStatus('Iteracion "' + sprintName + '" no encontrada.', 'err'); return; }
+
+  SPRINT_START = new Date(iteration.startDate + 'T00:00:00');
+  SPRINT_END   = new Date(SPRINT_START.getTime() + iteration.duration * 86400000 - 1000);
+
+  const fmtDate = d => d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }).toUpperCase();
+  document.getElementById('sprint-badge').textContent = fmtDate(SPRINT_START) + ' – ' + fmtDate(SPRINT_END);
+
+  function mapItem(item) {
+    const fvs = item.fieldValues.nodes;
+    const get = field => field ? fvs.find(fv => fv.field && fv.field.id === field.id) : null;
+    const sp   = get(spField)?.number || 0;
+    const bv   = get(bvField)?.number || 0;
+    const stFv = get(statusField);
+    const status = stFv ? stFv.name : (item.content.state === 'CLOSED' ? 'Done' : 'Todo');
+    const closedAt = item.content.closedAt ? new Date(item.content.closedAt) : null;
+    const iterFv = fvs.find(fv => fv.field && fv.field.id === iterField.id && fv.startDate);
+    const iterStart = iterFv ? new Date(iterFv.startDate + 'T00:00:00') : null;
+    return { sp, bv, status, closedAt, iterStart };
+  }
+
+  const sprintItems = allItems.filter(item => {
+    if (!item.content?.title) return false;
+    const iterFv = item.fieldValues.nodes.find(fv => fv.field && fv.field.id === iterField.id);
+    return iterFv && iterFv.title === sprintName;
+  });
+
+  const sprintIssues = sprintItems.map(item => ({
+    ...mapItem(item),
+    number: item.content.number,
+    title: item.content.title,
+    assignees: (item.content.assignees?.nodes || []).map(a => a.login)
+  }));
+
+  const allMapped = allItems.filter(i => i.content?.title).map(mapItem);
+
+  renderDashboard(sprintIssues);
+  buildVelocityChart(allMapped);
+  buildValueChart(allMapped);
+  buildReleaseChart(allMapped);
 }
 
 function renderDashboard(issues) {
