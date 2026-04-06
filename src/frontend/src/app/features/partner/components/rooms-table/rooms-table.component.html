@@ -4,7 +4,7 @@
     <button class="btn-primary" (click)="openFormModal()">Crear hospedaje</button>
   </div>
 
-  
+
   <table class="rooms-table">
     <thead>
       <tr>
@@ -27,7 +27,6 @@
           <td class="col-center col-number">{{ room.numero }}</td>
           <td class="col-desc">{{ room.descripcion || 'Sin descripción' }}</td>
           <td class="col-center">{{ room.capacidad }}</td>
-          <!-- <td class="col-dates">- /<br>-</td> -->
           <td class="col-taxes">{{ room.impuestos | currency:'COP':'$':'1.0-0' }}</td>
           <td class="col-right col-price">{{ room.monto | currency:'COP':'$':'1.0-0' }}</td>
         </tr>
@@ -39,7 +38,7 @@
       }
     </tbody>
   </table>
-  
+
   @if (totalPages > 1 || totalItems > 0) {
     <div class="pagination">
       <div class="limit-selector">

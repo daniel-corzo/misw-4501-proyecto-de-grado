@@ -28,11 +28,12 @@ export class RoomFormModalComponent implements OnInit {
       descripcion: [''],
       impuestos: ['', [Validators.required, Validators.min(0)]],
       precio: ['', [Validators.required, Validators.min(0)]],
-      fechaInicio: [''],
-      fechaFin: [''],
       imagenes: this.fb.array([
-        this.fb.control('', [Validators.required, Validators.pattern(/^(https?:\/\/.*\.(?:png|jpg|jpeg|gif|svg))$/i)])
-      ])
+        this.fb.control('', [
+          Validators.required,
+          Validators.pattern(/^(https?:\/\/.*\.(?:png|jpg|jpeg|gif|svg))$/i),
+        ]),
+      ]),
     });
   }
 
