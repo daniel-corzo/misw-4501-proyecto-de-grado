@@ -50,6 +50,5 @@ class UsuarioResponse(BaseModel):
     email: str
     role: RoleEnum
     viajero: Optional[ViajeroResponse]
-    hotel_id: Optional[UUID]
 
     model_config = ConfigDict(from_attributes=True)

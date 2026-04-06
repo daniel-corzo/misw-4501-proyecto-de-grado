@@ -11,6 +11,7 @@ from app.schemas.hotel import (
     ListaHotelesResponse,
     CrearHabitacionRequest,
     HabitacionDetalleResponse,
+    ListaHabitacionesResponse,
 )
 from app.services.hotel_service import (
     OrdenHoteles,
@@ -81,17 +82,19 @@ async def crear_habitacion(
 
 @router.get(
     "/habitaciones",
-    response_model=list[HabitacionDetalleResponse],
+    response_model=ListaHabitacionesResponse,
     status_code=status.HTTP_200_OK,
     dependencies=[
         Depends(RoleChecker([RoleEnum.MANAGER, RoleEnum.USER]))
     ],
 )
 async def listar_habitaciones(
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
     db: AsyncSession = Depends(get_db),
     current_hotel: Annotated[Hotel, Depends(get_hotel_by_user)] = None
 ):
-    return await listar_habitaciones_service(db=db, hotel=current_hotel)
+    return await listar_habitaciones_service(db=db, hotel=current_hotel, limit=limit, offset=offset)
 
 
 @router.get(

@@ -84,3 +84,35 @@ async def test_crear_habitacion_endpoint_authenticated(override_client, mock_db_
     assert response.status_code == 201
     data = response.json()
     assert data["capacidad"] == 2
+
+@pytest.mark.asyncio
+async def test_listar_habitaciones_endpoint_authenticated(override_client, mock_db_session):
+    hotel_id = uuid.uuid4()
+    mock_db_session.execute = AsyncMock(return_value=_ScalarResult(User(id=hotel_id, email="hotel@test.com", role=RoleEnum.USER)))
+
+    with patch("app.routers.hoteles.listar_habitaciones_service", autospec=True) as MockListarService:
+        from app.schemas.hotel import ListaHabitacionesResponse, HabitacionDetalleResponse
+        mock_response = ListaHabitacionesResponse(
+            total=1,
+            habitaciones=[
+                HabitacionDetalleResponse(
+                    id=uuid.uuid4(),
+                    capacidad=2,
+                    numero="101",
+                    descripcion="Vista al mar",
+                    monto=100,
+                    impuestos=10,
+                    disponible=True,
+                    imagenes=[]
+                )
+            ]
+        )
+        MockListarService.return_value = mock_response
+
+        response = await override_client.get("/hoteles/habitaciones?limit=10&offset=0")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 1
+    assert len(data["habitaciones"]) == 1
+    assert data["habitaciones"][0]["numero"] == "101"

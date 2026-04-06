@@ -92,6 +92,11 @@ class HabitacionDetalleResponse(BaseModel):
     disponible: bool
 
 
+class ListaHabitacionesResponse(BaseModel):
+    total: int
+    habitaciones: List[HabitacionDetalleResponse]
+
+
 class HotelDetalleResponse(BaseModel):
     id: UUID
     nombre: str

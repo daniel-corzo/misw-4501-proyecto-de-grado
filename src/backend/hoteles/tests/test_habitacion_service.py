@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import selectinload
 
 from app.schemas.hotel import CrearHabitacionRequest
-from app.services.habitacion_service import crear_habitacion_service
+from app.services.habitacion_service import crear_habitacion_service, listar_habitaciones_service
 from app.models.hotel import Hotel
 from app.models.habitacion import Habitacion
 
@@ -77,3 +77,51 @@ async def test_crear_habitacion_hotel_not_found(mock_db_session):
         await crear_habitacion_service(db=mock_db_session, hotel=None, body=body)
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Hotel no encontrado"
+
+@pytest.mark.asyncio
+async def test_listar_habitaciones_success(mock_db_session):
+    hotel_id = uuid.uuid4()
+    mock_hotel = Hotel(id=hotel_id, nombre="Hotel Test")
+    
+    class MockResultCount:
+        def scalar(self):
+            return 2
+
+    class MockResultQuery:
+        def scalars(self):
+            class MockScalars:
+                def all(self):
+                    return [
+                        Habitacion(
+                            id=uuid.uuid4(),
+                            capacidad=2,
+                            numero="101",
+                            descripcion="Vista al mar",
+                            monto=100,
+                            impuestos=10,
+                            disponible=True,
+                            imagenes=[],
+                            hotel_id=hotel_id
+                        ),
+                        Habitacion(
+                            id=uuid.uuid4(),
+                            capacidad=4,
+                            numero="102",
+                            descripcion="Vista a la montaña",
+                            monto=150,
+                            impuestos=15,
+                            disponible=True,
+                            imagenes=[],
+                            hotel_id=hotel_id
+                        )
+                    ]
+            return MockScalars()
+            
+    mock_db_session.execute.side_effect = [MockResultCount(), MockResultQuery()]
+    
+    response = await listar_habitaciones_service(db=mock_db_session, hotel=mock_hotel)
+    
+    assert response.total == 2
+    assert len(response.habitaciones) == 2
+    assert response.habitaciones[0].numero == "101"
+    assert response.habitaciones[1].numero == "102"
