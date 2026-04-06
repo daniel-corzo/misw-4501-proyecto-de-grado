@@ -20,6 +20,21 @@ async def crear_habitacion_service(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Hotel no encontrado"
         )
+
+    dup_result = await db.execute(
+        select(Habitacion)
+        .where(
+            Habitacion.hotel_id == hotel.id,
+            Habitacion.numero == body.numero,
+        )
+        .limit(1)
+    )
+    if dup_result.scalars().first() is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Ya existe una habitación con ese número en este hotel",
+        )
+
     habitacion = Habitacion(
         id=uuid.uuid4(),
         capacidad=body.capacidad,
