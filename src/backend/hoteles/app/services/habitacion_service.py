@@ -1,11 +1,11 @@
 import uuid
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from app.models.habitacion import Habitacion
 from app.models.hotel import Hotel
-from app.schemas.hotel import CrearHabitacionRequest, HabitacionDetalleResponse
+from app.schemas.hotel import CrearHabitacionRequest, HabitacionDetalleResponse, ListaHabitacionesResponse
 
 async def crear_habitacion_service(
     db: AsyncSession, 
@@ -47,30 +47,40 @@ async def crear_habitacion_service(
 
 async def listar_habitaciones_service(
     db: AsyncSession,
-    hotel: Hotel
-) -> list[HabitacionDetalleResponse]:
+    hotel: Hotel,
+    limit: int = 20,
+    offset: int = 0
+) -> ListaHabitacionesResponse:
     if not hotel:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Hotel no encontrado"
         )
     
+    total_result = await db.execute(
+        select(func.count()).select_from(Habitacion).where(Habitacion.hotel_id == hotel.id)
+    )
+    total = total_result.scalar() or 0
+
     result = await db.execute(
-        select(Habitacion).where(Habitacion.hotel_id == hotel.id)
+        select(Habitacion).where(Habitacion.hotel_id == hotel.id).limit(limit).offset(offset)
     )
     habitaciones = result.scalars().all()
     
-    return [
-        HabitacionDetalleResponse(
-            id=h.id,
-            capacidad=h.capacidad,
-            numero=h.numero,
-            descripcion=h.descripcion,
-            imagenes=h.imagenes or [],
-            monto=h.monto,
-            impuestos=h.impuestos,
-            disponible=h.disponible
-        )
-        for h in habitaciones
-    ]
+    return ListaHabitacionesResponse(
+        total=total,
+        habitaciones=[
+            HabitacionDetalleResponse(
+                id=h.id,
+                capacidad=h.capacidad,
+                numero=h.numero,
+                descripcion=h.descripcion,
+                imagenes=h.imagenes or [],
+                monto=h.monto,
+                impuestos=h.impuestos,
+                disponible=h.disponible
+            )
+            for h in habitaciones
+        ]
+    )
 

@@ -26,5 +26,3 @@ class Usuario(BaseModel):
     )
 
     viajero: Mapped[Viajero | None] = relationship(Viajero, uselist=False)
-
-    hotel_id: Mapped[UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)

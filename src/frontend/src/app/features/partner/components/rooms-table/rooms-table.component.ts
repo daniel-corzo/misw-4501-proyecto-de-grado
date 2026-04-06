@@ -15,6 +15,12 @@ export class RoomsTableComponent implements OnInit {
   isFormModalOpen = false;
   rooms: any[] = [];
   loading = false;
+  
+  // Pagination variables
+  totalItems = 0;
+  limit = 10;
+  offset = 0;
+  currentPage = 1;
 
   private api = inject(ApiService);
   private toast = inject(ToastService);
@@ -25,16 +31,38 @@ export class RoomsTableComponent implements OnInit {
 
   loadRooms() {
     this.loading = true;
-    this.api.get<any[]>('/hoteles/habitaciones').subscribe({
+    this.api.get<any>(`/hoteles/habitaciones?limit=${this.limit}&offset=${this.offset}`).subscribe({
       next: (data) => {
-        this.rooms = data;
+        this.rooms = data.habitaciones || [];
+        this.totalItems = data.total || 0;
         this.loading = false;
       },
-      error: () => {
-        this.toast.danger('Error al cargar los hospedajes.');
+      error: (body) => {
+        console.log('Error al cargar habitaciones:', body);
+        console.log(body);
+        const errorMsg = body?.error?.detail || 'Error desconocido';
+        this.toast.danger('Error al cargar los hospedajes. ' + errorMsg);
         this.loading = false;
       }
     });
+  }
+
+  changePage(page: number) {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+    this.offset = (page - 1) * this.limit;
+    this.loadRooms();
+  }
+
+  changeLimit(event: any) {
+    this.limit = Number(event.target.value);
+    this.currentPage = 1;
+    this.offset = 0;
+    this.loadRooms();
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.totalItems / this.limit);
   }
 
   openFormModal() {
