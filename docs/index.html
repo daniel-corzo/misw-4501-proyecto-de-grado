@@ -725,7 +725,8 @@ function buildVelocityChart(allIssues) {
 
 function buildValueChart(allIssues) {
   const today = new Date();
-  const idealPerWeek = 100 / WEEKS.length;
+  const devWeeks = WEEKS.length - 1; // last week is presentation only
+  const idealPerWeek = 100 / devWeeks;
   let accumulated = 0;
   const realCumulative = WEEKS.map(w => {
     if (isFutureWeek(w.start)) return null;
@@ -735,7 +736,7 @@ function buildValueChart(allIssues) {
     accumulated += weekBV;
     return Math.round(accumulated * 10) / 10;
   });
-  const idealCumulative = WEEKS.map((_, idx) => Math.round(idealPerWeek * (idx + 1) * 10) / 10);
+  const idealCumulative = WEEKS.map((_, idx) => Math.round(Math.min(100, idealPerWeek * (idx + 1)) * 10) / 10);
 
   const currentReal  = realCumulative.filter(v => v !== null).slice(-1)[0] || 0;
   const weeksElapsed = realCumulative.filter(v => v !== null).length;
