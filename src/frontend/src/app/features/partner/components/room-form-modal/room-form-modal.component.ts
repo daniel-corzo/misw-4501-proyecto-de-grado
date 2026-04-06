@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } fr
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { ApiService } from '../../../../core/services/api.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-room-form-modal',
@@ -114,10 +115,17 @@ export class RoomFormModalComponent implements OnInit {
         this.loading = false;
         this.closeModal.emit();
       },
-      error: () => {
-        this.toast.danger('Error al guardar el hospedaje. Por favor, intenta de nuevo.');
+      error: (error: HttpErrorResponse) => {
+        const detail = error.error?.detail;
+        if (detail) {
+          this.toast.danger(detail);
+        } else {
+          this.toast.danger(
+            'Error al guardar el hospedaje. Por favor, intenta de nuevo.',
+          );
+        }
         this.loading = false;
-      }
+      },
     });
   }
 }
