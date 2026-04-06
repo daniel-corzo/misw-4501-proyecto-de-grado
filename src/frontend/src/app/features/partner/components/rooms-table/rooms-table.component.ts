@@ -13,6 +13,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 })
 export class RoomsTableComponent implements OnInit {
   isFormModalOpen = false;
+  allRooms: any[] = [];
   rooms: any[] = [];
   loading = false;
   
@@ -31,15 +32,18 @@ export class RoomsTableComponent implements OnInit {
 
   loadRooms() {
     this.loading = true;
-    this.api.get<any>(`/hoteles/habitaciones?limit=${this.limit}&offset=${this.offset}`).subscribe({
+    this.api.get<any>('/hoteles/habitaciones', { "limit": this.limit, "offset": this.offset }).subscribe({
       next: (data) => {
-        this.rooms = data.habitaciones || [];
-        this.totalItems = data.total || 0;
+        if (Array.isArray(data)) {
+          this.rooms = data;
+          this.totalItems = data.length;
+        } else {
+          this.rooms = data.habitaciones || [];
+          this.totalItems = data.total || this.rooms.length;
+        }
         this.loading = false;
       },
       error: (body) => {
-        console.log('Error al cargar habitaciones:', body);
-        console.log(body);
         const errorMsg = body?.error?.detail || 'Error desconocido';
         this.toast.danger('Error al cargar los hospedajes. ' + errorMsg);
         this.loading = false;
@@ -55,7 +59,7 @@ export class RoomsTableComponent implements OnInit {
   }
 
   changeLimit(event: any) {
-    this.limit = Number(event.target.value);
+    this.limit = Number(event.target?.value || 10);
     this.currentPage = 1;
     this.offset = 0;
     this.loadRooms();

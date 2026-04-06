@@ -44,11 +44,11 @@
     <div class="pagination">
       <div class="limit-selector">
         <label for="limit-select">Mostrar:</label>
-        <select id="limit-select" (change)="changeLimit($event)">
-          <option value="5" [selected]="limit === 5">5</option>
-          <option value="10" [selected]="limit === 10">10</option>
-          <option value="25" [selected]="limit === 25">25</option>
-          <option value="50" [selected]="limit === 50">50</option>
+        <select id="limit-select" (change)="changeLimit($event)" [value]="limit">
+          <option value="5">5</option>
+          <option value="10">10</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
         </select>
       </div>
       <button class="btn-pagination" (click)="changePage(currentPage - 1)" [disabled]="currentPage === 1">Anterior</button>

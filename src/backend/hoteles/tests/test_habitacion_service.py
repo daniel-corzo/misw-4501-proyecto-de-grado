@@ -83,8 +83,6 @@ async def test_listar_habitaciones_success(mock_db_session):
     hotel_id = uuid.uuid4()
     mock_hotel = Hotel(id=hotel_id, nombre="Hotel Test")
     
-    mock_db_session.execute.return_value = _ScalarResult(mock_hotel)
-    
     class MockResultCount:
         def scalar(self):
             return 2
