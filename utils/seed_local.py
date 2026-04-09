@@ -20,7 +20,7 @@ from datetime import datetime, time, timezone
 # ── Configuracion ────────────────────────────────────────────────────────────
 
 DB_HOST = "localhost"
-DB_PORT = 5433
+DB_PORT = 5432
 DB_NAME = "travelhub"
 DB_USER = "travelhub"
 DB_PASS = "travelhub"
