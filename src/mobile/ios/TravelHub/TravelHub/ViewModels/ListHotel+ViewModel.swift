@@ -48,6 +48,7 @@ private extension HotelListDTO {
             checkInHour: "",
             checkOutHour: "",
             valorMinimoModificacion: 0,
+            politicas: [],
             habitaciones: []
         )
     }
