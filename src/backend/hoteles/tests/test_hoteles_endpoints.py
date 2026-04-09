@@ -347,3 +347,116 @@ async def test_get_hotel_detalle_returns_404_when_not_found(override_client, moc
     data = response.json()
     assert data["error"] == "not_found"
     assert data["message"] == "El recurso solicitado no existe"
+
+
+@pytest.mark.asyncio
+async def test_get_hotel_detalle_returns_401_when_unauthenticated(mock_db_session):
+    """GET /hoteles/{id} without auth → 401."""
+    async def override_get_db():
+        yield mock_db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+    # intentionally NOT overriding get_current_user so the real JWT check runs
+
+    try:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.get(f"/hoteles/{uuid.uuid4()}")
+        assert response.status_code == 401
+    finally:
+        app.dependency_overrides.clear()
+
+
+@pytest.mark.asyncio
+async def test_get_hotel_detalle_returns_hotel_without_rooms_and_politicas(override_client, mock_db_session):
+    """Edge case: hotel with empty habitaciones and politicas lists."""
+    hotel_id = uuid.uuid4()
+    usuario_id = uuid.uuid4()
+    hotel = SimpleNamespace(
+        id=hotel_id,
+        nombre="Hotel Mínimo",
+        direccion="Calle 5",
+        pais="Colombia",
+        estado=None,
+        departamento="Cundinamarca",
+        ciudad="Bogota",
+        descripcion=None,
+        amenidades=[],
+        estrellas=3,
+        ranking=4.0,
+        contacto_celular=None,
+        contacto_email=None,
+        imagenes=[],
+        check_in=datetime.now(UTC).time(),
+        check_out=datetime.now(UTC).time(),
+        valor_minimo_modificacion=50.0,
+        usuario_id=usuario_id,
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
+        politicas=[],
+        habitaciones=[],
+    )
+
+    mock_db_session.execute = AsyncMock(return_value=_ScalarResult(hotel))
+
+    response = await override_client.get(f"/hoteles/{hotel_id}")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == str(hotel_id)
+    assert data["politicas"] == []
+    assert data["habitaciones"] == []
+    assert data["amenidades"] == []
+    assert data["imagenes"] == []
+
+
+@pytest.mark.asyncio
+async def test_get_hotel_detalle_response_has_all_expected_fields(override_client, mock_db_session):
+    """Assert all top-level fields are present in the response."""
+    hotel_id = uuid.uuid4()
+    usuario_id = uuid.uuid4()
+    hotel = SimpleNamespace(
+        id=hotel_id,
+        nombre="Hotel Completo",
+        direccion="Av. 123",
+        pais="Colombia",
+        estado="Cundinamarca",
+        departamento="Cundinamarca",
+        ciudad="Bogota",
+        descripcion="Descripcion completa",
+        amenidades=["WIFI", "POOL"],
+        estrellas=5,
+        ranking=4.9,
+        contacto_celular="3001234567",
+        contacto_email="completo@hotel.com",
+        imagenes=["img1.jpg", "img2.jpg"],
+        check_in=datetime.now(UTC).time(),
+        check_out=datetime.now(UTC).time(),
+        valor_minimo_modificacion=120.0,
+        usuario_id=usuario_id,
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
+        politicas=[],
+        habitaciones=[],
+    )
+
+    mock_db_session.execute = AsyncMock(return_value=_ScalarResult(hotel))
+
+    response = await override_client.get(f"/hoteles/{hotel_id}")
+
+    assert response.status_code == 200
+    data = response.json()
+
+    expected_fields = [
+        "id", "nombre", "direccion", "pais", "departamento", "ciudad",
+        "descripcion", "amenidades", "estrellas", "ranking",
+        "contacto_celular", "contacto_email", "imagenes",
+        "check_in", "check_out", "valor_minimo_modificacion",
+        "usuario_id", "created_at", "updated_at", "politicas", "habitaciones",
+    ]
+    for field in expected_fields:
+        assert field in data, f"Missing field: {field}"
+
+    assert data["nombre"] == "Hotel Completo"
+    assert data["estrellas"] == 5
+    assert data["ranking"] == 4.9
+    assert data["imagenes"] == ["img1.jpg", "img2.jpg"]

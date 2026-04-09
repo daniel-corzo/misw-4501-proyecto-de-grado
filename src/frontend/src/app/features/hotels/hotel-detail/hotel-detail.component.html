@@ -1,0 +1,255 @@
+<!-- ── Loading State ───────────────────────────────────────────── -->
+@if (loading) {
+  <div class="hotel-detail hotel-detail--loading">
+    <div class="skeleton skeleton--title"></div>
+    <div class="skeleton skeleton--gallery"></div>
+    <div class="skeleton skeleton--body"></div>
+  </div>
+}
+
+<!-- ── Error State ─────────────────────────────────────────────── -->
+@if (!loading && error) {
+  <div class="hotel-detail__error">
+    <p class="hotel-detail__error-msg">{{ error }}</p>
+    <a class="hotel-detail__error-link" routerLink="/">Volver al inicio</a>
+  </div>
+}
+
+<!-- ── Hotel Content ──────────────────────────────────────────── -->
+@if (!loading && !error && hotel) {
+  <div class="hotel-detail">
+
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb" aria-label="breadcrumb">
+      <a class="breadcrumb__item" routerLink="/">Home</a>
+      <span class="breadcrumb__sep">/</span>
+      <span class="breadcrumb__item">{{ hotel.ciudad }} Hotels</span>
+      <span class="breadcrumb__sep">/</span>
+      <span class="breadcrumb__item breadcrumb__item--active">{{ hotel.nombre }}</span>
+    </nav>
+
+    <!-- Hotel Header -->
+    <header class="hotel-header">
+      <h1 class="hotel-header__name">{{ hotel.nombre }}</h1>
+      <div class="hotel-header__meta">
+        <span class="hotel-header__stars" [attr.aria-label]="hotel.estrellas + ' estrellas'">
+          @for (star of starsArray; track $index) {
+            <span class="star">★</span>
+          }
+        </span>
+        <span class="hotel-header__location">
+          <svg class="hotel-header__pin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          {{ hotel.direccion }}, {{ hotel.ciudad }}, {{ hotel.pais }}
+        </span>
+      </div>
+    </header>
+
+    <!-- Image Gallery -->
+    <section class="gallery" aria-label="Galería de imágenes">
+      @if (hotel.imagenes.length > 0) {
+        <div class="gallery__layout">
+          <div class="gallery__main">
+            <img
+              class="gallery__main-img"
+              [src]="hotel.imagenes[selectedImageIndex]"
+              [alt]="hotel.nombre + ' imagen ' + (selectedImageIndex + 1)"
+              loading="eager"
+            />
+          </div>
+          @if (hotel.imagenes.length > 1) {
+            <div class="gallery__thumbs">
+              @for (img of hotel.imagenes.slice(0, 5); track $index) {
+                <button
+                  class="gallery__thumb-btn"
+                  [class.gallery__thumb-btn--active]="selectedImageIndex === $index"
+                  (click)="selectImage($index)"
+                  [attr.aria-label]="'Ver imagen ' + ($index + 1)"
+                >
+                  <img
+                    class="gallery__thumb-img"
+                    [src]="img"
+                    [alt]="hotel.nombre + ' miniatura ' + ($index + 1)"
+                    loading="lazy"
+                  />
+                  @if ($index === 4 && hotel.imagenes.length > 5) {
+                    <span class="gallery__thumb-more">+{{ hotel.imagenes.length - 5 }} photos</span>
+                  }
+                </button>
+              }
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="gallery__placeholder" role="img" aria-label="Sin imágenes disponibles">
+          <span>Sin imágenes disponibles</span>
+        </div>
+      }
+    </section>
+
+    <!-- Two-column layout -->
+    <div class="hotel-detail__layout">
+
+      <!-- Left column — content -->
+      <div class="hotel-detail__content">
+
+        <!-- About -->
+        <section class="hotel-section">
+          <h2 class="hotel-section__title">About this hotel</h2>
+          <p class="hotel-section__body">{{ hotel.descripcion || 'No hay descripción disponible para este hotel.' }}</p>
+        </section>
+
+        <!-- Amenities -->
+        <section class="hotel-section">
+          <h2 class="hotel-section__title">Amenities</h2>
+          <app-amenities-tags
+            [editable]="false"
+            [amenities]="hotel.amenidades"
+          ></app-amenities-tags>
+        </section>
+
+        <!-- Ranking / Reviews -->
+        <section class="hotel-section">
+          <h2 class="hotel-section__title">Guest Rating</h2>
+          <div class="rating-display">
+            <span class="rating-display__score">{{ hotel.ranking.toFixed(1) }}</span>
+            <div class="rating-display__stars">
+              @for (star of starsArray; track $index) {
+                <span class="star">★</span>
+              }
+            </div>
+            <span class="rating-display__label">Based on guest reviews</span>
+          </div>
+        </section>
+
+        <!-- Location -->
+        <section class="hotel-section">
+          <h2 class="hotel-section__title">Location</h2>
+          <p class="hotel-section__body">
+            {{ hotel.direccion }}<br />
+            {{ hotel.ciudad }}, {{ hotel.departamento }}<br />
+            {{ hotel.pais }}
+            @if (hotel.estado) {
+              <br />{{ hotel.estado }}
+            }
+          </p>
+          @if (hotel.contacto_email) {
+            <p class="hotel-section__contact">
+              <strong>Email:</strong> {{ hotel.contacto_email }}
+            </p>
+          }
+          @if (hotel.contacto_celular) {
+            <p class="hotel-section__contact">
+              <strong>Teléfono:</strong> {{ hotel.contacto_celular }}
+            </p>
+          }
+        </section>
+
+        <!-- Rooms -->
+        <section class="hotel-section">
+          <h2 class="hotel-section__title">Select your room</h2>
+          @if (hotel.habitaciones.length === 0) {
+            <p class="hotel-section__empty">No hay habitaciones disponibles en este momento.</p>
+          }
+          @for (room of hotel.habitaciones; track room.id) {
+            <div class="room-card" [class.room-card--selected]="selectedRoom?.id === room.id" [class.room-card--unavailable]="!room.disponible">
+              <div class="room-card__image">
+                @if (room.imagenes.length > 0) {
+                  <img class="room-card__img" [src]="room.imagenes[0]" [alt]="'Habitación ' + room.numero" loading="lazy" />
+                } @else {
+                  <div class="room-card__img-placeholder"></div>
+                }
+              </div>
+              <div class="room-card__info">
+                <h3 class="room-card__name">{{ room.descripcion || 'Room ' + room.numero }}</h3>
+                <p class="room-card__capacity">{{ room.capacidad }} {{ room.capacidad === 1 ? 'Guest' : 'Guests' }}</p>
+                <p class="room-card__price">
+                  <span class="room-card__price-amount">${{ formatPrice(room.monto) }}</span>
+                  <span class="room-card__price-label">/night</span>
+                </p>
+                @if (!room.disponible) {
+                  <p class="room-card__unavailable-label">Not available</p>
+                }
+                <p class="room-card__excl">Excl. taxes &amp; fees</p>
+              </div>
+              @if (room.disponible) {
+                <button
+                  class="room-card__btn"
+                  [class.room-card__btn--selected]="selectedRoom?.id === room.id"
+                  (click)="selectRoom(room)"
+                >
+                  {{ selectedRoom?.id === room.id ? 'Selected' : 'Select Room' }}
+                </button>
+              }
+            </div>
+          }
+        </section>
+
+        <!-- Policies -->
+        @if (hotel.politicas.length > 0) {
+          <section class="hotel-section">
+            <h2 class="hotel-section__title">Policies</h2>
+            @for (politica of hotel.politicas; track politica.id) {
+              <div class="policy-card">
+                <strong class="policy-card__name">{{ politica.nombre }}</strong>
+                @if (politica.descripcion) {
+                  <p class="policy-card__desc">{{ politica.descripcion }}</p>
+                }
+              </div>
+            }
+          </section>
+        }
+
+      </div><!-- end left column -->
+
+      <!-- Right column — booking card -->
+      <aside class="booking-card">
+        <div class="booking-card__price-row">
+          <span class="booking-card__price">${{ formatPrice(selectedRoom?.monto ?? minPrice) }}</span>
+          <span class="booking-card__per-night">/night</span>
+        </div>
+
+        <div class="booking-card__fields">
+          <div class="booking-card__field-row">
+            <div class="booking-card__field">
+              <span class="booking-card__field-label">CHECK-IN</span>
+              <span class="booking-card__field-value">{{ hotel.check_in }}</span>
+            </div>
+            <div class="booking-card__field">
+              <span class="booking-card__field-label">CHECK-OUT</span>
+              <span class="booking-card__field-value">{{ hotel.check_out }}</span>
+            </div>
+          </div>
+          <div class="booking-card__field">
+            <span class="booking-card__field-label">GUESTS</span>
+            <span class="booking-card__field-value">
+              {{ selectedRoom ? selectedRoom.capacidad + ' Guest' + (selectedRoom.capacidad !== 1 ? 's' : '') : 'Select a room' }}
+            </span>
+          </div>
+        </div>
+
+        <button class="booking-card__cta" [disabled]="!selectedRoom?.disponible">
+          Reserve Now
+        </button>
+        <p class="booking-card__notice">You won't be charged yet</p>
+
+        @if (selectedRoom) {
+          <div class="booking-card__breakdown">
+            <div class="booking-card__breakdown-row">
+              <span>1 night × ${{ formatPrice(selectedRoom.monto) }}</span>
+              <span>${{ formatPrice(selectedRoom.monto) }}</span>
+            </div>
+            <div class="booking-card__breakdown-row">
+              <span>Taxes</span>
+              <span>${{ formatPrice(selectedRoom.impuestos) }}</span>
+            </div>
+            <div class="booking-card__breakdown-row booking-card__breakdown-row--total">
+              <span>Total</span>
+              <span>${{ formatPrice(selectedRoom.monto + selectedRoom.impuestos) }}</span>
+            </div>
+          </div>
+        }
+      </aside>
+
+    </div><!-- end layout -->
+  </div><!-- end hotel-detail -->
+}

@@ -196,6 +196,122 @@ async def test_obtener_hotel_service_raises_404_when_not_found():
 
 
 @pytest.mark.anyio
+async def test_obtener_hotel_service_handles_none_amenidades():
+    """hotel.amenidades = None should return response.amenidades == []."""
+    hotel_id = uuid.uuid4()
+    usuario_id = uuid.uuid4()
+    hotel = SimpleNamespace(
+        id=hotel_id,
+        nombre="Hotel Sin Amenidades",
+        direccion="Calle 0",
+        pais="Colombia",
+        estado=None,
+        departamento="Cundinamarca",
+        ciudad="Bogota",
+        descripcion="Sin amenidades",
+        amenidades=None,
+        estrellas=3,
+        ranking=3.5,
+        contacto_celular=None,
+        contacto_email=None,
+        imagenes=None,
+        check_in=time(15, 0),
+        check_out=time(12, 0),
+        valor_minimo_modificacion=80.0,
+        usuario_id=usuario_id,
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
+        politicas=[],
+        habitaciones=[],
+    )
+
+    db = AsyncMock()
+    db.execute = AsyncMock(return_value=_ScalarResult(hotel))
+
+    response = await obtener_hotel_service(db=db, hotel_id=hotel_id)
+
+    assert response.amenidades == []
+    assert response.imagenes == []
+
+
+@pytest.mark.anyio
+async def test_obtener_hotel_service_maps_all_fields():
+    """All top-level fields in HotelDetalleResponse are correctly mapped from the ORM object."""
+    hotel_id = uuid.uuid4()
+    usuario_id = uuid.uuid4()
+    created_at = datetime.now(UTC)
+    updated_at = datetime.now(UTC)
+    check_in_time = time(15, 0)
+    check_out_time = time(12, 0)
+
+    politica = SimpleNamespace(
+        id=uuid.uuid4(),
+        nombre="Pol 1",
+        descripcion="Desc pol",
+        tipo="cancelacion",
+        penalizacion=10,
+        dias_antelacion=2,
+    )
+    habitacion = SimpleNamespace(
+        id=uuid.uuid4(),
+        capacidad=2,
+        numero="101",
+        descripcion="Hab 1",
+        imagenes=["hab.jpg"],
+        monto=200,
+        impuestos=40,
+        disponible=True,
+    )
+    hotel = SimpleNamespace(
+        id=hotel_id,
+        nombre="Hotel Completo",
+        direccion="Av. Siempre Viva",
+        pais="Colombia",
+        estado="Cundinamarca",
+        departamento="Cundinamarca",
+        ciudad="Bogota",
+        descripcion="Descripcion",
+        amenidades=["WIFI", "POOL"],
+        estrellas=4,
+        ranking=4.5,
+        contacto_celular="3101234567",
+        contacto_email="info@hotel.com",
+        imagenes=["img1.jpg"],
+        check_in=check_in_time,
+        check_out=check_out_time,
+        valor_minimo_modificacion=100.0,
+        usuario_id=usuario_id,
+        created_at=created_at,
+        updated_at=updated_at,
+        politicas=[politica],
+        habitaciones=[habitacion],
+    )
+
+    db = AsyncMock()
+    db.execute = AsyncMock(return_value=_ScalarResult(hotel))
+
+    response = await obtener_hotel_service(db=db, hotel_id=hotel_id)
+
+    assert response.id == hotel_id
+    assert response.nombre == "Hotel Completo"
+    assert response.direccion == "Av. Siempre Viva"
+    assert response.pais == "Colombia"
+    assert response.ciudad == "Bogota"
+    assert response.descripcion == "Descripcion"
+    assert "WIFI" in [a.value for a in response.amenidades]
+    assert response.estrellas == 4
+    assert response.ranking == 4.5
+    assert response.contacto_email == "info@hotel.com"
+    assert response.check_in == check_in_time
+    assert response.check_out == check_out_time
+    assert response.valor_minimo_modificacion == 100.0
+    assert response.usuario_id == usuario_id
+    assert len(response.politicas) == 1
+    assert len(response.habitaciones) == 1
+    assert response.habitaciones[0].monto == 200
+
+
+@pytest.mark.anyio
 @patch("app.services.hotel_service.httpx.AsyncClient")
 async def test_crear_hotel_service_returns_created_hotel_response(mock_async_client):
     mock_response = MagicMock()
