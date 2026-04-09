@@ -134,10 +134,19 @@ enum HotelAmenity: String, Codable {
     }
 }
 
-struct Habitacion: Identifiable, Codable {
+struct Politica: Identifiable {
+    var id: UUID
+    var nombre: String
+    var descripcion: String
+    var tipo: String
+    var penalizacion: Int
+    var diasAntelacion: Int
+}
+
+struct Habitacion: Identifiable {
     var id: UUID
     var capacidad: Int
-    var numero: Int
+    var numero: String
     var descripcion: String
     var imagenes: [String]
     var monto: Double
@@ -145,12 +154,12 @@ struct Habitacion: Identifiable, Codable {
     var disponible: Bool
 }
 
-struct Hotel: Identifiable, Codable {
+struct Hotel: Identifiable {
     var id: UUID
     var nombre: String
     var direccion: String
     var pais: String
-    var estado: String
+    var estado: String?
     var departamento: String
     var ciudad: String
     var descripcion: String
@@ -163,5 +172,6 @@ struct Hotel: Identifiable, Codable {
     var checkInHour: String
     var checkOutHour: String
     var valorMinimoModificacion: Double
+    var politicas: [Politica]
     var habitaciones: [Habitacion]
 }

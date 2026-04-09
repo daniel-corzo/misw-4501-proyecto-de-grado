@@ -35,7 +35,7 @@ struct HotelDetailDTO: Decodable {
     let nombre: String
     let direccion: String
     let pais: String
-    let estado: String
+    let estado: String?
     let departamento: String
     let ciudad: String
     let descripcion: String
@@ -48,16 +48,39 @@ struct HotelDetailDTO: Decodable {
     let checkIn: String
     let checkOut: String
     let valorMinimoModificacion: Double
+    let usuarioId: String
+    let createdAt: String
+    let updatedAt: String
+    let politicas: [PoliticaDTO]
     let habitaciones: [HabitacionDTO]
 
     enum CodingKeys: String, CodingKey {
         case id, nombre, direccion, pais, estado, departamento, ciudad
-        case descripcion, amenidades, estrellas, ranking, imagenes, habitaciones
+        case descripcion, amenidades, estrellas, ranking, imagenes
+        case politicas, habitaciones
         case contactoCelular = "contacto_celular"
         case contactoEmail = "contacto_email"
         case checkIn = "check_in"
         case checkOut = "check_out"
         case valorMinimoModificacion = "valor_minimo_modificacion"
+        case usuarioId = "usuario_id"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+    }
+}
+
+/// DTO para una política del hotel
+struct PoliticaDTO: Decodable {
+    let id: UUID
+    let nombre: String
+    let descripcion: String
+    let tipo: String
+    let penalizacion: Int
+    let diasAntelacion: Int
+
+    enum CodingKeys: String, CodingKey {
+        case id, nombre, descripcion, tipo, penalizacion
+        case diasAntelacion = "dias_antelacion"
     }
 }
 
@@ -65,7 +88,7 @@ struct HotelDetailDTO: Decodable {
 struct HabitacionDTO: Decodable {
     let id: UUID
     let capacidad: Int
-    let numero: Int
+    let numero: String
     let descripcion: String
     let imagenes: [String]
     let monto: Double

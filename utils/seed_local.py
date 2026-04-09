@@ -20,7 +20,7 @@ from datetime import datetime, time, timezone
 # ── Configuracion ────────────────────────────────────────────────────────────
 
 DB_HOST = "localhost"
-DB_PORT = 5432
+DB_PORT = 5433
 DB_NAME = "travelhub"
 DB_USER = "travelhub"
 DB_PASS = "travelhub"
@@ -166,8 +166,8 @@ def main():
 
         cur.execute(
             """
-            INSERT INTO usuario (id, created_at, updated_at, email, hashed_contrasena, tipo, role, hotel_id)
-            VALUES (%s, %s, %s, %s, %s, %s::tipousuario, %s::roleenum, NULL)
+            INSERT INTO usuario (id, created_at, updated_at, email, hashed_contrasena, tipo, role)
+            VALUES (%s, %s, %s, %s, %s, %s::tipousuario, %s::roleenum)
             """,
             (str(uid), ts, ts, u["email"], hashed, u["tipo"], u["role"]),
         )
@@ -219,11 +219,6 @@ def main():
         ),
     )
 
-    # Vincular hotel_id en el usuario
-    cur.execute(
-        "UPDATE usuario SET hotel_id = %s WHERE id = %s",
-        (str(hotel_id), str(hotel_user_id)),
-    )
     print(f"  OK {h['nombre']} ({h['ciudad']}, {h['estrellas']} estrellas)")
 
     # -- Habitaciones ------------------------------------------------------
