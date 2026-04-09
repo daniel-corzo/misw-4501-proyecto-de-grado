@@ -37,7 +37,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"tesis_test123@yopmail.com\",\n  \"password\": \"123\",\n  \"role\": \"USER\",\n  \"nombre\": \"Test\",\n  \"telefono\": \"3172117192\",\n  \"tipo\": \"viajero\"\n}",
+              "raw": "{\n  \"email\": \"{{viajeroEmail}}\",\n  \"password\": \"{{viajeroPassword}}\",\n  \"role\": \"USER\",\n  \"nombre\": \"Test\",\n  \"telefono\": \"3123592953\",\n  \"tipo\": \"viajero\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -81,7 +81,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"viajero@travelhub.dev\",\n  \"password\": \"Viajero123!\"\n}",
+              "raw": "{\n  \"email\": {{viajeroEmail}},\n  \"password\": {{viajeroPassword}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -220,20 +220,13 @@
           "name": "Hoteles",
           "request": {
             "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4ZTgyYWE3OS01YTkxLTQ1NTUtYTlhMi1mZjc1NDg0MzljNjgiLCJlbWFpbCI6InRlc2lzX3Rlc3QxMjNAeW9wbWFpbC5jb20iLCJyb2xlIjoiQURNSU4iLCJleHAiOjE3NzQ5Mjc4Mjl9.mgq0CZ4EwmZUFJlzXWWx_B6mBntVJx34J3is4meurdRTXsk_i29x3giyGbM4E3MxVDRrELDS_KcANyWJ1h7-3lC_i8ojWqQSyRBVXM8rvk6yiSi4aOR1B1Wzhsd8ab4u_lhTlRxY_Pm0MKicqF_gEk6VdwWCBuRy3KjYc5LnGbQ3Qv0kWmCkwof4_G4Tiy_sfQWcY03NGgMmOZ8g2yfRlfha6z7BvbPvFu2mwIq0oACcDsVd6nLQLZnj1im2B-xYBFlM8kXWiQZSPL1ib2-W7ONQzG4Y8gtqPf27KX3aOeTr7ph2kMJ6oq9si87r1exxA0QDMyzwCVMq1N9g8gez5Q",
-                  "type": "string"
-                }
-              ]
+              "type": "noauth"
             },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"email\": \"hotel@nuevo.com\",\n    \"password\": \"HotelNuevo123!\",\n    \"nombre\": \"Hotel Nuevo\",\n    \"direccion\": \"Calle 10\",\n    \"pais\": \"Colombia\",\n    \"estado\": \"Cundinamarca\",\n    \"departamento\": \"Cundinamarca\",\n    \"ciudad\": \"Bogotá\",\n    \"descripcion\": \"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.\",\n    \"amenidades\": [\n        \"WIFI\",\n        \"POOL\"\n    ],\n    \"estrellas\": 5,\n    \"ranking\": 4.8,\n    \"contacto_celular\": \"3000000000\",\n    \"contacto_email\": \"hotel@nuevo.com\",\n    \"imagenes\": [\n        \"https://raw.githubusercontent.com/DavidMS73/images-test/main/hotel1.jpeg\"\n    ],\n    \"check_in\": \"15:00:00\",\n    \"check_out\": \"12:00:00\",\n    \"valor_minimo_modificacion\": 100.0,\n    \"politicas\": [\n        {\n            \"nombre\": \"Cancelacion flexible\",\n            \"descripcion\": \"Gratis hasta 24h\",\n            \"tipo\": \"cancelacion\",\n            \"penalizacion\": 0,\n            \"dias_antelacion\": 1\n        }\n    ],\n    \"habitaciones\": [\n        {\n            \"capacidad\": 2,\n            \"numero\": \"101\",\n            \"descripcion\": \"Vista ciudad\",\n            \"imagenes\": [\n                \"h1.jpg\"\n            ],\n            \"monto\": 250,\n            \"impuestos\": 45,\n            \"disponible\": true\n        }\n    ]\n}",
+              "raw": "{\n    \"email\": \"hotel_test@travelhub.dev\",\n    \"password\": \"HotelNuevo123!\",\n    \"nombre\": \"Hotel Nuevo\",\n    \"direccion\": \"Calle 10\",\n    \"pais\": \"Colombia\",\n    \"estado\": \"Cundinamarca\",\n    \"departamento\": \"Cundinamarca\",\n    \"ciudad\": \"Bogotá\",\n    \"descripcion\": \"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.\",\n    \"amenidades\": [\n        \"WIFI\",\n        \"POOL\"\n    ],\n    \"estrellas\": 5,\n    \"ranking\": 4.8,\n    \"contacto_celular\": \"3000000000\",\n    \"contacto_email\": \"hotel@nuevo.com\",\n    \"imagenes\": [\n        \"https://raw.githubusercontent.com/DavidMS73/images-test/main/hotel1.jpeg\"\n    ],\n    \"check_in\": \"15:00:00\",\n    \"check_out\": \"12:00:00\",\n    \"valor_minimo_modificacion\": 100.0,\n    \"politicas\": [\n        {\n            \"nombre\": \"Cancelacion flexible\",\n            \"descripcion\": \"Gratis hasta 24h\",\n            \"tipo\": \"cancelacion\",\n            \"penalizacion\": 0,\n            \"dias_antelacion\": 1\n        }\n    ],\n    \"habitaciones\": [\n        {\n            \"capacidad\": 2,\n            \"numero\": \"101\",\n            \"descripcion\": \"Vista ciudad\",\n            \"imagenes\": [\n                \"h1.jpg\"\n            ],\n            \"monto\": 250,\n            \"impuestos\": 45,\n            \"disponible\": true\n        }\n    ]\n}",
               "options": {
                 "raw": {
                   "language": "json"

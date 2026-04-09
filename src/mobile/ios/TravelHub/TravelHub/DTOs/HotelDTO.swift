@@ -73,7 +73,7 @@ struct HotelDetailDTO: Decodable {
 struct PoliticaDTO: Decodable {
     let id: UUID
     let nombre: String
-    let descripcion: String
+    let descripcion: String?
     let tipo: String
     let penalizacion: Int
     let diasAntelacion: Int
@@ -89,7 +89,7 @@ struct HabitacionDTO: Decodable {
     let id: UUID
     let capacidad: Int
     let numero: String
-    let descripcion: String
+    let descripcion: String?
     let imagenes: [String]
     let monto: Double
     let impuestos: Double

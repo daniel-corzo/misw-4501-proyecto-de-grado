@@ -137,7 +137,7 @@ enum HotelAmenity: String, Codable {
 struct Politica: Identifiable {
     var id: UUID
     var nombre: String
-    var descripcion: String
+    var descripcion: String?
     var tipo: String
     var penalizacion: Int
     var diasAntelacion: Int
@@ -147,7 +147,7 @@ struct Habitacion: Identifiable {
     var id: UUID
     var capacidad: Int
     var numero: String
-    var descripcion: String
+    var descripcion: String?
     var imagenes: [String]
     var monto: Double
     var impuestos: Double
