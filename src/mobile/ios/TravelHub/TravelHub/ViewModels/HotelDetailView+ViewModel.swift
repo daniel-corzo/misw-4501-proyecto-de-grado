@@ -52,7 +52,21 @@ private extension HotelDetailDTO {
             checkInHour: checkIn,
             checkOutHour: checkOut,
             valorMinimoModificacion: valorMinimoModificacion,
+            politicas: politicas.map { $0.toDomain() },
             habitaciones: habitaciones.map { $0.toDomain() }
+        )
+    }
+}
+
+private extension PoliticaDTO {
+    func toDomain() -> Politica {
+        return Politica(
+            id: id,
+            nombre: nombre,
+            descripcion: descripcion,
+            tipo: tipo,
+            penalizacion: penalizacion,
+            diasAntelacion: diasAntelacion
         )
     }
 }
