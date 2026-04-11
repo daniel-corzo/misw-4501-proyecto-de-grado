@@ -19,6 +19,8 @@ jobs:
       services: ${{ steps.build-matrix.outputs.services }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: dorny/paths-filter@v3
         id: filter
@@ -53,7 +55,11 @@ jobs:
             [ "${{ steps.filter.outputs.notificaciones }}" == "true" ] && SERVICES+=(notificaciones)
           fi
 
-          JSON=$(printf '%s\n' "${SERVICES[@]}" | jq -R . | jq -sc .)
+          if [ ${#SERVICES[@]} -eq 0 ]; then
+            JSON='[]'
+          else
+            JSON=$(printf '%s\n' "${SERVICES[@]}" | jq -R . | jq -sc .)
+          fi
           echo "services=$JSON" >> "$GITHUB_OUTPUT"
           echo "Servicios a desplegar: $JSON"
 
