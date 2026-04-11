@@ -57,6 +57,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'hotels/:id',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/hotels/hotel-detail/hotel-detail.component').then(
+            (m) => m.HotelDetailComponent
+          ),
+      },
+      {
         path: 'terms',
         loadComponent: () =>
           import('./features/terms/terms.component').then(
