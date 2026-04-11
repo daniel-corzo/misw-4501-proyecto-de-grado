@@ -1,0 +1,22 @@
+.partner-hotel {
+  padding: var(--space-xl);
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+
+  .hotel-header {
+    margin-bottom: var(--space-xl);
+
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--color-text);
+      letter-spacing: -0.5px;
+      margin: 0;
+    }
+  }
+
+  .hotel-content {
+    /* To space the table appropriately */
+    margin-top: var(--space-xl);
+  }
+}

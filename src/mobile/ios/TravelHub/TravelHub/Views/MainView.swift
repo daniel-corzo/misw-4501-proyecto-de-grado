@@ -8,7 +8,9 @@
 import SwiftUI
 
 struct MainView: View {
-    
+
+    @Binding var isLoggedIn: Bool
+
     var body: some View {
         TabView {
             
@@ -27,7 +29,7 @@ struct MainView: View {
             }
             
             NavigationStack {
-                Text("Profile View")
+                ProfileView(isLoggedIn: $isLoggedIn)
             }
             .tabItem {
                 Label(LocalizedStringResource.TabBar.profile, systemImage: "person")
@@ -37,5 +39,5 @@ struct MainView: View {
 }
 
 #Preview {
-    MainView()
+    MainView(isLoggedIn: .constant(true))
 }

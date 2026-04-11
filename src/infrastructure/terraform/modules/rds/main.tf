@@ -102,7 +102,9 @@ resource "aws_secretsmanager_secret" "shared" {
 resource "aws_secretsmanager_secret_version" "shared" {
   secret_id = aws_secretsmanager_secret.shared.id
   secret_string = jsonencode({
-    db_url     = "postgresql+asyncpg://${var.db_username}:${random_password.db.result}@${aws_db_instance.main.address}:5432/${var.db_name}"
-    jwt_secret = random_password.jwt_secret.result
+    db_url          = "postgresql+asyncpg://${var.db_username}:${random_password.db.result}@${aws_db_instance.main.address}:5432/${var.db_name}"
+    jwt_secret      = random_password.jwt_secret.result
+    jwt_private_key = var.jwt_private_key
+    jwt_public_key  = var.jwt_public_key
   })
 }

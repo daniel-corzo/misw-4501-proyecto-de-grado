@@ -9,3 +9,8 @@ variable "region" {
 variable "owner" {
   type = string
 }
+
+variable "domain_name" {
+  description = "Domain name for CloudFront distribution"
+  type        = string
+}

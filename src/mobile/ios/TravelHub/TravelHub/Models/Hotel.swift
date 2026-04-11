@@ -8,27 +8,27 @@
 import Foundation
 
 enum HotelAmenity: String, Codable {
-    case pool
-    case gym
-    case spa
-    case restaurant
-    case bar
-    case wifi
-    case parking
-    case airConditioning
-    case roomService
-    case laundry
-    case concierge
-    case beachAccess
-    case skiAccess
-    case petFriendly
-    case smokingArea
-    case evCharging
-    case businessCenter
-    case conferenceRoom
-    case childrenPlayground
-    case shuttle
-    case breakfastIncluded
+    case pool = "POOL"
+    case gym = "GYM"
+    case spa = "SPA"
+    case restaurant = "RESTAURANT"
+    case bar = "BAR"
+    case wifi = "WIFI"
+    case parking = "PARKING"
+    case airConditioning = "AIR_CONDITIONING"
+    case roomService = "ROOM_SERVICE"
+    case laundry = "LAUNDRY"
+    case concierge = "CONCIERGE"
+    case beachAccess = "BEACH_ACCESS"
+    case skiAccess = "SKI_ACCESS"
+    case petFriendly = "PET_FRIENDLY"
+    case smokingArea = "SMOKING_AREA"
+    case evCharging = "EV_CHARGING"
+    case businessCenter = "BUSINESS_CENTER"
+    case conferenceRoom = "CONFERENCE_ROOM"
+    case childrenPlayground = "CHILDREN_PLAYGROUND"
+    case shuttle = "SHUTTLE"
+    case breakfastIncluded = "BREAKFAST_INCLUDED"
     
     var localizedName: LocalizedStringResource {
         switch self {
@@ -134,21 +134,44 @@ enum HotelAmenity: String, Codable {
     }
 }
 
-struct Hotel: Identifiable, Codable {
-    var id: Int
+struct Politica: Identifiable {
+    var id: UUID
+    var nombre: String
+    var descripcion: String?
+    var tipo: String
+    var penalizacion: Int
+    var diasAntelacion: Int
+}
+
+struct Habitacion: Identifiable {
+    var id: UUID
+    var capacidad: Int
+    var numero: String
+    var descripcion: String?
+    var imagenes: [String]
+    var monto: Double
+    var impuestos: Double
+    var disponible: Bool
+}
+
+struct Hotel: Identifiable {
+    var id: UUID
     var nombre: String
     var direccion: String
     var pais: String
-    var estado: String
+    var estado: String?
     var departamento: String
     var ciudad: String
     var descripcion: String
     var amenidades: [HotelAmenity]
-    var ranking: Int
+    var estrellas: Int
+    var ranking: Double
     var contactoCelular: String
     var contactoEmail: String
     var images: [String]
     var checkInHour: String
     var checkOutHour: String
-    var valorMinimoModificacion: Int
+    var valorMinimoModificacion: Double
+    var politicas: [Politica]
+    var habitaciones: [Habitacion]
 }

@@ -12,10 +12,13 @@ struct LogInView: View {
         case email, password
     }
     
+    @Environment(\.authService) private var authService: AuthService
+    @Environment(\.userService) private var userService: UserService
+    @Environment(\.toastManager) private var toastManager: ToastManager
+    
     @FocusState private var focusedField: Field?
     @State private var viewModel = ViewModel()
     @State private var isHidingPassword: Bool = true
-    @State private var showError = false
     @State private var isLoading = false
     
     @Binding var isLoggedIn: Bool
@@ -72,7 +75,7 @@ struct LogInView: View {
                                 isSecuredField: true,
                                 text: $viewModel.password
                             )
-                            .textContentType(.newPassword)
+                            .textContentType(.password)
                             .focused($focusedField, equals: .password)
                             .submitLabel(.done)
                             .onSubmit { focusedField = nil }
@@ -92,20 +95,22 @@ struct LogInView: View {
                         
                         // MARK: - Login button
                         Button {
-                            isLoading = true
-                            showError = false
-                            
-                            // 2️⃣ Simulación de login (API)
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                                isLoading = false
+                            Task {
+                                focusedField = nil
+                                isLoading = true
                                 
-                                if viewModel.email.isEmpty || viewModel.password.isEmpty {
-                                    // ❌ Error: campos vacíos
-                                    showError = true
-                                } else {
-                                    // ✅ Login OK: navegar
-                                    isLoggedIn = true
+                                do {
+                                    let _ = try await viewModel.logIn()
+                                    let me = try await userService.getMe()
+                                    if me.tipo == TipoUsuario.viajero.rawValue {
+                                        isLoggedIn = true
+                                    } else {
+                                        toastManager.warning("No se puede acceder a la aplicación con este tipo de usuario")
+                                    }
+                                } catch {
+                                    toastManager.error(error.localizedDescription, title: "Error")
                                 }
+                                isLoading = false
                             }
                         } label: {
                             HStack {
@@ -127,11 +132,8 @@ struct LogInView: View {
                         .glassEffect(.regular.tint(.accent).interactive())
                         .clipShape(Capsule())
                         .shadow(color: .accent.opacity(0.2), radius: 15, y: 10)
-                        .alert("Error", isPresented: $showError, actions: {
-                            Button("OK", role: .cancel) { }
-                        }, message: {
-                            Text(LocalizedStringResource.LogIn.emailAndPasswordError)
-                        })
+                        .disabled(!viewModel.canSubmit || isLoading)
+                        .opacity((!viewModel.canSubmit || isLoading) ? 0.6 : 1.0)
                         
                         Divider()
                         
@@ -158,9 +160,14 @@ struct LogInView: View {
             }
         }
         .onTapGesture { focusedField = nil }
+        .task {
+            self.viewModel.authService = self.authService
+        }
     }
 }
 
 #Preview {
     LogInView(isLoggedIn: .constant(false))
+        // TODO: Change injected service for a mock
+        .environment(\.authService, AuthServiceImpl(httpService: HttpServiceImpl.shared))
 }

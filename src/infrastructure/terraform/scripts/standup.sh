@@ -1,6 +1,6 @@
 #!/bin/bash
 # Recrea los stacks destruidos por teardown.sh.
-# Asume que network, ecr, static-frontend y cloudfront siguen existiendo.
+# Asume que network, dns, ecr, static-frontend y cloudfront siguen existiendo.
 #
 # Uso: ejecutar desde src/
 #   cd src && bash infrastructure/terraform/scripts/standup.sh

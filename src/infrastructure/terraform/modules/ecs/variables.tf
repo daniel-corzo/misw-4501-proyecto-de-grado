@@ -26,8 +26,10 @@ variable "shared_secret_arn" {
 variable "services" {
   description = "Mapa de servicios con su repository_url, container_port y target_group_arn opcional"
   type = map(object({
-    repository_url   = string
-    container_port   = number
-    target_group_arn = optional(string)
+    repository_url    = string
+    container_port    = number
+    target_group_arn  = optional(string)
+    extra_environment = optional(list(object({ name = string, value = string })), [])
+    exclude_secrets   = optional(list(string), [])
   }))
 }

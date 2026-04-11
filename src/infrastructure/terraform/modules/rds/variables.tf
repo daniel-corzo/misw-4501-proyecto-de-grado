@@ -35,3 +35,15 @@ variable "instance_class" {
   default = "db.t3.micro"
 }
 
+variable "jwt_private_key" {
+  type        = string
+  sensitive   = true
+  description = "JWT private key in PEM format"
+}
+
+variable "jwt_public_key" {
+  type        = string
+  sensitive   = true
+  description = "JWT public key in PEM format"
+}
+

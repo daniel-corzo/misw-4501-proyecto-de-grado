@@ -1,86 +1,108 @@
 import uuid
-from datetime import datetime
-from fastapi import APIRouter, HTTPException, status
-from app.schemas.hotel import CrearHotelRequest, HotelResponse, ListaHotelesResponse
+
+from fastapi import APIRouter, status, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.database import get_db
+from app.schemas.hotel import (
+    AmenidadHotel,
+    CrearHotelRequest,
+    HotelDetalleResponse,
+    ListaHotelesResponse,
+    CrearHabitacionRequest,
+    HabitacionDetalleResponse,
+    ListaHabitacionesResponse,
+)
+from app.services.hotel_service import (
+    OrdenHoteles,
+    crear_hotel_service,
+    get_hotel_by_user,
+    listar_hoteles_service,
+    obtener_hotel_service,
+)
+from app.services.habitacion_service import (
+    crear_habitacion_service,
+    listar_habitaciones_service,
+)
+from app.models.hotel import Hotel
+from travelhub_common.security import get_current_user, User, RoleChecker, RoleEnum
+from typing import Annotated
 
 router = APIRouter(prefix="/hoteles", tags=["hoteles"])
 
 
 @router.get("", response_model=ListaHotelesResponse, status_code=status.HTTP_200_OK)
-async def listar_hoteles():
-    """
-    Retorna la lista de todos los hoteles registrados.
-
-    En la implementacion real:
-    - Paginar resultados (limit/offset)
-    - Filtrar por ciudad, categoria, etc.
-    - Consultar PostgreSQL via SQLAlchemy
-    """
-    # TODO: reemplazar con consulta real paginada a la BD
-    hoteles = [
-        HotelResponse(
-            id=uuid.uuid4(),
-            nombre="Hotel Gran Colombia",
-            ciudad="Bogota",
-            direccion="Cra 15 # 93-47",
-            estrellas=4,
-            descripcion="Hotel boutique en el corazon de Bogota",
-            amenidades=["wifi", "piscina", "spa", "restaurante"],
-            created_at=datetime.utcnow(),
-        ),
-        HotelResponse(
-            id=uuid.uuid4(),
-            nombre="Hotel Andino Royal",
-            ciudad="Bogota",
-            direccion="Calle 85 # 12-28",
-            estrellas=5,
-            descripcion="Lujo y confort en la zona rosa",
-            amenidades=["wifi", "gym", "bar", "concierge", "valet"],
-            created_at=datetime.utcnow(),
-        ),
-    ]
-    return ListaHotelesResponse(total=len(hoteles), hoteles=hoteles)
-
-
-@router.get("/{hotel_id}", response_model=HotelResponse, status_code=status.HTTP_200_OK)
-async def obtener_hotel(hotel_id: uuid.UUID):
-    """
-    Retorna el detalle de un hotel por su ID.
-
-    En la implementacion real:
-    - Consultar PostgreSQL por primary key
-    - Levantar 404 si no existe
-    """
-    # TODO: reemplazar con consulta real a la BD
-    return HotelResponse(
-        id=hotel_id,
-        nombre="Hotel Gran Colombia",
-        ciudad="Bogota",
-        direccion="Cra 15 # 93-47",
-        estrellas=4,
-        descripcion="Hotel boutique en el corazon de Bogota",
-        amenidades=["wifi", "piscina", "spa", "restaurante"],
-        created_at=datetime.utcnow(),
+async def listar_hoteles(
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    orden: OrdenHoteles = Query(default="rating_desc"),
+    precio_min: float | None = Query(default=None, ge=0),
+    precio_max: float | None = Query(default=None, ge=0),
+    rango_50_1000: bool = Query(default=False),
+    estrellas: list[int] | None = Query(default=None),
+    amenidades_populares: list[AmenidadHotel] | None = Query(default=None),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return await listar_hoteles_service(
+        db=db,
+        limit=limit,
+        offset=offset,
+        orden=orden,
+        precio_min=precio_min,
+        precio_max=precio_max,
+        rango_50_1000=rango_50_1000,
+        estrellas=estrellas,
+        amenidades_populares=amenidades_populares,
     )
 
 
-@router.post("", response_model=HotelResponse, status_code=status.HTTP_201_CREATED)
-async def crear_hotel(body: CrearHotelRequest):
-    """
-    Registra un nuevo hotel en el sistema.
+@router.post(
+    "", response_model=HotelDetalleResponse, status_code=status.HTTP_201_CREATED
+)
+async def crear_hotel(body: CrearHotelRequest, db: AsyncSession = Depends(get_db)):
+    return await crear_hotel_service(db=db, body=body)
 
-    En la implementacion real:
-    - Validar que no exista hotel duplicado
-    - Persistir en PostgreSQL via SQLAlchemy
-    """
-    # TODO: reemplazar con persistencia real en BD
-    return HotelResponse(
-        id=uuid.uuid4(),
-        nombre=body.nombre,
-        ciudad=body.ciudad,
-        direccion=body.direccion,
-        estrellas=body.estrellas,
-        descripcion=body.descripcion,
-        amenidades=body.amenidades,
-        created_at=datetime.utcnow(),
-    )
+
+@router.post(
+    "/habitaciones",
+    response_model=HabitacionDetalleResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[
+        Depends(RoleChecker([RoleEnum.MANAGER, RoleEnum.USER]))
+    ],
+)
+async def crear_habitacion(
+    body: CrearHabitacionRequest,
+    db: AsyncSession = Depends(get_db),
+    current_hotel: Annotated[Hotel, Depends(get_hotel_by_user)] = None
+):
+    return await crear_habitacion_service(db=db, hotel=current_hotel, body=body)
+
+
+@router.get(
+    "/habitaciones",
+    response_model=ListaHabitacionesResponse,
+    status_code=status.HTTP_200_OK,
+    dependencies=[
+        Depends(RoleChecker([RoleEnum.MANAGER, RoleEnum.USER]))
+    ],
+)
+async def listar_habitaciones(
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    db: AsyncSession = Depends(get_db),
+    current_hotel: Annotated[Hotel, Depends(get_hotel_by_user)] = None
+):
+    return await listar_habitaciones_service(db=db, hotel=current_hotel, limit=limit, offset=offset)
+
+
+@router.get(
+    "/{hotel_id}", response_model=HotelDetalleResponse, status_code=status.HTTP_200_OK
+)
+async def obtener_hotel(
+    hotel_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return await obtener_hotel_service(db=db, hotel_id=hotel_id)

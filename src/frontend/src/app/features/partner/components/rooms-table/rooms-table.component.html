@@ -1,0 +1,62 @@
+<div class="rooms-table-container">
+  <div class="rooms-header">
+    <h2>Mis hospedajes</h2>
+    <button class="btn-primary" (click)="openFormModal()">Crear hospedaje</button>
+  </div>
+
+
+  <table class="rooms-table">
+    <thead>
+      <tr>
+        <th class="col-center">Número</th>
+        <th>Descripción</th>
+        <th class="col-center">Capacidad</th>
+        <!-- <th>Precio inicio /<br>fin de fecha</th> -->
+        <th>Impuestos</th>
+        <th class="col-right">Precio</th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (loading) {
+        <tr>
+          <td colspan="5" class="col-center">Cargando hospedajes...</td>
+        </tr>
+      }
+      @for (room of rooms; track room.id) {
+        <tr>
+          <td class="col-center col-number">{{ room.numero }}</td>
+          <td class="col-desc">{{ room.descripcion || 'Sin descripción' }}</td>
+          <td class="col-center">{{ room.capacidad }}</td>
+          <td class="col-taxes">{{ room.impuestos | currency:'COP':'$':'1.0-0' }}</td>
+          <td class="col-right col-price">{{ room.monto | currency:'COP':'$':'1.0-0' }}</td>
+        </tr>
+      }
+      @if (!loading && rooms.length === 0) {
+        <tr>
+          <td colspan="5" class="col-center">No hay hospedajes registrados.</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  @if (totalPages > 1 || totalItems > 0) {
+    <div class="pagination">
+      <div class="limit-selector">
+        <label for="limit-select">Mostrar:</label>
+        <select id="limit-select" (change)="changeLimit($event)" [value]="limit">
+          <option value="5">5</option>
+          <option value="10">10</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+        </select>
+      </div>
+      <button class="btn-pagination" (click)="changePage(currentPage - 1)" [disabled]="currentPage === 1">Anterior</button>
+      <span class="pagination-info">Página {{ currentPage }} de {{ totalPages }}</span>
+      <button class="btn-pagination" (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages">Siguiente</button>
+    </div>
+  }
+</div>
+
+@if (isFormModalOpen) {
+  <app-room-form-modal (closeModal)="closeFormModal()"></app-room-form-modal>
+}

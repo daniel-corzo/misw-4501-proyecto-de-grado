@@ -1,69 +1,60 @@
 import uuid
-from datetime import datetime
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.usuario import CrearUsuarioRequest, ActualizarUsuarioRequest, UsuarioResponse
+from app.database import get_db
+from travelhub_common.security import get_current_user, User, RoleChecker, RoleEnum
+from app.config import get_settings, Settings
+from app.services.usuario_service import create_user, get_my_profile, get_user_by_id, update_user_profile
 
 router = APIRouter(prefix="/usuarios", tags=["usuarios"])
 
 
 @router.post("", response_model=UsuarioResponse, status_code=status.HTTP_201_CREATED)
-async def crear_usuario(body: CrearUsuarioRequest):
+async def crear_usuario(
+    body: CrearUsuarioRequest,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings)
+):
     """
-    Crea un nuevo usuario en el sistema.
-
-    En la implementacion real:
-    - Verificar que el email no este registrado
-    - Hashear password con passlib/bcrypt
-    - Persistir en PostgreSQL via SQLAlchemy
-    - Publicar evento 'usuario_creado' en SQS
+    Registra un nuevo usuario (credenciales y perfil) en el sistema.
     """
-    # TODO: reemplazar con persistencia real en BD
-    return UsuarioResponse(
-        id=uuid.uuid4(),
-        nombre=body.nombre,
-        apellido=body.apellido,
-        email=body.email,
-        telefono=body.telefono,
-        created_at=datetime.utcnow(),
-    )
+    created_user = await create_user(body, db, settings)
 
+    return UsuarioResponse.model_validate(created_user)
+
+@router.get("/me", response_model=UsuarioResponse, status_code=status.HTTP_200_OK)
+async def obtener_mi_perfil(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Retorna el propio perfil del usuario autenticado.
+    """
+    return await get_my_profile(current_user, db)
 
 @router.get("/{usuario_id}", response_model=UsuarioResponse, status_code=status.HTTP_200_OK)
-async def obtener_usuario(usuario_id: uuid.UUID):
+async def obtener_usuario(
+    usuario_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(RoleChecker([RoleEnum.ADMIN]))
+):
     """
-    Retorna el perfil de un usuario por su ID.
-
-    En la implementacion real:
-    - Consultar PostgreSQL por ID
-    - Levantar 404 si no existe
+    Retorna el perfil de un usuario por su ID. Protegido: Solo Admin.
     """
-    # TODO: reemplazar con consulta real a la BD
-    return UsuarioResponse(
-        id=usuario_id,
-        nombre="Juan",
-        apellido="Perez",
-        email="juan.perez@example.com",
-        telefono="+57 300 123 4567",
-        created_at=datetime.utcnow(),
-    )
+    return await get_user_by_id(usuario_id, db)
 
 
 @router.put("/{usuario_id}", response_model=UsuarioResponse, status_code=status.HTTP_200_OK)
-async def actualizar_usuario(usuario_id: uuid.UUID, body: ActualizarUsuarioRequest):
+async def actualizar_usuario(
+    usuario_id: uuid.UUID, 
+    body: ActualizarUsuarioRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     """
     Actualiza los datos del perfil de un usuario.
-
-    En la implementacion real:
-    - Buscar usuario en BD
-    - Aplicar campos no nulos del body (PATCH semantics)
-    - Persistir cambios
+    Regla: O eres admin, o eres tú mismo.
     """
-    # TODO: reemplazar con actualizacion real en la BD
-    return UsuarioResponse(
-        id=usuario_id,
-        nombre=body.nombre or "Juan",
-        apellido=body.apellido or "Perez",
-        email="juan.perez@example.com",
-        telefono=body.telefono or "+57 300 123 4567",
-        created_at=datetime.utcnow(),
-    )
+    return await update_user_profile(usuario_id, body, current_user, db)
+

@@ -10,6 +10,11 @@ variable "owner" {
   type = string
 }
 
+variable "full_domain" {
+  type        = string
+  default     = "api.travel-hub.online"
+}
+
 variable "target_port" {
   type = number
 }
