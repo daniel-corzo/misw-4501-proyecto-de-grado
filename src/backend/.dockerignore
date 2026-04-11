@@ -1,0 +1,13 @@
+# Tests y herramientas de desarrollo
+**/tests/
+**/__pycache__/
+**/.pytest_cache/
+**/*.pyc
+**/.coverage
+**/coverage.xml
+**/pytest.ini
+**/.env
+
+# Archivos de editor/IDE
+**/.vscode/
+**/.idea/

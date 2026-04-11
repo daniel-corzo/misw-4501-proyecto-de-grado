@@ -1,0 +1,182 @@
+name: Backend CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/backend/**'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  # ────────────────────────────────────────────────────────────────────────────
+  # Job 1: Detectar qué servicios cambiaron
+  # ────────────────────────────────────────────────────────────────────────────
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.build-matrix.outputs.services }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            common:
+              - 'src/backend/common/**'
+            usuarios:
+              - 'src/backend/usuarios/**'
+            busquedas:
+              - 'src/backend/busquedas/**'
+            hoteles:
+              - 'src/backend/hoteles/**'
+            reservas:
+              - 'src/backend/reservas/**'
+            notificaciones:
+              - 'src/backend/notificaciones/**'
+
+      - name: Build service matrix
+        id: build-matrix
+        run: |
+          ALL_SERVICES=(usuarios busquedas hoteles reservas notificaciones)
+
+          if [ "${{ steps.filter.outputs.common }}" == "true" ]; then
+            SERVICES=("${ALL_SERVICES[@]}")
+          else
+            SERVICES=()
+            [ "${{ steps.filter.outputs.usuarios }}"       == "true" ] && SERVICES+=(usuarios)
+            [ "${{ steps.filter.outputs.busquedas }}"      == "true" ] && SERVICES+=(busquedas)
+            [ "${{ steps.filter.outputs.hoteles }}"        == "true" ] && SERVICES+=(hoteles)
+            [ "${{ steps.filter.outputs.reservas }}"       == "true" ] && SERVICES+=(reservas)
+            [ "${{ steps.filter.outputs.notificaciones }}" == "true" ] && SERVICES+=(notificaciones)
+          fi
+
+          JSON=$(printf '%s\n' "${SERVICES[@]}" | jq -R . | jq -sc .)
+          echo "services=$JSON" >> "$GITHUB_OUTPUT"
+          echo "Servicios a desplegar: $JSON"
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Job 2: Build Docker → Push ECR → Deploy via CodeDeploy
+  # ────────────────────────────────────────────────────────────────────────────
+  build-and-deploy:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.services != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJson(needs.detect-changes.outputs.services) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # ── Build y push de la imagen Docker ─────────────────────────────────
+      - name: Build and push Docker image
+        env:
+          SERVICE: ${{ matrix.service }}
+        run: |
+          REPO_URI="${{ secrets.ECR_REGISTRY }}/travelhub-${SERVICE}"
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+
+          docker build \
+            --file "src/backend/${SERVICE}/Dockerfile" \
+            --tag  "${REPO_URI}:${SHORT_SHA}" \
+            --tag  "${REPO_URI}:latest" \
+            src/backend
+
+          docker push "${REPO_URI}:${SHORT_SHA}"
+          docker push "${REPO_URI}:latest"
+
+          echo "REPO_URI=${REPO_URI}"     >> "$GITHUB_ENV"
+          echo "SHORT_SHA=${SHORT_SHA}"   >> "$GITHUB_ENV"
+
+      # ── Registrar nueva task definition con la imagen nueva ──────────────
+      # CodeDeploy necesita un task definition ARN ya registrado.
+      # Tomamos la definición activa, reemplazamos la imagen, y registramos
+      # una nueva revisión.
+      - name: Register new ECS task definition
+        env:
+          SERVICE: ${{ matrix.service }}
+        run: |
+          CURRENT_TD=$(aws ecs describe-services \
+            --cluster "${{ secrets.ECS_CLUSTER }}" \
+            --services "travelhub-${SERVICE}-service" \
+            --query 'services[0].taskDefinition' \
+            --output text)
+
+          echo "Task definition actual: ${CURRENT_TD}"
+
+          NEW_TD_ARN=$(aws ecs describe-task-definition \
+            --task-definition "${CURRENT_TD}" \
+            --query 'taskDefinition' \
+            --output json \
+          | python3 -c "
+          import json, sys
+          td = json.load(sys.stdin)
+          for k in ['taskDefinitionArn','revision','status','requiresAttributes',
+                    'compatibilities','registeredAt','registeredBy']:
+              td.pop(k, None)
+          td['containerDefinitions'][0]['image'] = '${REPO_URI}:${SHORT_SHA}'
+          print(json.dumps(td))
+          " \
+          | aws ecs register-task-definition \
+              --cli-input-json file:///dev/stdin \
+              --query 'taskDefinition.taskDefinitionArn' \
+              --output text)
+
+          echo "Nueva task definition: ${NEW_TD_ARN}"
+          echo "NEW_TD_ARN=${NEW_TD_ARN}" >> "$GITHUB_ENV"
+
+      # ── Trigger CodeDeploy blue/green deployment ─────────────────────────
+      - name: Create CodeDeploy deployment
+        env:
+          SERVICE: ${{ matrix.service }}
+        run: |
+          APP_SPEC=$(jq -n \
+            --arg td_arn "${NEW_TD_ARN}" \
+            --arg container "travelhub-${SERVICE}" \
+            '{
+              version: "0.0",
+              Resources: [{
+                TargetService: {
+                  Type: "AWS::ECS::Service",
+                  Properties: {
+                    TaskDefinition: $td_arn,
+                    LoadBalancerInfo: {
+                      ContainerName: $container,
+                      ContainerPort: 8000
+                    },
+                    PlatformVersion: "LATEST"
+                  }
+                }
+              }]
+            }')
+
+          REVISION=$(jq -n \
+            --arg content "${APP_SPEC}" \
+            '{
+              revisionType: "AppSpecContent",
+              appSpecContent: { content: $content }
+            }')
+
+          DEPLOYMENT_ID=$(aws deploy create-deployment \
+            --application-name "travelhub-${SERVICE}" \
+            --deployment-group-name "travelhub-${SERVICE}-dg" \
+            --revision "${REVISION}" \
+            --query 'deploymentId' \
+            --output text)
+
+          echo "::notice::Deployment ${DEPLOYMENT_ID} creado para ${SERVICE}"
+          echo "https://console.aws.amazon.com/codesuite/codedeploy/deployments/${DEPLOYMENT_ID}"

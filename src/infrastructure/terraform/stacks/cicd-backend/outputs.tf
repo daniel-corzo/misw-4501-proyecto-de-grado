@@ -1,9 +1,9 @@
-output "pipeline_names" {
-  description = "Nombre de cada pipeline creado (uno por microservicio)"
-  value       = { for svc, p in module.pipeline : svc => p.pipeline_name }
+output "codedeploy_application_names" {
+  description = "Mapa de servicio a nombre de la CodeDeploy Application"
+  value       = module.codedeploy.application_names
 }
 
-output "connection_arn" {
-  description = "ARN de la conexion CodeStar usada por los pipelines"
-  value       = var.codestar_connection_arn
+output "codedeploy_deployment_group_names" {
+  description = "Mapa de servicio a nombre del Deployment Group"
+  value       = module.codedeploy.deployment_group_names
 }

@@ -25,4 +25,9 @@ module "alb" {
   target_port       = var.target_port
   health_check_path = var.health_check_path
   services          = local.services
+
+  # /auth/* y /api/auth/* (tras strip de CloudFront) deben llegar a usuarios
+  auth_path_rules = {
+    auth = "usuarios"
+  }
 }

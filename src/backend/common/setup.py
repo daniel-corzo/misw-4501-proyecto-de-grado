@@ -11,5 +11,6 @@ setup(
         "pydantic-settings>=2.8.1",
         "boto3>=1.37.1",
         "starlette>=0.46.0",
+        "python-jose[cryptography]>=3.3.0",
     ],
 )

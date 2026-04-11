@@ -38,33 +38,22 @@ resource "aws_ecs_task_definition" "task" {
           hostPort      = each.value.container_port
         }
       ]
-      environment = [
-        {
-          name  = "PORT"
-          value = tostring(each.value.container_port)
-        },
-        {
-          name  = "ENVIRONMENT"
-          value = "production"
-        }
-      ]
+      environment = concat(
+        [
+          { name = "PORT",         value = tostring(each.value.container_port) },
+          { name = "ENVIRONMENT",  value = "production" },
+          { name = "SERVICE_NAME", value = each.key }
+        ],
+        each.value.extra_environment
+      )
       secrets = [
-        {
-          name      = "DB_URL"
-          valueFrom = "${var.shared_secret_arn}:db_url::"
-        },
-        {
-          name      = "JWT_SECRET"
-          valueFrom = "${var.shared_secret_arn}:jwt_secret::"
-        },
-        {
-          name      = "JWT_PRIVATE_KEY"
-          valueFrom = "${var.shared_secret_arn}:jwt_private_key::"
-        },
-        {
-          name      = "JWT_PUBLIC_KEY"
-          valueFrom = "${var.shared_secret_arn}:jwt_public_key::"
-        }
+        for s in [
+          { name = "DB_URL",          valueFrom = "${var.shared_secret_arn}:db_url::",          key = "db_url" },
+          { name = "JWT_SECRET",      valueFrom = "${var.shared_secret_arn}:jwt_secret::",      key = "jwt_secret" },
+          { name = "JWT_PRIVATE_KEY", valueFrom = "${var.shared_secret_arn}:jwt_private_key::", key = "jwt_private_key" },
+          { name = "JWT_PUBLIC_KEY",  valueFrom = "${var.shared_secret_arn}:jwt_public_key::",  key = "jwt_public_key" }
+        ] : { name = s.name, valueFrom = s.valueFrom }
+        if !contains(each.value.exclude_secrets, s.key)
       ]
       logConfiguration = {
         logDriver = "awslogs"
