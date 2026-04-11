@@ -64,7 +64,7 @@ jobs:
 
           echo "Task definition actual: ${CURRENT_TD}"
 
-          NEW_TD_ARN=$(aws ecs describe-task-definition \
+          aws ecs describe-task-definition \
             --task-definition "${CURRENT_TD}" \
             --query 'taskDefinition' \
             --output json \
@@ -75,10 +75,11 @@ jobs:
                     'compatibilities','registeredAt','registeredBy']:
               td.pop(k, None)
           td['containerDefinitions'][0]['image'] = '${REPO_URI}:${SHORT_SHA}'
-          print(json.dumps(td))
-          " \
-          | aws ecs register-task-definition \
-              --cli-input-json file:///dev/stdin \
+          json.dump(td, open('/tmp/td.json','w'))
+          "
+
+          NEW_TD_ARN=$(aws ecs register-task-definition \
+              --cli-input-json file:///tmp/td.json \
               --query 'taskDefinition.taskDefinitionArn' \
               --output text)
 
