@@ -44,4 +44,9 @@ variable "auth_path_rules" {
   description = "Reglas extra de path -> servicio existente (ej. auth -> usuarios). No crea target groups nuevos."
   type        = map(string)
   default     = {}
+
+  validation {
+    condition     = alltrue([for svc in values(var.auth_path_rules) : contains(keys(var.services), svc)])
+    error_message = "Cada valor de auth_path_rules debe ser un servicio definido en var.services."
+  }
 }
