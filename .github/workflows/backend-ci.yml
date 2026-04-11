@@ -1,4 +1,4 @@
-name: Backend CI
+name: Backend testing and coverage
 
 on:
   push:
