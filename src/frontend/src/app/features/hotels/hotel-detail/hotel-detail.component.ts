@@ -9,7 +9,7 @@ import { AmenitiesTagsComponent } from '../components/amenities-tags/amenities-t
   standalone: true,
   imports: [CommonModule, RouterLink, AmenitiesTagsComponent],
   templateUrl: './hotel-detail.component.html',
-  styleUrl: './hotel-detail.component.scss',
+  styleUrls: ['./hotel-detail.component.scss'],
 })
 export class HotelDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -22,12 +22,26 @@ export class HotelDetailComponent implements OnInit {
   selectedRoom: HabitacionDetalle | null = null;
 
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (!id) {
-      this.error = 'Hotel no encontrado.';
-      this.loading = false;
-      return;
-    }
+    this.route.paramMap.subscribe((params) => {
+      const id = params.get('id');
+      this.resetHotelState();
+      if (!id) {
+        this.error = 'Hotel no encontrado.';
+        this.loading = false;
+        return;
+      }
+      this.loadHotel(id);
+    });
+  }
+
+  private resetHotelState(): void {
+    this.hotel = null;
+    this.error = null;
+    this.loading = true;
+    this.selectedImageIndex = 0;
+    this.selectedRoom = null;
+  }
+  private loadHotel(id: string): void {
 
     this.hotelService.getHotelById(id).subscribe({
       next: (hotel) => {

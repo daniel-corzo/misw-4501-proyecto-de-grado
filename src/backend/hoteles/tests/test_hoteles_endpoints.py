@@ -447,7 +447,7 @@ async def test_get_hotel_detalle_response_has_all_expected_fields(override_clien
     data = response.json()
 
     expected_fields = [
-        "id", "nombre", "direccion", "pais", "departamento", "ciudad",
+        "id", "nombre", "direccion", "estado", "pais", "departamento", "ciudad",
         "descripcion", "amenidades", "estrellas", "ranking",
         "contacto_celular", "contacto_email", "imagenes",
         "check_in", "check_out", "valor_minimo_modificacion",
