@@ -39,3 +39,9 @@ variable "services" {
   description = "Mapa de nombre de servicio a prefijo del router (ej. usuarios = /usuarios). El orden en el mapa determina la prioridad."
   type        = map(string)
 }
+
+variable "auth_path_rules" {
+  description = "Reglas extra de path -> servicio existente (ej. auth -> usuarios). No crea target groups nuevos."
+  type        = map(string)
+  default     = {}
+}

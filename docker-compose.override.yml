@@ -1,0 +1,36 @@
+# Override automático para desarrollo local.
+# Docker Compose lo carga junto con docker-compose.yml sin flags adicionales.
+#
+# Qué hace:
+#   - Reinstala travelhub-common como editable (-e) antes de arrancar cada
+#     servicio, para que el volumen montado en /common funcione con hot-reload.
+#   - Mantiene --reload de uvicorn para recargar al guardar cambios.
+#
+# El Dockerfile de producción usa pip install /common (regular), que es
+# correcto para la imagen. Este override solo aplica en local.
+
+services:
+  usuarios:
+    command: >
+      sh -c "pip install -q -e /common &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  busquedas:
+    command: >
+      sh -c "pip install -q -e /common &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  hoteles:
+    command: >
+      sh -c "pip install -q -e /common &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  reservas:
+    command: >
+      sh -c "pip install -q -e /common &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  notificaciones:
+    command: >
+      sh -c "pip install -q -e /common &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"

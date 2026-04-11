@@ -80,7 +80,7 @@ jobs:
         run: pip install -e ./common
 
       - name: Install service dependencies
-        run: pip install -r ./${{ matrix.service }}/requirements.txt
+        run: pip install -r ./${{ matrix.service }}/requirements-dev.txt
 
       - name: Run tests with coverage
         working-directory: src/backend/${{ matrix.service }}

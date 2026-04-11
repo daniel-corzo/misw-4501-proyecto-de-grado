@@ -209,3 +209,50 @@ resource "aws_lb_listener_rule" "service-https" {
     }
   }
 }
+
+# ===============================
+# Listener Rules extra (alias de path -> servicio existente)
+# Ejemplo: /auth/* -> target group de usuarios
+# ===============================
+
+locals {
+  auth_rules_with_priority = {
+    for idx, path in keys(var.auth_path_rules) : path => 100 + (idx + 1) * 10
+  }
+}
+
+resource "aws_lb_listener_rule" "auth-http" {
+  for_each = local.auth_rules_with_priority
+
+  listener_arn = aws_lb_listener.http.arn
+  priority     = each.value
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.blue[var.auth_path_rules[each.key]].arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/${each.key}", "/${each.key}/*"]
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "auth-https" {
+  for_each = local.auth_rules_with_priority
+
+  listener_arn = aws_lb_listener.https.arn
+  priority     = each.value
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.blue[var.auth_path_rules[each.key]].arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/${each.key}", "/${each.key}/*"]
+    }
+  }
+}
