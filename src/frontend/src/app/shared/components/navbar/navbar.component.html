@@ -21,6 +21,7 @@
     <div class="navbar__actions">
       @if (auth.isAuthenticated()) {
         @if (auth.getUserType() === 'viajero') {
+        <a class="navbar__link" routerLink="/hotels" routerLinkActive="navbar__link--active" [routerLinkActiveOptions]="{ exact: true }">Hoteles</a>
         <!-- My bookings -->
         <a class="navbar__link" routerLink="/bookings" routerLinkActive="navbar__link--active">Mis Reservas</a>
         } @else if (auth.getUserType() === 'hotel') {

@@ -1,0 +1,26 @@
+@if (loading) {
+  <p class="hotels-list__status">Cargando hoteles…</p>
+}
+
+@if (error) {
+  <p class="hotels-list__error">{{ error }}</p>
+}
+
+@if (!loading && !error) {
+  <div class="hotels-list">
+    <h1 class="hotels-list__title">Hoteles</h1>
+    @if (hoteles.length === 0) {
+      <p class="hotels-list__empty">No hay hoteles disponibles.</p>
+    } @else {
+      <ul class="hotels-list__ul">
+        @for (h of hoteles; track h.id) {
+          <li class="hotels-list__li">
+            <a class="hotels-list__link" [routerLink]="['/hotels', h.id]">{{ h.nombre }}</a>
+            <span class="hotels-list__meta"> — {{ h.ciudad }}, {{ h.pais }}</span>
+          </li>
+        }
+      </ul>
+      <p class="hotels-list__count">Mostrando {{ hoteles.length }} de {{ total }}</p>
+    }
+  </div>
+}
