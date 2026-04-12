@@ -1,0 +1,49 @@
+:host {
+  display: block;
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 2rem;
+}
+
+.hotels-list__status,
+.hotels-list__error,
+.hotels-list__empty {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.hotels-list__error {
+  color: var(--color-danger, #b91c1c);
+}
+
+.hotels-list__title {
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.hotels-list__ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.hotels-list__li {
+  margin-bottom: 0.35rem;
+}
+
+.hotels-list__link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.hotels-list__meta {
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.9rem;
+}
+
+.hotels-list__count {
+  margin: 1rem 0 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #64748b);
+}
