@@ -47,9 +47,31 @@ export interface HotelDetalle {
   habitaciones: HabitacionDetalle[];
 }
 
+export interface HotelListItem {
+  id: string;
+  nombre: string;
+  ciudad: string;
+  pais: string;
+  estrellas: number;
+  imagenes: string[];
+  precio_minimo: number;
+  created_at: string;
+}
+
+export interface ListaHotelesResponse {
+  total: number;
+  hoteles: HotelListItem[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class HotelService {
   private readonly api = inject(ApiService);
+
+  listHotels(params?: { limit?: number; offset?: number }): Observable<ListaHotelesResponse> {
+    const limit = params?.limit ?? 20;
+    const offset = params?.offset ?? 0;
+    return this.api.get<ListaHotelesResponse>('/hoteles', { limit, offset });
+  }
 
   getHotelById(id: string): Observable<HotelDetalle> {
     return this.api.get<HotelDetalle>(`/hoteles/${id}`);
