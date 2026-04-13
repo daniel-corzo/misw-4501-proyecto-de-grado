@@ -30,6 +30,15 @@ struct HotelDetailView: View {
         }
         return Array(hotel.amenidades.prefix(4))
     }
+    
+    var images: [String] {
+        print(viewModel.hotel?.habitaciones ?? "No hay habitaciones")
+        print(viewModel.hotel?.habitaciones.first?.imagenes ?? "No hay imágenes")
+        var images: [String] = viewModel.hotel?.images ?? []
+        images.append(contentsOf: viewModel.hotel?.habitaciones.flatMap({ $0.imagenes }) ?? [])
+        
+        return images
+    }
 
     var body: some View {
         Group {
@@ -68,7 +77,7 @@ struct HotelDetailView: View {
         ScrollView(.vertical) {
             VStack(alignment: .leading, spacing: 32) {
                 TabView {
-                    ForEach(hotel.images, id: \.self) { imageURL in
+                    ForEach(self.images, id: \.self) { imageURL in
                         AsyncImage(url: URL(string: imageURL)) { image in
                             image
                                 .resizable()
