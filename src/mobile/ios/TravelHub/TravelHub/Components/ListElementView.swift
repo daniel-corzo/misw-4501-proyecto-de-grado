@@ -31,10 +31,14 @@ struct ListElementView: View {
                     .frame(maxWidth: .infinity)
                     
                 case .success(let image):
-                    image
-                        .resizable()
-                        .scaledToFill()
+                    Color.clear
+                        .frame(maxWidth: .infinity)
                         .frame(height: 220)
+                        .overlay {
+                            image
+                                .resizable()
+                                .scaledToFill()
+                        }
                         .clipped()
                     
                 case .failure:
