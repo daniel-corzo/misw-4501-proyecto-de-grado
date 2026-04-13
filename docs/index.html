@@ -321,7 +321,7 @@ const OWNER = 'daniel-corzo';
 const REPO  = 'misw-4501-proyecto-de-grado';
 const PROJECT_NUM = 3;
 const PAT = 'gh' + 'p_7cJmeG26RpL6xRjj' + 'dwfTEnlCEpcZdd3FAhFw';
-let currentSprintName = 'Sprint 1';
+let currentSprintName = 'Sprint 2';
 const TOTAL_SP = 114;
 
 const ASSIGNEES = {
@@ -512,7 +512,7 @@ async function loadData() {
 
   try {
     const itemsFrag = `items(first:100,after:$cursor){pageInfo{hasNextPage endCursor}nodes{id content{...on Issue{number title state closedAt assignees(first:5){nodes{login}}}}fieldValues(first:20){nodes{...on ProjectV2ItemFieldNumberValue{field{...on ProjectV2Field{id name}}number}...on ProjectV2ItemFieldSingleSelectValue{field{...on ProjectV2SingleSelectField{id name}}name}...on ProjectV2ItemFieldIterationValue{field{...on ProjectV2IterationField{id name}}title startDate duration}}}}}`;
-    const q1 = `query($login:String!,$number:Int!,$cursor:String){user(login:$login){projectV2(number:$number){id title fields(first:30){nodes{...on ProjectV2Field{id name}...on ProjectV2SingleSelectField{id name options{id name}}...on ProjectV2IterationField{id name configuration{iterations{id title startDate duration}}}}}${itemsFrag}}}}`;
+    const q1 = `query($login:String!,$number:Int!,$cursor:String){user(login:$login){projectV2(number:$number){id title fields(first:30){nodes{...on ProjectV2Field{id name}...on ProjectV2SingleSelectField{id name options{id name}}...on ProjectV2IterationField{id name configuration{iterations{id title startDate duration}completedIterations{id title startDate duration}}}}}${itemsFrag}}}}`;
     const d1 = await gql(token, q1, { login: OWNER, number: PROJECT_NUM, cursor: null });
     const project = d1.user.projectV2;
     setStatus('Proyecto: ' + project.title + ' — procesando...', 'loading');
@@ -569,7 +569,8 @@ function renderForSprint(sprintName) {
   const statusField  = cachedStatusField;
   const allItems     = cachedAllItems;
 
-  const iteration = iterField.configuration.iterations.find(it => it.title === sprintName);
+  const allIterations = [...(iterField.configuration.iterations || []), ...(iterField.configuration.completedIterations || [])];
+  const iteration = allIterations.find(it => it.title === sprintName);
   if (!iteration) { setStatus('Iteracion "' + sprintName + '" no encontrada.', 'err'); return; }
 
   SPRINT_START = new Date(iteration.startDate + 'T00:00:00');
@@ -591,10 +592,28 @@ function renderForSprint(sprintName) {
     return { sp, bv, status, closedAt, iterStart };
   }
 
+  // Primary filter: items whose iteration field matches the selected sprint.
+  // Fallback for past sprints: issues whose iteration was later changed to a newer sprint
+  // won't match the iteration filter, but can still be recovered via their closedAt date.
+  // This mirrors how velocity/value/release charts already work (date-based, not iter-based).
+  const releaseSprint = RELEASE_SPRINTS.find(s => s.label === sprintName);
+  const today = new Date();
+  const isHistorical = releaseSprint && releaseSprint.end < today;
+
   const sprintItems = allItems.filter(item => {
     if (!item.content?.title) return false;
     const iterFv = item.fieldValues.nodes.find(fv => fv.field && fv.field.id === iterField.id);
-    return iterFv && iterFv.title === sprintName;
+    if (iterFv && iterFv.title === sprintName) return true;
+    // For past sprints, also include items closed within the sprint's date range
+    // whose iteration field was later moved away (e.g. to Sprint 2).
+    // Use a direct date comparison (no clamping) to avoid pulling in unrelated issues.
+    if (isHistorical && item.content.closedAt) {
+      const closedStr = toLocalDateStr(new Date(item.content.closedAt));
+      const startStr  = toUTCDateStr(releaseSprint.start);
+      const endStr    = toUTCDateStr(releaseSprint.end);
+      return closedStr >= startStr && closedStr <= endStr;
+    }
+    return false;
   });
 
   const sprintIssues = sprintItems.map(item => ({
