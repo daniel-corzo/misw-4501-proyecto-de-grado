@@ -96,7 +96,7 @@ struct ListHotelView: View {
                                 imageURL: hotel.images.first ?? "",
                                 title: hotel.nombre,
                                 location: hotel.ciudad,
-                                price: "100",
+                                price: (hotel.precioMinimo).formatted(.currency(code: "COP")),
                                 rating: hotel.estrellas
                             )
                         }

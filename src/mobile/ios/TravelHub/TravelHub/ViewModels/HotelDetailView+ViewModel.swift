@@ -53,7 +53,8 @@ private extension HotelDetailDTO {
             checkOutHour: checkOut,
             valorMinimoModificacion: valorMinimoModificacion,
             politicas: politicas.map { $0.toDomain() },
-            habitaciones: habitaciones.map { $0.toDomain() }
+            habitaciones: habitaciones.map { $0.toDomain() },
+            precioMinimo: 0
         )
     }
 }

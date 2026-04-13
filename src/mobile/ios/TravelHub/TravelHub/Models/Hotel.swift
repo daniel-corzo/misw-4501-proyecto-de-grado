@@ -174,4 +174,5 @@ struct Hotel: Identifiable {
     var valorMinimoModificacion: Double
     var politicas: [Politica]
     var habitaciones: [Habitacion]
+    var precioMinimo: Int
 }
