@@ -5,9 +5,21 @@ from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 
 from app.schemas.hotel import CrearHabitacionRequest
-from app.services.habitacion_service import crear_habitacion_service, listar_habitaciones_service
+from app.services.habitacion_service import (
+    actualizar_habitacion_service,
+    crear_habitacion_service,
+    listar_habitaciones_service,
+)
 from app.models.hotel import Hotel
 from app.models.habitacion import Habitacion
+
+
+class MockScalarOneOrNoneResult:
+    def __init__(self, value):
+        self._value = value
+
+    def scalar_one_or_none(self):
+        return self._value
 
 
 @pytest.fixture
@@ -119,6 +131,142 @@ async def test_crear_habitacion_integrity_error_other_reraises(mock_db_session):
         await crear_habitacion_service(db=mock_db_session, hotel=mock_hotel, body=body)
 
     mock_db_session.execute.assert_not_called()
+    mock_db_session.rollback.assert_awaited_once()
+    mock_db_session.refresh.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_actualizar_habitacion_success(mock_db_session):
+    hotel_id = uuid.uuid4()
+    habitacion_id = uuid.uuid4()
+    body = CrearHabitacionRequest(
+        capacidad=3,
+        numero="202",
+        descripcion="Suite remodelada",
+        monto=220,
+        impuestos=22,
+        disponible=True,
+        imagenes=["https://example.com/habitacion.jpg"],
+    )
+
+    mock_hotel = Hotel(id=hotel_id, nombre="Hotel Test")
+    existing_room = Habitacion(
+        id=habitacion_id,
+        capacidad=2,
+        numero="101",
+        descripcion="Vista al mar",
+        monto=100,
+        impuestos=10,
+        disponible=False,
+        imagenes=[],
+        hotel_id=hotel_id,
+    )
+    mock_db_session.execute = AsyncMock(
+        return_value=MockScalarOneOrNoneResult(existing_room)
+    )
+
+    response = await actualizar_habitacion_service(
+        db=mock_db_session,
+        hotel=mock_hotel,
+        habitacion_id=habitacion_id,
+        body=body,
+    )
+
+    assert response.id == habitacion_id
+    assert response.numero == body.numero
+    assert response.capacidad == body.capacidad
+    assert response.monto == body.monto
+    assert response.impuestos == body.impuestos
+    assert response.descripcion == body.descripcion
+    assert response.imagenes == body.imagenes
+    assert response.disponible is True
+    mock_db_session.add.assert_not_called()
+    mock_db_session.execute.assert_awaited_once()
+    mock_db_session.commit.assert_awaited_once()
+    mock_db_session.refresh.assert_awaited_once_with(existing_room)
+
+
+@pytest.mark.asyncio
+async def test_actualizar_habitacion_not_found(mock_db_session):
+    hotel_id = uuid.uuid4()
+    habitacion_id = uuid.uuid4()
+    body = CrearHabitacionRequest(
+        capacidad=3,
+        numero="202",
+        descripcion="Suite remodelada",
+        monto=220,
+        impuestos=22,
+        disponible=True,
+        imagenes=[],
+    )
+
+    mock_hotel = Hotel(id=hotel_id, nombre="Hotel Test")
+    mock_db_session.execute = AsyncMock(return_value=MockScalarOneOrNoneResult(None))
+
+    with pytest.raises(HTTPException) as exc_info:
+        await actualizar_habitacion_service(
+            db=mock_db_session,
+            hotel=mock_hotel,
+            habitacion_id=habitacion_id,
+            body=body,
+        )
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Habitación no encontrada"
+    mock_db_session.add.assert_not_called()
+    mock_db_session.commit.assert_not_called()
+    mock_db_session.refresh.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_actualizar_habitacion_duplicate_numero_conflict(mock_db_session):
+    hotel_id = uuid.uuid4()
+    habitacion_id = uuid.uuid4()
+    body = CrearHabitacionRequest(
+        capacidad=3,
+        numero="202",
+        descripcion="Suite remodelada",
+        monto=220,
+        impuestos=22,
+        disponible=True,
+        imagenes=[],
+    )
+
+    mock_hotel = Hotel(id=hotel_id, nombre="Hotel Test")
+    existing_room = Habitacion(
+        id=habitacion_id,
+        capacidad=2,
+        numero="101",
+        descripcion="Vista al mar",
+        monto=100,
+        impuestos=10,
+        disponible=True,
+        imagenes=[],
+        hotel_id=hotel_id,
+    )
+
+    class FakeOrig:
+        constraint_name = "uq_habitacion_hotel_numero"
+
+    mock_db_session.execute = AsyncMock(
+        return_value=MockScalarOneOrNoneResult(existing_room)
+    )
+    mock_db_session.commit.side_effect = IntegrityError(None, None, FakeOrig())
+
+    with pytest.raises(HTTPException) as exc_info:
+        await actualizar_habitacion_service(
+            db=mock_db_session,
+            hotel=mock_hotel,
+            habitacion_id=habitacion_id,
+            body=body,
+        )
+
+    assert exc_info.value.status_code == 409
+    assert (
+        exc_info.value.detail == "Ya existe una habitación con ese número en este hotel"
+    )
+    mock_db_session.add.assert_not_called()
+    mock_db_session.execute.assert_awaited_once()
     mock_db_session.rollback.assert_awaited_once()
     mock_db_session.refresh.assert_not_called()
 
