@@ -1,12 +1,9 @@
-import os
 import uuid
 from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-
-os.environ.setdefault("ENVIRONMENT", "test")
 
 from app.database import get_db
 from app.main import app
@@ -125,7 +122,8 @@ async def test_post_reservas_422_invalid_dates(override_client):
 
 
 @pytest.mark.asyncio
-async def test_post_reservas_401_unauthenticated(mock_db_session):
+async def test_post_reservas_401_missing_authorization(mock_db_session):
+    """No Authorization header: FastAPI HTTPBearer raises HTTPException with 401 (see HTTPBase.make_not_authenticated_error)."""
     async def override_get_db():
         yield mock_db_session
 

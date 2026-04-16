@@ -1,12 +1,9 @@
-import os
 import uuid
 from datetime import date, datetime, UTC
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from fastapi import HTTPException
-
-os.environ.setdefault("ENVIRONMENT", "test")
 
 from app.schemas.reserva import CrearReservaRequest
 from app.services.reserva_service import crear_reserva_service
