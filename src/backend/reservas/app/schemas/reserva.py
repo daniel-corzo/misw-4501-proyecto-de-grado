@@ -1,8 +1,9 @@
-from pydantic import BaseModel
+from enum import Enum
+from typing import List, Optional
 from uuid import UUID
 from datetime import date, datetime
-from typing import List, Optional
-from enum import Enum
+
+from pydantic import BaseModel, Field, model_validator
 
 
 class EstadoReserva(str, Enum):
@@ -14,24 +15,28 @@ class EstadoReserva(str, Enum):
 
 class CrearReservaRequest(BaseModel):
     usuario_id: UUID
-    hotel_id: UUID
     habitacion_id: UUID
     fecha_entrada: date
     fecha_salida: date
-    num_huespedes: int
-    comentarios: Optional[str] = None
+    num_huespedes: int = Field(ge=1)
+    pago_id: Optional[UUID] = None
+
+    @model_validator(mode="after")
+    def fecha_salida_after_entrada(self):
+        if self.fecha_salida <= self.fecha_entrada:
+            raise ValueError("fecha_salida debe ser posterior a fecha_entrada")
+        return self
 
 
 class ReservaResponse(BaseModel):
     id: UUID
     usuario_id: UUID
-    hotel_id: UUID
     habitacion_id: UUID
     fecha_entrada: date
     fecha_salida: date
     num_huespedes: int
     estado: EstadoReserva
-    total: float
+    pago_id: Optional[UUID] = None
     created_at: datetime
 
 
