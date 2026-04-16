@@ -1,13 +1,18 @@
 import uuid
-from datetime import datetime, date
+from datetime import UTC, datetime, date
+
 from fastapi import APIRouter, HTTPException, status, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.database import get_db
 from app.schemas.reserva import (
     CrearReservaRequest,
     ReservaResponse,
     EstadoReserva,
     ListaReservasResponse,
 )
-from travelhub_common.security import get_current_user, User, RoleChecker, RoleEnum
+from app.services.reserva_service import crear_reserva_service
+from travelhub_common.security import get_current_user, User, RoleEnum
 
 router = APIRouter(prefix="/reservas", tags=["reservas"])
 
@@ -15,34 +20,17 @@ router = APIRouter(prefix="/reservas", tags=["reservas"])
 @router.post("", response_model=ReservaResponse, status_code=status.HTTP_201_CREATED)
 async def crear_reserva(
     body: CrearReservaRequest,
-    current_user: User = Depends(get_current_user)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Crea una nueva reserva de habitacion.
 
-    En la implementacion real:
+    En la implementacion futura:
     - Verificar disponibilidad via habitaciones del servicio de hoteles
-    - Calcular total (noches * precio_noche)
-    - Persistir en PostgreSQL
     - Publicar evento 'reserva_creada' en SQS para notificaciones
     """
-    noches = (body.fecha_salida - body.fecha_entrada).days
-    precio_ejemplo = 350_000.0
-    total = noches * precio_ejemplo
-
-    # TODO: reemplazar con logica real
-    return ReservaResponse(
-        id=uuid.uuid4(),
-        usuario_id=body.usuario_id,
-        hotel_id=body.hotel_id,
-        habitacion_id=body.habitacion_id,
-        fecha_entrada=body.fecha_entrada,
-        fecha_salida=body.fecha_salida,
-        num_huespedes=body.num_huespedes,
-        estado=EstadoReserva.pendiente,
-        total=total,
-        created_at=datetime.utcnow(),
-    )
+    return await crear_reserva_service(db=db, body=body, current_user=current_user)
 
 
 @router.get("/{reserva_id}", response_model=ReservaResponse, status_code=status.HTTP_200_OK)
@@ -61,14 +49,13 @@ async def obtener_reserva(
     return ReservaResponse(
         id=reserva_id,
         usuario_id=uuid.uuid4(),
-        hotel_id=uuid.uuid4(),
         habitacion_id=uuid.uuid4(),
         fecha_entrada=date(2026, 4, 1),
         fecha_salida=date(2026, 4, 5),
         num_huespedes=2,
         estado=EstadoReserva.confirmada,
-        total=1_400_000.0,
-        created_at=datetime.utcnow(),
+        pago_id=None,
+        created_at=datetime.now(UTC),
     )
 
 
