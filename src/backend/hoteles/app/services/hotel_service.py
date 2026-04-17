@@ -25,7 +25,7 @@ from app.schemas.hotel import (
 )
 
 
-OrdenHoteles = Literal["precio_asc", "precio_desc", "rating_desc"]
+OrdenHoteles = Literal["precio_asc", "precio_desc", "rating_desc", "nombre_asc", "nombre_desc"]
 
 AMENIDADES_POPULARES_PERMITIDAS = {
     AmenidadHotel.WIFI,
@@ -46,6 +46,8 @@ async def listar_hoteles_service(
     rango_50_1000: bool,
     estrellas: list[int] | None,
     amenidades_populares: list[AmenidadHotel] | None,
+    ciudad: str | None = None,
+    capacidad_min: int | None = None,
 ) -> ListaHotelesResponse:
     precio_por_hotel_subquery = (
         select(
@@ -96,6 +98,18 @@ async def listar_hoteles_service(
         valores_amenidades = [amenidad.value for amenidad in amenidades_populares]
         base_query = base_query.where(Hotel.amenidades.contains(valores_amenidades))
 
+    if ciudad:
+        base_query = base_query.where(Hotel.ciudad.ilike(f"%{ciudad}%"))
+
+    if capacidad_min is not None:
+        hoteles_con_capacidad = (
+            select(Habitacion.hotel_id)
+            .where(Habitacion.capacidad >= capacidad_min, Habitacion.disponible.is_(True))
+            .distinct()
+            .subquery()
+        )
+        base_query = base_query.where(Hotel.id.in_(select(hoteles_con_capacidad.c.hotel_id)))
+
     if effective_precio_min is not None:
         base_query = base_query.where(precio_por_hotel_subquery.c.precio_minimo >= effective_precio_min)
 
@@ -106,6 +120,10 @@ async def listar_hoteles_service(
         base_query = base_query.order_by(precio_por_hotel_subquery.c.precio_minimo.asc().nullslast())
     elif orden == "precio_desc":
         base_query = base_query.order_by(precio_por_hotel_subquery.c.precio_minimo.desc().nullslast())
+    elif orden == "nombre_asc":
+        base_query = base_query.order_by(Hotel.nombre.asc())
+    elif orden == "nombre_desc":
+        base_query = base_query.order_by(Hotel.nombre.desc())
     else:
         base_query = base_query.order_by(Hotel.ranking.desc(), Hotel.created_at.desc())
 
@@ -124,6 +142,7 @@ async def listar_hoteles_service(
                 ciudad=hotel.ciudad,
                 pais=hotel.pais,
                 estrellas=hotel.estrellas,
+                amenidades=getattr(hotel, 'amenidades', None) or [],
                 imagenes=hotel.imagenes or [],
                 precio_minimo=int(precio_minimo),
                 created_at=hotel.created_at,

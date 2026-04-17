@@ -62,6 +62,7 @@ class HotelListItemResponse(BaseModel):
     ciudad: str
     pais: str
     estrellas: int
+    amenidades: List[str] = Field(default_factory=list)
     imagenes: List[str] = Field(default_factory=list)
     precio_minimo: int
     created_at: datetime

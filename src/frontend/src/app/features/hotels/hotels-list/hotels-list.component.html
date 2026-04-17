@@ -1,26 +1,249 @@
-@if (loading) {
-  <p class="hotels-list__status">Cargando hoteles…</p>
-}
+<div class="search-results">
 
-@if (error) {
-  <p class="hotels-list__error">{{ error }}</p>
-}
+  <!-- ── Sidebar ──────────────────────────────────────────────── -->
+  <aside class="hotels-filters">
+    <div class="hotels-filters__header">
+      <span class="hotels-filters__title">Filters</span>
+      <button class="hotels-filters__clear" type="button" (click)="clearFilters()">Clear all</button>
+    </div>
 
-@if (!loading && !error) {
-  <div class="hotels-list">
-    <h1 class="hotels-list__title">Hoteles</h1>
-    @if (hoteles.length === 0) {
-      <p class="hotels-list__empty">No hay hoteles disponibles.</p>
-    } @else {
-      <ul class="hotels-list__ul">
-        @for (h of hoteles; track h.id) {
-          <li class="hotels-list__li">
-            <a class="hotels-list__link" [routerLink]="['/hotels', h.id]">{{ h.nombre }}</a>
-            <span class="hotels-list__meta"> — {{ h.ciudad }}, {{ h.pais }}</span>
-          </li>
-        }
-      </ul>
-      <p class="hotels-list__count">Mostrando {{ hoteles.length }} de {{ total }}</p>
+    <!-- Price per night -->
+    <section class="hotels-filters__section">
+      <h3 class="hotels-filters__section-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+        </svg>
+        Price per night
+      </h3>
+      <div class="price-slider">
+        <div class="price-slider__labels">
+          <span>${{ precioMin.toLocaleString('es-CO') }}</span>
+          <span>{{ precioMax >= PRICE_MAX ? '$' + PRICE_MAX.toLocaleString('es-CO') + '+' : '$' + precioMax.toLocaleString('es-CO') }}</span>
+        </div>
+        <div class="price-slider__row">
+          <div class="price-slider__track">
+            <div
+              class="price-slider__fill"
+              [style.left.%]="priceMinPct"
+              [style.right.%]="100 - priceMaxPct"
+            ></div>
+          </div>
+          <input
+            class="price-slider__input price-slider__input--min"
+            type="range"
+            [min]="PRICE_MIN" [max]="PRICE_MAX" [step]="PRICE_STEP"
+            [(ngModel)]="precioMin"
+            (input)="onPriceMinInput()"
+            aria-label="Precio mínimo"
+          />
+          <input
+            class="price-slider__input price-slider__input--max"
+            type="range"
+            [min]="PRICE_MIN" [max]="PRICE_MAX" [step]="PRICE_STEP"
+            [(ngModel)]="precioMax"
+            (input)="onPriceMaxInput()"
+            aria-label="Precio máximo"
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- Star Rating -->
+    <section class="hotels-filters__section">
+      <h3 class="hotels-filters__section-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+        Star Rating
+      </h3>
+      @for (star of starOptions; track star) {
+        <label class="hotels-filters__checkbox-row">
+          <input
+            type="checkbox"
+            [checked]="selectedStars.has(star)"
+            (change)="toggleStar(star)"
+          />
+          <span class="star-row">
+            @for (filled of getStars(star); track $index) {
+              <svg class="star-icon" [class.star-icon--filled]="filled" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+            }
+          </span>
+        </label>
+      }
+    </section>
+
+    <!-- Amenities -->
+    <section class="hotels-filters__section">
+      <h3 class="hotels-filters__section-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        Amenities
+      </h3>
+      @for (amenity of popularAmenities; track amenity.value) {
+        <label class="hotels-filters__checkbox-row">
+          <input
+            type="checkbox"
+            [checked]="selectedAmenidades.has(amenity.value)"
+            (change)="toggleAmenidad(amenity.value)"
+          />
+          <span>{{ amenity.label }}</span>
+        </label>
+      }
+    </section>
+  </aside>
+
+  <!-- ── Main results ──────────────────────────────────────────── -->
+  <main class="hotels-main">
+
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+      <a class="breadcrumb__link" routerLink="/">Home</a>
+      <span class="breadcrumb__sep">›</span>
+      <span>Search Results</span>
+    </nav>
+
+    <!-- Title + sort -->
+    <div class="hotels-main__header">
+      <div>
+        <h1 class="hotels-main__title">
+          Hotels{{ ciudad ? ' in ' + ciudad : '' }}
+        </h1>
+        <p class="hotels-main__subtitle">
+          {{ total }} {{ total === 1 ? 'property' : 'properties' }} found
+          @if (dateRangeLabel) { · {{ dateRangeLabel }} }
+          @if (huespedes > 1) { · {{ huespedes }} guests }
+        </p>
+      </div>
+      <div class="sort-control">
+        <label class="sort-control__label">Sort by:</label>
+        <select class="sort-control__select" [(ngModel)]="orden" (change)="onOrdenChange()">
+          @for (opt of sortOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    @if (loading) {
+      <div class="hotels-main__status">Cargando hoteles…</div>
     }
-  </div>
-}
+
+    <!-- Error -->
+    @if (!loading && error) {
+      <div class="hotels-main__error">{{ error }}</div>
+    }
+
+    <!-- Empty -->
+    @if (!loading && !error && hoteles.length === 0) {
+      <div class="hotels-main__empty">
+        No se encontraron hoteles con los filtros seleccionados.
+      </div>
+    }
+
+    <!-- Hotel cards -->
+    @if (!loading && !error && hoteles.length > 0) {
+      <div class="hotel-list">
+        @for (hotel of hoteles; track hotel.id) {
+          <article class="hotel-card">
+            <div class="hotel-card__image-wrap">
+              @if (hasValidImage(hotel)) {
+                <img
+                  class="hotel-card__image"
+                  [src]="getImageUrl(hotel)"
+                  [alt]="hotel.nombre"
+                  loading="lazy"
+                  (error)="onImageError(hotel.id)"
+                />
+              } @else {
+                <div class="hotel-card__image hotel-card__image--placeholder" aria-hidden="true">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 21h18"/>
+                    <path d="M5 21V7l7-4 7 4v14"/>
+                    <path d="M9 9h2M9 13h2M9 17h2M13 9h2M13 13h2M13 17h2"/>
+                  </svg>
+                </div>
+              }
+            </div>
+
+            <div class="hotel-card__body">
+              <div class="hotel-card__meta">
+                <span class="star-row">
+                  @for (filled of getStars(hotel.estrellas); track $index) {
+                    <svg class="star-icon" [class.star-icon--filled]="filled" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                  }
+                </span>
+                <span class="hotel-card__type">Hotel</span>
+              </div>
+
+              <h2 class="hotel-card__name">{{ hotel.nombre }}</h2>
+
+              <p class="hotel-card__location">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                {{ hotel.ciudad }}, {{ hotel.pais }}
+              </p>
+
+              <div class="hotel-card__badges">
+                <span class="badge badge--green">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                  Cancelación gratis
+                </span>
+                @if (hasAmenidad(hotel, 'WIFI')) {
+                  <span class="badge badge--muted">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+                    Free WiFi
+                  </span>
+                }
+              </div>
+            </div>
+
+            <div class="hotel-card__price-block">
+              <p class="hotel-card__price">
+                ${{ hotel.precio_minimo.toLocaleString('es-CO') }}
+              </p>
+              <p class="hotel-card__price-label">Precio total (incl. imp.)</p>
+              <a class="hotel-card__btn" [routerLink]="['/hotels', hotel.id]">Ver detalle</a>
+            </div>
+          </article>
+        }
+      </div>
+
+      <!-- Pagination -->
+      @if (totalPages > 1) {
+        <nav class="pagination">
+          <button
+            class="pagination__btn"
+            [disabled]="page === 0"
+            (click)="goToPage(page - 1)"
+            aria-label="Previous"
+          >‹</button>
+
+          @for (p of visiblePages; track $index) {
+            @if (p === '...') {
+              <span class="pagination__ellipsis">…</span>
+            } @else {
+              <button
+                class="pagination__btn"
+                [class.pagination__btn--active]="page === p"
+                (click)="goToPage(p)"
+              >{{ p + 1 }}</button>
+            }
+          }
+
+          <button
+            class="pagination__btn"
+            [disabled]="page === totalPages - 1"
+            (click)="goToPage(page + 1)"
+            aria-label="Next"
+          >›</button>
+        </nav>
+      }
+    }
+  </main>
+
+</div>

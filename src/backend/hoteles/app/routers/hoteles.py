@@ -41,6 +41,8 @@ async def listar_hoteles(
     rango_50_1000: bool = Query(default=False),
     estrellas: list[int] | None = Query(default=None),
     amenidades_populares: list[AmenidadHotel] | None = Query(default=None),
+    ciudad: str | None = Query(default=None, max_length=100),
+    capacidad_min: int | None = Query(default=None, ge=1, le=20),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -54,6 +56,8 @@ async def listar_hoteles(
         rango_50_1000=rango_50_1000,
         estrellas=estrellas,
         amenidades_populares=amenidades_populares,
+        ciudad=ciudad,
+        capacidad_min=capacidad_min,
     )
 
 

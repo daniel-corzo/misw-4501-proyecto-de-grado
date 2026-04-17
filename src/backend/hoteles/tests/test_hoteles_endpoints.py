@@ -410,6 +410,118 @@ async def test_get_hotel_detalle_returns_hotel_without_rooms_and_politicas(overr
 
 
 @pytest.mark.asyncio
+async def test_get_hoteles_filters_by_ciudad(override_client, mock_db_session):
+    hotel = SimpleNamespace(
+        id=uuid.uuid4(),
+        nombre="Hotel Bogota",
+        ciudad="Bogota",
+        pais="Colombia",
+        estrellas=4,
+        imagenes=[],
+        created_at=datetime.now(UTC),
+    )
+
+    mock_db_session.execute = AsyncMock(
+        side_effect=[
+            _ScalarResult(1),
+            _RowsResult([(hotel, 200)]),
+        ]
+    )
+
+    response = await override_client.get("/hoteles?ciudad=Bogo")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 1
+    assert data["hoteles"][0]["ciudad"] == "Bogota"
+
+
+@pytest.mark.asyncio
+async def test_get_hoteles_filters_by_capacidad_min(override_client, mock_db_session):
+    hotel = SimpleNamespace(
+        id=uuid.uuid4(),
+        nombre="Hotel Familiar",
+        ciudad="Medellin",
+        pais="Colombia",
+        estrellas=3,
+        imagenes=[],
+        created_at=datetime.now(UTC),
+    )
+
+    mock_db_session.execute = AsyncMock(
+        side_effect=[
+            _ScalarResult(1),
+            _RowsResult([(hotel, 450)]),
+        ]
+    )
+
+    response = await override_client.get("/hoteles?capacidad_min=4")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 1
+    assert data["hoteles"][0]["nombre"] == "Hotel Familiar"
+
+
+@pytest.mark.asyncio
+async def test_get_hoteles_orden_nombre_asc(override_client, mock_db_session):
+    hotel = SimpleNamespace(
+        id=uuid.uuid4(),
+        nombre="Andino Royal",
+        ciudad="Bogota",
+        pais="Colombia",
+        estrellas=5,
+        imagenes=[],
+        created_at=datetime.now(UTC),
+    )
+
+    mock_db_session.execute = AsyncMock(
+        side_effect=[
+            _ScalarResult(1),
+            _RowsResult([(hotel, 300)]),
+        ]
+    )
+
+    response = await override_client.get("/hoteles?orden=nombre_asc")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["hoteles"][0]["nombre"] == "Andino Royal"
+
+
+@pytest.mark.asyncio
+async def test_get_hoteles_orden_nombre_desc(override_client, mock_db_session):
+    hotel = SimpleNamespace(
+        id=uuid.uuid4(),
+        nombre="Zona Rosa Hotel",
+        ciudad="Bogota",
+        pais="Colombia",
+        estrellas=4,
+        imagenes=[],
+        created_at=datetime.now(UTC),
+    )
+
+    mock_db_session.execute = AsyncMock(
+        side_effect=[
+            _ScalarResult(1),
+            _RowsResult([(hotel, 250)]),
+        ]
+    )
+
+    response = await override_client.get("/hoteles?orden=nombre_desc")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["hoteles"][0]["nombre"] == "Zona Rosa Hotel"
+
+
+@pytest.mark.asyncio
+async def test_get_hoteles_returns_400_for_invalid_capacidad_min(override_client, mock_db_session):
+    response = await override_client.get("/hoteles?capacidad_min=0")
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_get_hotel_detalle_response_has_all_expected_fields(override_client, mock_db_session):
     """Assert all top-level fields are present in the response."""
     hotel_id = uuid.uuid4()

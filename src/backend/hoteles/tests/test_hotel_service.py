@@ -312,6 +312,164 @@ async def test_obtener_hotel_service_maps_all_fields():
 
 
 @pytest.mark.anyio
+async def test_listar_hoteles_service_filters_by_ciudad():
+    hotel_id = uuid.uuid4()
+    created_at = datetime.now(UTC)
+    hotel = SimpleNamespace(
+        id=hotel_id,
+        nombre="Hotel Bogota",
+        ciudad="Bogota",
+        pais="Colombia",
+        estrellas=4,
+        imagenes=[],
+        created_at=created_at,
+    )
+
+    db = AsyncMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _ScalarResult(1),
+            _RowsResult([(hotel, 200)]),
+        ]
+    )
+
+    response = await listar_hoteles_service(
+        db=db,
+        limit=20,
+        offset=0,
+        orden="rating_desc",
+        precio_min=None,
+        precio_max=None,
+        rango_50_1000=False,
+        estrellas=None,
+        amenidades_populares=None,
+        ciudad="bogo",
+    )
+
+    assert response.total == 1
+    assert response.hoteles[0].ciudad == "Bogota"
+    assert db.execute.await_count == 2
+
+
+@pytest.mark.anyio
+async def test_listar_hoteles_service_filters_by_capacidad_min():
+    hotel_id = uuid.uuid4()
+    created_at = datetime.now(UTC)
+    hotel = SimpleNamespace(
+        id=hotel_id,
+        nombre="Hotel Familiar",
+        ciudad="Medellin",
+        pais="Colombia",
+        estrellas=3,
+        imagenes=[],
+        created_at=created_at,
+    )
+
+    db = AsyncMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _ScalarResult(1),
+            _RowsResult([(hotel, 450)]),
+        ]
+    )
+
+    response = await listar_hoteles_service(
+        db=db,
+        limit=20,
+        offset=0,
+        orden="precio_asc",
+        precio_min=None,
+        precio_max=None,
+        rango_50_1000=False,
+        estrellas=None,
+        amenidades_populares=None,
+        capacidad_min=4,
+    )
+
+    assert response.total == 1
+    assert response.hoteles[0].nombre == "Hotel Familiar"
+    assert db.execute.await_count == 2
+
+
+@pytest.mark.anyio
+async def test_listar_hoteles_service_nombre_asc():
+    hotel_id = uuid.uuid4()
+    created_at = datetime.now(UTC)
+    hotel = SimpleNamespace(
+        id=hotel_id,
+        nombre="Andino Royal",
+        ciudad="Bogota",
+        pais="Colombia",
+        estrellas=5,
+        imagenes=[],
+        created_at=created_at,
+    )
+
+    db = AsyncMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _ScalarResult(1),
+            _RowsResult([(hotel, 300)]),
+        ]
+    )
+
+    response = await listar_hoteles_service(
+        db=db,
+        limit=20,
+        offset=0,
+        orden="nombre_asc",
+        precio_min=None,
+        precio_max=None,
+        rango_50_1000=False,
+        estrellas=None,
+        amenidades_populares=None,
+    )
+
+    assert response.total == 1
+    assert response.hoteles[0].nombre == "Andino Royal"
+    assert db.execute.await_count == 2
+
+
+@pytest.mark.anyio
+async def test_listar_hoteles_service_nombre_desc():
+    hotel_id = uuid.uuid4()
+    created_at = datetime.now(UTC)
+    hotel = SimpleNamespace(
+        id=hotel_id,
+        nombre="Zona Rosa Hotel",
+        ciudad="Bogota",
+        pais="Colombia",
+        estrellas=4,
+        imagenes=[],
+        created_at=created_at,
+    )
+
+    db = AsyncMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _ScalarResult(1),
+            _RowsResult([(hotel, 250)]),
+        ]
+    )
+
+    response = await listar_hoteles_service(
+        db=db,
+        limit=20,
+        offset=0,
+        orden="nombre_desc",
+        precio_min=None,
+        precio_max=None,
+        rango_50_1000=False,
+        estrellas=None,
+        amenidades_populares=None,
+    )
+
+    assert response.total == 1
+    assert response.hoteles[0].nombre == "Zona Rosa Hotel"
+    assert db.execute.await_count == 2
+
+
+@pytest.mark.anyio
 @patch("app.services.hotel_service.httpx.AsyncClient")
 async def test_crear_hotel_service_returns_created_hotel_response(mock_async_client):
     mock_response = MagicMock()

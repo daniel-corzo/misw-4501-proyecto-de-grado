@@ -1,6 +1,8 @@
 import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
+import { environment } from '../../../environments/environment';
 
 export interface HabitacionDetalle {
   id: string;
@@ -53,6 +55,7 @@ export interface HotelListItem {
   ciudad: string;
   pais: string;
   estrellas: number;
+  amenidades: string[];
   imagenes: string[];
   precio_minimo: number;
   created_at: string;
@@ -63,14 +66,38 @@ export interface ListaHotelesResponse {
   hoteles: HotelListItem[];
 }
 
+export interface HotelListParams {
+  limit?: number;
+  offset?: number;
+  ciudad?: string;
+  precio_min?: number;
+  precio_max?: number;
+  estrellas?: number[];
+  amenidades_populares?: string[];
+  capacidad_min?: number;
+  orden?: 'precio_asc' | 'precio_desc' | 'rating_desc' | 'nombre_asc' | 'nombre_desc';
+}
+
 @Injectable({ providedIn: 'root' })
 export class HotelService {
   private readonly api = inject(ApiService);
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = environment.apiUrl;
 
-  listHotels(params?: { limit?: number; offset?: number }): Observable<ListaHotelesResponse> {
-    const limit = params?.limit ?? 20;
-    const offset = params?.offset ?? 0;
-    return this.api.get<ListaHotelesResponse>('/hoteles', { limit, offset });
+  listHotels(params: HotelListParams = {}): Observable<ListaHotelesResponse> {
+    let httpParams = new HttpParams()
+      .set('limit', String(params.limit ?? 10))
+      .set('offset', String(params.offset ?? 0));
+
+    if (params.orden) httpParams = httpParams.set('orden', params.orden);
+    if (params.ciudad) httpParams = httpParams.set('ciudad', params.ciudad);
+    if (params.capacidad_min != null) httpParams = httpParams.set('capacidad_min', String(params.capacidad_min));
+    if (params.precio_min != null) httpParams = httpParams.set('precio_min', String(params.precio_min));
+    if (params.precio_max != null) httpParams = httpParams.set('precio_max', String(params.precio_max));
+    params.estrellas?.forEach(e => { httpParams = httpParams.append('estrellas', String(e)); });
+    params.amenidades_populares?.forEach(a => { httpParams = httpParams.append('amenidades_populares', a); });
+
+    return this.http.get<ListaHotelesResponse>(`${this.baseUrl}/hoteles`, { params: httpParams });
   }
 
   getHotelById(id: string): Observable<HotelDetalle> {
