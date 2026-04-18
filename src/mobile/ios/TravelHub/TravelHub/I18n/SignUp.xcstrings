@@ -1,6 +1,23 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "agreeToTerms" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I agree to the %1$(termsText)@ and %2$(privacyPolicyText)@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acepto los %1$(termsText)@ y la %2$(privacyPolicyText)@"
+          }
+        }
+      }
+    },
     "alreadyHaveAccount" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -8,6 +25,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Already have an account?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Ya tienes una cuenta?"
           }
         }
       }
@@ -20,6 +43,12 @@
             "state" : "translated",
             "value" : "Create Account"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crear Cuenta"
+          }
         }
       }
     },
@@ -30,6 +59,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Join TravelHub to start booking your next\nadventure and find the best hotel deals"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Únete a TravelHub para empezar a reservar tu próxima aventura y encontrar las mejores ofertas de hoteles"
           }
         }
       }
@@ -42,6 +77,12 @@
             "state" : "translated",
             "value" : "Log in"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inicia sesión"
+          }
         }
       }
     },
@@ -52,6 +93,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Create a strong password"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crear una contraseña segura"
+          }
+        }
+      }
+    },
+    "privacyPolicy" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacy Policy"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Política de Privacidad"
+          }
+        }
+      }
+    },
+    "terms" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terms of Service"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Términos y Condiciones"
           }
         }
       }
@@ -64,6 +145,12 @@
             "state" : "translated",
             "value" : "Create your account"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crea tu cuenta"
+          }
         }
       }
     },
@@ -74,6 +161,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The user was created successfully!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El usuario fue creado exitosamente"
           }
         }
       }

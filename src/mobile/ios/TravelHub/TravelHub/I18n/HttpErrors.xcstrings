@@ -9,6 +9,12 @@
             "state" : "translated",
             "value" : "An error occurred while interpreting the server’s response"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocurrió un error al intentar interpretar la respuesta del servidor"
+          }
         }
       }
     },
@@ -19,6 +25,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The email or the password is incorrect"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El correo o la contraseña es incorrecto"
           }
         }
       }
@@ -31,6 +43,12 @@
             "state" : "translated",
             "value" : "A network error occurred. Please try again."
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocurrió un error de red. Por favor, intente de nuevo"
+          }
         }
       }
     },
@@ -42,6 +60,12 @@
             "state" : "translated",
             "value" : "%1$(serverError)@"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%(serverError)@"
+          }
         }
       }
     },
@@ -52,6 +76,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "An unknown error occurred. Please try again."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocurrió un error inesperado. Por favor, intente de nuevo"
           }
         }
       }
