@@ -28,7 +28,7 @@ struct ListHotelView: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            Text("Hotels")
+            Text(LocalizedStringResource.HotelList.screenName)
                 .font(.title3)
                 .fontWeight(.bold)
                 .frame(maxWidth: .infinity)
