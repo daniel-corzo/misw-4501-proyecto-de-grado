@@ -2,7 +2,7 @@ import uuid
 from datetime import UTC, datetime, date
 
 from fastapi import APIRouter, status, Depends, Request
-from sqlalchemy import or_, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -109,8 +109,7 @@ async def listar_reservas_hotel(
     if not habitacion_ids:
         return ListaReservasHotelResponse(total=0, reservas=[], habitaciones=[])
 
-    habitaciones_filter = or_(*[Reserva.habitaciones_ids.any(habitacion_id) for habitacion_id in habitacion_ids])
-    stmt = select(Reserva).where(habitaciones_filter)
+    stmt = select(Reserva).where(Reserva.habitaciones_ids.overlap(habitacion_ids))
 
     stmt = stmt.order_by(Reserva.created_at.desc())
     result = await db.execute(stmt)
