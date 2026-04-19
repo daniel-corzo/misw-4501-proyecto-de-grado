@@ -100,6 +100,20 @@ async def actualizar_habitacion_service(
             detail="Habitación no encontrada",
         )
 
+    duplicate_result = await db.execute(
+        select(Habitacion.id).where(
+            Habitacion.hotel_id == hotel.id,
+            Habitacion.numero == body.numero,
+            Habitacion.id != habitacion_id,
+        )
+    )
+    duplicate_habitacion_id = duplicate_result.scalar_one_or_none()
+    if duplicate_habitacion_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Ya existe una habitación con ese número en este hotel",
+        )
+
     habitacion.capacidad = body.capacidad
     habitacion.numero = body.numero
     habitacion.descripcion = body.descripcion

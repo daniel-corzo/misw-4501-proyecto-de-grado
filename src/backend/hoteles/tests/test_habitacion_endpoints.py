@@ -147,6 +147,7 @@ async def test_actualizar_habitacion_endpoint_authenticated(override_client, moc
         side_effect=[
             _ScalarResult(mock_hotel),
             _ScalarResult(existing_room),
+            _ScalarResult(None),
         ]
     )
 

@@ -162,7 +162,10 @@ async def test_actualizar_habitacion_success(mock_db_session):
         hotel_id=hotel_id,
     )
     mock_db_session.execute = AsyncMock(
-        return_value=MockScalarOneOrNoneResult(existing_room)
+        side_effect=[
+            MockScalarOneOrNoneResult(existing_room),
+            MockScalarOneOrNoneResult(None),
+        ]
     )
 
     response = await actualizar_habitacion_service(
@@ -181,7 +184,7 @@ async def test_actualizar_habitacion_success(mock_db_session):
     assert response.imagenes == body.imagenes
     assert response.disponible is True
     mock_db_session.add.assert_not_called()
-    mock_db_session.execute.assert_awaited_once()
+    assert mock_db_session.execute.await_count == 2
     mock_db_session.commit.assert_awaited_once()
     mock_db_session.refresh.assert_awaited_once_with(existing_room)
 
@@ -245,13 +248,12 @@ async def test_actualizar_habitacion_duplicate_numero_conflict(mock_db_session):
         hotel_id=hotel_id,
     )
 
-    class FakeOrig:
-        constraint_name = "uq_habitacion_hotel_numero"
-
     mock_db_session.execute = AsyncMock(
-        return_value=MockScalarOneOrNoneResult(existing_room)
+        side_effect=[
+            MockScalarOneOrNoneResult(existing_room),
+            MockScalarOneOrNoneResult(uuid.uuid4()),
+        ]
     )
-    mock_db_session.commit.side_effect = IntegrityError(None, None, FakeOrig())
 
     with pytest.raises(HTTPException) as exc_info:
         await actualizar_habitacion_service(
@@ -266,8 +268,9 @@ async def test_actualizar_habitacion_duplicate_numero_conflict(mock_db_session):
         exc_info.value.detail == "Ya existe una habitación con ese número en este hotel"
     )
     mock_db_session.add.assert_not_called()
-    mock_db_session.execute.assert_awaited_once()
-    mock_db_session.rollback.assert_awaited_once()
+    assert mock_db_session.execute.await_count == 2
+    mock_db_session.commit.assert_not_called()
+    mock_db_session.rollback.assert_not_called()
     mock_db_session.refresh.assert_not_called()
 
 
