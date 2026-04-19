@@ -1,6 +1,23 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "bookNow" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Book Now"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reservar"
+          }
+        }
+      }
+    },
     "filter" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -14,6 +31,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Filtrar"
+          }
+        }
+      }
+    },
+    "perNight" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/ night"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/ noche"
           }
         }
       }
