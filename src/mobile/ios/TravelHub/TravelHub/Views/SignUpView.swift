@@ -21,9 +21,6 @@ struct SignUpView: View {
         var text = AttributedString(
             String(localized: .SignUp.agreeToTerms(termsText: termsText, privacyPolicyText: privacyPolicyText))
         )
-        print(termsText)
-        print(privacyPolicyText)
-        print(text)
 
         if let termsRange = text.range(of: termsText) {
             text[termsRange].foregroundColor = .blue
