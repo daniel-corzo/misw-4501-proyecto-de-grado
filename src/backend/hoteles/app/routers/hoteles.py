@@ -12,11 +12,13 @@ from app.schemas.hotel import (
     CrearHabitacionRequest,
     HabitacionDetalleResponse,
     ListaHabitacionesResponse,
+    ListaHabitacionesResumenResponse,
 )
 from app.services.hotel_service import (
     OrdenHoteles,
     crear_hotel_service,
     get_hotel_by_user,
+    listar_habitaciones_resumen_por_ids_service,
     listar_hoteles_service,
     obtener_hotel_service,
 )
@@ -117,6 +119,22 @@ async def actualizar_habitacion(
         hotel=current_hotel,
         habitacion_id=habitacion_id,
         body=body,
+    )
+
+
+@router.get(
+    "/habitaciones/resumen",
+    response_model=ListaHabitacionesResumenResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def listar_habitaciones_resumen_por_ids(
+    habitacion_ids: list[uuid.UUID] = Query(default=[]),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return await listar_habitaciones_resumen_por_ids_service(
+        db=db,
+        habitacion_ids=habitacion_ids,
     )
 
 

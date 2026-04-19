@@ -97,6 +97,18 @@ class ListaHabitacionesResponse(BaseModel):
     habitaciones: List[HabitacionDetalleResponse]
 
 
+class HabitacionResumenResponse(BaseModel):
+    id: UUID
+    nombre_habitacion: str
+    nombre_hotel: str
+    imagenes_hotel: List[str] = Field(default_factory=list)
+
+
+class ListaHabitacionesResumenResponse(BaseModel):
+    total: int
+    habitaciones: List[HabitacionResumenResponse]
+
+
 class HotelDetalleResponse(BaseModel):
     id: UUID
     nombre: str

@@ -9,6 +9,7 @@ import Foundation
 
 protocol ReservationService {
     func create(reservation: NewReservation) async throws
+    func fetchReservations(estado: String) async throws -> ListReservationsResponse
 }
 
 final class ReservationServiceImpl: ReservationService {
@@ -37,5 +38,14 @@ final class ReservationServiceImpl: ReservationService {
             body: body,
             token: token
         )
+    }
+
+    func fetchReservations(estado: String) async throws -> ListReservationsResponse {
+        let token = try tokenStore.readToken() ?? ""
+        var components = URLComponents(url: HttpRoutes.reservas.url, resolvingAgainstBaseURL: false)!
+        components.queryItems = [URLQueryItem(name: "estado", value: estado)]
+        let url = components.url!
+
+        return try await httpService.get(url: url, token: token)
     }
 }

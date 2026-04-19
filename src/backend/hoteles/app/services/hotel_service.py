@@ -18,8 +18,10 @@ from app.schemas.hotel import (
     AmenidadHotel,
     CrearHotelRequest,
     HabitacionDetalleResponse,
+    HabitacionResumenResponse,
     HotelDetalleResponse,
     HotelListItemResponse,
+    ListaHabitacionesResumenResponse,
     ListaHotelesResponse,
     PoliticaDetalleResponse,
 )
@@ -290,6 +292,40 @@ async def crear_hotel_service(db: AsyncSession, body: CrearHotelRequest):
 
     await db.commit()
     return await obtener_hotel_service(db=db, hotel_id=hotel.id)
+
+
+async def listar_habitaciones_resumen_por_ids_service(
+    db: AsyncSession,
+    habitacion_ids: list[uuid.UUID],
+) -> ListaHabitacionesResumenResponse:
+    if not habitacion_ids:
+        return ListaHabitacionesResumenResponse(total=0, habitaciones=[])
+
+    result = await db.execute(
+        select(
+            Habitacion.id,
+            Habitacion.numero,
+            Habitacion.descripcion,
+            Hotel.nombre.label("nombre_hotel"),
+            Hotel.imagenes.label("imagenes_hotel"),
+        )
+        .join(Hotel, Habitacion.hotel_id == Hotel.id)
+        .where(Habitacion.id.in_(habitacion_ids))
+    )
+
+    habitaciones = []
+    for row in result.all():
+        nombre_habitacion = row.descripcion or f"Habitacion {row.numero}"
+        habitaciones.append(
+            HabitacionResumenResponse(
+                id=row.id,
+                nombre_habitacion=nombre_habitacion,
+                nombre_hotel=row.nombre_hotel,
+                imagenes_hotel=row.imagenes_hotel or [],
+            )
+        )
+
+    return ListaHabitacionesResumenResponse(total=len(habitaciones), habitaciones=habitaciones)
 
 async def get_hotel_by_user(db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)) -> Hotel:
     result = await db.execute(select(Hotel).where(Hotel.usuario_id == user.id))

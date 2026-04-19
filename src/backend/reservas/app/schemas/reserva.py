@@ -36,6 +36,9 @@ class CrearReservaRequest(BaseModel):
 class ReservaResponse(BaseModel):
     id: UUID
     habitacion_id: UUID
+    nombre_habitacion: Optional[str] = None
+    nombre_hotel: Optional[str] = None
+    imagenes_hotel: List[str] = Field(default_factory=list)
     fecha_entrada: date
     fecha_salida: date
     num_huespedes: int
@@ -58,6 +61,13 @@ class HabitacionHotelResponse(BaseModel):
     monto: int
     impuestos: int
     disponible: bool
+
+
+class HabitacionReservaDetalleResponse(BaseModel):
+    id: UUID
+    nombre_habitacion: str
+    nombre_hotel: str
+    imagenes_hotel: List[str] = Field(default_factory=list)
 
 
 class ListaReservasHotelResponse(BaseModel):

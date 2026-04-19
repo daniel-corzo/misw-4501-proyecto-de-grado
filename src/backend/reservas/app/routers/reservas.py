@@ -16,6 +16,7 @@ from app.schemas.reserva import (
     ListaReservasResponse,
 )
 from app.services.hotel_service import obtener_habitaciones_hotel
+from app.services.hotel_service import obtener_detalles_habitaciones_por_ids
 from app.services.reserva_service import crear_reserva_service, reserva_to_response
 from travelhub_common.security import get_current_user, User
 
@@ -40,6 +41,7 @@ async def crear_reserva(
 
 @router.get("", response_model=ListaReservasResponse, status_code=status.HTTP_200_OK)
 async def listar_reservas_usuario(
+    request: Request,
     estado: FiltroReservasUsuario,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -65,7 +67,33 @@ async def listar_reservas_usuario(
 
     stmt = stmt.order_by(Reserva.created_at.desc())
     result = await db.execute(stmt)
-    reservas = [reserva_to_response(r) for r in result.scalars().all()]
+    reservas_db = result.scalars().all()
+
+    habitacion_ids = list(
+        {
+            habitacion_id
+            for reserva in reservas_db
+            for habitacion_id in (reserva.habitaciones_ids or [])
+        }
+    )
+    detalles_por_habitacion = await obtener_detalles_habitaciones_por_ids(
+        request.headers.get("Authorization"),
+        habitacion_ids,
+    )
+
+    reservas = []
+    for reserva in reservas_db:
+        habitacion_id = reserva.habitaciones_ids[0] if reserva.habitaciones_ids else None
+        detalle_habitacion = detalles_por_habitacion.get(habitacion_id) if habitacion_id else None
+        reservas.append(
+            reserva_to_response(
+                reserva,
+                nombre_habitacion=detalle_habitacion.nombre_habitacion if detalle_habitacion else None,
+                nombre_hotel=detalle_habitacion.nombre_hotel if detalle_habitacion else None,
+                imagenes_hotel=detalle_habitacion.imagenes_hotel if detalle_habitacion else [],
+            )
+        )
+
     return ListaReservasResponse(total=len(reservas), reservas=reservas)
 
 

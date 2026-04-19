@@ -14,7 +14,12 @@ def _fecha_to_utc_start(d: date) -> datetime:
     return datetime.combine(d, time.min, tzinfo=timezone.utc)
 
 
-def reserva_to_response(reserva: Reserva) -> ReservaResponse:
+def reserva_to_response(
+    reserva: Reserva,
+    nombre_habitacion: str | None = None,
+    nombre_hotel: str | None = None,
+    imagenes_hotel: list[str] | None = None,
+) -> ReservaResponse:
     habitacion_id = reserva.habitaciones_ids[0] if reserva.habitaciones_ids else None
     if habitacion_id is None:
         raise HTTPException(
@@ -24,6 +29,9 @@ def reserva_to_response(reserva: Reserva) -> ReservaResponse:
     return ReservaResponse(
         id=reserva.id,
         habitacion_id=habitacion_id,
+        nombre_habitacion=nombre_habitacion,
+        nombre_hotel=nombre_hotel,
+        imagenes_hotel=imagenes_hotel or [],
         fecha_entrada=reserva.check_in.date(),
         fecha_salida=reserva.check_out.date(),
         num_huespedes=reserva.personas,

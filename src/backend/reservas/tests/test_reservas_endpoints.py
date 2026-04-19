@@ -8,7 +8,7 @@ from httpx import ASGITransport, AsyncClient
 
 from app.database import get_db
 from app.main import app
-from app.schemas.reserva import HabitacionHotelResponse
+from app.schemas.reserva import HabitacionHotelResponse, HabitacionReservaDetalleResponse
 from travelhub_common.security import RoleEnum, User, get_current_user
 from app.models.reserva import Reserva
 
@@ -176,13 +176,29 @@ async def test_get_reservas_usuario_activas_returns_200(override_client, mock_db
     result.scalars.return_value = scalar_result
     mock_db_session.execute = AsyncMock(return_value=result)
 
-    response = await override_client.get("/reservas?estado=activas")
+    detalles = {
+        HABITACION_ID: HabitacionReservaDetalleResponse(
+            id=HABITACION_ID,
+            nombre_habitacion="Deluxe Room",
+            nombre_hotel="Grand Hyatt Regency",
+            imagenes_hotel=["https://cdn.example.com/hoteles/grand-hyatt-1.jpg"],
+        )
+    }
+
+    with patch(
+        "app.routers.reservas.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value=detalles),
+    ):
+        response = await override_client.get("/reservas?estado=activas")
 
     assert response.status_code == 200
     data = response.json()
     assert data["total"] == 1
     assert len(data["reservas"]) == 1
     assert data["reservas"][0]["estado"] == "confirmada"
+    assert data["reservas"][0]["nombre_habitacion"] == "Deluxe Room"
+    assert data["reservas"][0]["nombre_hotel"] == "Grand Hyatt Regency"
+    assert data["reservas"][0]["imagenes_hotel"] == ["https://cdn.example.com/hoteles/grand-hyatt-1.jpg"]
     assert mock_db_session.execute.await_count == 1
 
 
@@ -203,12 +219,34 @@ async def test_get_reservas_usuario_canceladas_returns_200(override_client, mock
     result.scalars.return_value = scalar_result
     mock_db_session.execute = AsyncMock(return_value=result)
 
-    response = await override_client.get("/reservas?estado=canceladas")
+    detalles = {
+        HABITACION_ID: HabitacionReservaDetalleResponse(
+            id=HABITACION_ID,
+            nombre_habitacion="Junior Suite",
+            nombre_hotel="Aman Tokyo Resort",
+            imagenes_hotel=[
+                "https://cdn.example.com/hoteles/aman-tokyo-1.jpg",
+                "https://cdn.example.com/hoteles/aman-tokyo-2.jpg",
+            ],
+        )
+    }
+
+    with patch(
+        "app.routers.reservas.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value=detalles),
+    ):
+        response = await override_client.get("/reservas?estado=canceladas")
 
     assert response.status_code == 200
     data = response.json()
     assert data["total"] == 1
     assert data["reservas"][0]["estado"] == "cancelada"
+    assert data["reservas"][0]["nombre_habitacion"] == "Junior Suite"
+    assert data["reservas"][0]["nombre_hotel"] == "Aman Tokyo Resort"
+    assert data["reservas"][0]["imagenes_hotel"] == [
+        "https://cdn.example.com/hoteles/aman-tokyo-1.jpg",
+        "https://cdn.example.com/hoteles/aman-tokyo-2.jpg",
+    ]
 
 
 @pytest.mark.asyncio

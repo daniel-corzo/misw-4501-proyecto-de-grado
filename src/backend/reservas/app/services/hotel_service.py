@@ -1,8 +1,9 @@
 import httpx
 from fastapi import HTTPException, status
+from uuid import UUID
 
 from app.config import get_settings
-from app.schemas.reserva import HabitacionHotelResponse
+from app.schemas.reserva import HabitacionHotelResponse, HabitacionReservaDetalleResponse
 
 
 async def obtener_habitaciones_hotel(authorization_header: str | None) -> list[HabitacionHotelResponse]:
@@ -55,4 +56,51 @@ async def obtener_habitaciones_hotel(authorization_header: str | None) -> list[H
             detail="No fue posible consultar el servicio de hoteles",
         ) from exc
 
+
     return habitaciones
+
+
+async def obtener_detalles_habitaciones_por_ids(
+    authorization_header: str | None,
+    habitacion_ids: list[UUID],
+) -> dict[UUID, HabitacionReservaDetalleResponse]:
+    if not habitacion_ids:
+        return {}
+
+    if not authorization_header:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No autorizado",
+        )
+
+    settings = get_settings()
+    headers = {"Authorization": authorization_header}
+    params = [("habitacion_ids", str(habitacion_id)) for habitacion_id in habitacion_ids]
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(
+                f"{settings.backend_api_url}/hoteles/habitaciones/resumen",
+                headers=headers,
+                params=params,
+            )
+
+            if response.status_code == status.HTTP_404_NOT_FOUND:
+                return {}
+            if response.status_code != status.HTTP_200_OK:
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="No fue posible obtener el detalle de las habitaciones",
+                )
+
+            payload = response.json()
+            detalles: dict[UUID, HabitacionReservaDetalleResponse] = {}
+            for item in payload.get("habitaciones", []):
+                detalle = HabitacionReservaDetalleResponse(**item)
+                detalles[detalle.id] = detalle
+            return detalles
+    except httpx.RequestError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="No fue posible consultar el servicio de hoteles",
+        ) from exc
