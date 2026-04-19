@@ -56,12 +56,12 @@ enum BookingTab: Int, CaseIterable {
 // MARK: - Badge Display
 
 extension EstadoReserva {
-    var badgeLabel: String {
+    var badgeLabel: LocalizedStringResource {
         switch self {
-        case .confirmada: return "CONFIRMED"
-        case .pendiente: return "UPCOMING"
-        case .cancelada: return "CANCELLED"
-        case .completada: return "COMPLETED"
+        case .confirmada: return .MyBookings.badgeConfirmed
+        case .pendiente: return .MyBookings.badgeUpcoming
+        case .cancelada: return .MyBookings.badgeCancelled
+        case .completada: return .MyBookings.badgeCompleted
         }
     }
 
@@ -92,6 +92,7 @@ extension MyBookingsView {
         func fetchReservations() async {
             isLoading = true
             hasError = false
+            defer { isLoading = false }
 
             do {
                 let response = try await reservationService.fetchReservations(
@@ -109,8 +110,6 @@ extension MyBookingsView {
                 hasError = true
                 toastManager.error(error.localizedDescription)
             }
-
-            isLoading = false
         }
     }
 }

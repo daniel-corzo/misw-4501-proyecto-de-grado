@@ -68,7 +68,7 @@ struct MyBookingsView: View {
 
     private var reservationsList: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            LazyVStack(alignment: .leading, spacing: 16) {
                 // Section header
                 VStack(alignment: .leading, spacing: 4) {
                     Text(viewModel.selectedTab.sectionTitle)

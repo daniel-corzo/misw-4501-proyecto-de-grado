@@ -16,24 +16,33 @@ struct BookingCardView: View {
         reservation.nombreHabitacion ?? String(localized: .MyBookings.defaultRoomName)
     }
 
+    private static let inputFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f
+    }()
+
+    private static let displayFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM dd"
+        return f
+    }()
+
+    private static let yearFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy"
+        return f
+    }()
+
     private var dateRangeText: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-
-        let displayFormatter = DateFormatter()
-        displayFormatter.dateFormat = "MMM dd"
-
-        let yearFormatter = DateFormatter()
-        yearFormatter.dateFormat = "yyyy"
-
-        guard let start = formatter.date(from: reservation.fechaEntrada),
-              let end = formatter.date(from: reservation.fechaSalida) else {
+        guard let start = Self.inputFormatter.date(from: reservation.fechaEntrada),
+              let end = Self.inputFormatter.date(from: reservation.fechaSalida) else {
             return "\(reservation.fechaEntrada) - \(reservation.fechaSalida)"
         }
 
-        let startStr = displayFormatter.string(from: start)
-        let endStr = displayFormatter.string(from: end)
-        let year = yearFormatter.string(from: end)
+        let startStr = Self.displayFormatter.string(from: start)
+        let endStr = Self.displayFormatter.string(from: end)
+        let year = Self.yearFormatter.string(from: end)
 
         return "\(startStr) - \(endStr), \(year)"
     }
