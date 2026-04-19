@@ -92,16 +92,16 @@ struct ListElementView: View {
                             .font(.title2)
                             .fontWeight(.bold)
                         
-                        Text("/ night")
+                        Text(LocalizedStringResource.HotelList.perNight)
                             .foregroundStyle(.gray)
                     }
                     
                     Spacer()
                     
                     Button {
-                        print("Book Now tapped")
+                        // TODO: Book reservation
                     } label: {
-                        Text("Book Now")
+                        Text(LocalizedStringResource.HotelList.bookNow)
                             .fontWeight(.semibold)
                             .foregroundColor(.white)
                             .padding(.horizontal, 24)
