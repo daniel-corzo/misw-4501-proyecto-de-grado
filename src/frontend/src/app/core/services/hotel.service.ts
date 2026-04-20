@@ -1,8 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
-import { environment } from '../../../environments/environment';
 
 export interface HabitacionDetalle {
   id: string;
@@ -81,23 +79,19 @@ export interface HotelListParams {
 @Injectable({ providedIn: 'root' })
 export class HotelService {
   private readonly api = inject(ApiService);
-  private readonly http = inject(HttpClient);
-  private readonly baseUrl = environment.apiUrl;
 
   listHotels(params: HotelListParams = {}): Observable<ListaHotelesResponse> {
-    let httpParams = new HttpParams()
-      .set('limit', String(params.limit ?? 10))
-      .set('offset', String(params.offset ?? 0));
-
-    if (params.orden) httpParams = httpParams.set('orden', params.orden);
-    if (params.ciudad) httpParams = httpParams.set('ciudad', params.ciudad);
-    if (params.capacidad_min != null) httpParams = httpParams.set('capacidad_min', String(params.capacidad_min));
-    if (params.precio_min != null) httpParams = httpParams.set('precio_min', String(params.precio_min));
-    if (params.precio_max != null) httpParams = httpParams.set('precio_max', String(params.precio_max));
-    params.estrellas?.forEach(e => { httpParams = httpParams.append('estrellas', String(e)); });
-    params.amenidades_populares?.forEach(a => { httpParams = httpParams.append('amenidades_populares', a); });
-
-    return this.http.get<ListaHotelesResponse>(`${this.baseUrl}/hoteles`, { params: httpParams });
+    return this.api.get<ListaHotelesResponse>('/hoteles', {
+      limit: params.limit ?? 10,
+      offset: params.offset ?? 0,
+      orden: params.orden,
+      ciudad: params.ciudad,
+      capacidad_min: params.capacidad_min,
+      precio_min: params.precio_min,
+      precio_max: params.precio_max,
+      estrellas: params.estrellas,
+      amenidades_populares: params.amenidades_populares,
+    });
   }
 
   getHotelById(id: string): Observable<HotelDetalle> {
