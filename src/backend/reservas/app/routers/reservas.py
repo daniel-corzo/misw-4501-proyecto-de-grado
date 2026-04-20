@@ -57,6 +57,7 @@ async def listar_reservas_usuario(
 
     if estado == FiltroReservasUsuario.canceladas:
         stmt = stmt.where(Reserva.estado == EstadoReserva.cancelada.value)
+        stmt = stmt.order_by(Reserva.created_at.desc())
     elif estado == FiltroReservasUsuario.activas:
         stmt = stmt.where(
             Reserva.estado.in_([
@@ -71,13 +72,9 @@ async def listar_reservas_usuario(
             Reserva.estado != EstadoReserva.cancelada.value,
             Reserva.check_out < now_utc,
         )
-    else:
         stmt = stmt.order_by(Reserva.created_at.desc())
     result = await db.execute(stmt)
     reservas_db = result.scalars().all()
-
-    if estado == FiltroReservasUsuario.activas:
-        reservas_db = sorted(reservas_db, key=lambda reserva: reserva.check_in)
 
     habitacion_ids = list(
         {
@@ -166,7 +163,7 @@ async def obtener_reserva(
     if detalle_habitacion is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="No fue posible obtener el detalle de la habitacion asociada",
+            detail="No fue posible obtener el detalle de la habitación asociada",
         )
 
     return reserva_to_detalle_response(reserva, detalle_habitacion)
