@@ -164,7 +164,7 @@ async def cancelar_reserva_service(
     if reserva.estado == EstadoReserva.cancelada.value:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="La reserva ya esta cancelada",
+            detail="La reserva ya está cancelada",
         )
 
     if reserva.estado not in [

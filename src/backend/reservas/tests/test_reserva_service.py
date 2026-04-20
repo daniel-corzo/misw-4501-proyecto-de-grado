@@ -145,4 +145,5 @@ async def test_cancelar_reserva_service_409_when_already_cancelled(mock_db):
         )
 
     assert exc.value.status_code == 409
+    assert exc.value.detail == "La reserva ya está cancelada"
     assert mock_db.commit.await_count == 0

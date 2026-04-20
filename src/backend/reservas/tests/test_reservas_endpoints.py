@@ -575,7 +575,7 @@ async def test_patch_reserva_cancelar_409_when_already_cancelada(override_client
 
     assert response.status_code == 409
     data = response.json()
-    assert "cancelada" in data["detail"].lower()
+    assert data["detail"] == "La reserva ya está cancelada"
 
 
 @pytest.mark.asyncio
