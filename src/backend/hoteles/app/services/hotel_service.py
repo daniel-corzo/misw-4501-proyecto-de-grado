@@ -306,8 +306,23 @@ async def listar_habitaciones_resumen_por_ids_service(
             Habitacion.id,
             Habitacion.numero,
             Habitacion.descripcion,
+            Habitacion.capacidad,
+            Habitacion.imagenes.label("imagenes_habitacion"),
+            Habitacion.monto,
+            Habitacion.impuestos,
+            Habitacion.hotel_id,
             Hotel.nombre.label("nombre_hotel"),
             Hotel.imagenes.label("imagenes_hotel"),
+            Hotel.direccion.label("direccion_hotel"),
+            Hotel.ciudad.label("ciudad_hotel"),
+            Hotel.pais.label("pais_hotel"),
+            Hotel.estrellas.label("estrellas_hotel"),
+            Hotel.ranking.label("ranking_hotel"),
+            Hotel.contacto_celular.label("contacto_celular_hotel"),
+            Hotel.contacto_email.label("contacto_email_hotel"),
+            Hotel.check_in.label("check_in_hotel"),
+            Hotel.check_out.label("check_out_hotel"),
+            Hotel.amenidades.label("amenidades_hotel"),
         )
         .join(Hotel, Habitacion.hotel_id == Hotel.id)
         .where(Habitacion.id.in_(habitacion_ids))
@@ -316,12 +331,33 @@ async def listar_habitaciones_resumen_por_ids_service(
     habitaciones = []
     for row in result.all():
         nombre_habitacion = row.descripcion or f"Habitacion {row.numero}"
+        amenidades_hotel = []
+        for amenidad in getattr(row, "amenidades_hotel", []) or []:
+            amenidades_hotel.append(amenidad.value if hasattr(amenidad, "value") else str(amenidad))
+
         habitaciones.append(
             HabitacionResumenResponse(
                 id=row.id,
                 nombre_habitacion=nombre_habitacion,
                 nombre_hotel=row.nombre_hotel,
                 imagenes_hotel=row.imagenes_hotel or [],
+                hotel_id=getattr(row, "hotel_id", None),
+                direccion_hotel=getattr(row, "direccion_hotel", None),
+                ciudad_hotel=getattr(row, "ciudad_hotel", None),
+                pais_hotel=getattr(row, "pais_hotel", None),
+                estrellas_hotel=getattr(row, "estrellas_hotel", None),
+                ranking_hotel=getattr(row, "ranking_hotel", None),
+                contacto_celular_hotel=getattr(row, "contacto_celular_hotel", None),
+                contacto_email_hotel=getattr(row, "contacto_email_hotel", None),
+                check_in_hotel=getattr(row, "check_in_hotel", None),
+                check_out_hotel=getattr(row, "check_out_hotel", None),
+                amenidades_hotel=amenidades_hotel,
+                capacidad_habitacion=getattr(row, "capacidad", None),
+                numero_habitacion=row.numero,
+                descripcion_habitacion=row.descripcion,
+                imagenes_habitacion=getattr(row, "imagenes_habitacion", []) or [],
+                monto_habitacion=getattr(row, "monto", None),
+                impuestos_habitacion=getattr(row, "impuestos", None),
             )
         )
 

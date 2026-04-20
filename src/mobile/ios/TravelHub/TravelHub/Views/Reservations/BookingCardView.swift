@@ -120,9 +120,7 @@ struct BookingCardView: View {
 
                 // View Details button
                 NavigationLink {
-                    // Placeholder for reservation detail
-                    Text("Reservation \(reservation.id.uuidString)")
-                        .navigationTitle(hotelName)
+                    ReservationDetailView(reservationId: reservation.id)
                 } label: {
                     Text(LocalizedStringResource.MyBookings.viewDetails)
                         .font(.subheadline)

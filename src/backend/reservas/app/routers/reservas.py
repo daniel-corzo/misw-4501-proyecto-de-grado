@@ -1,7 +1,7 @@
 import uuid
-from datetime import UTC, datetime, date
+from datetime import UTC, datetime
 
-from fastapi import APIRouter, status, Depends, Request
+from fastapi import APIRouter, status, Depends, Request, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,10 +14,16 @@ from app.schemas.reserva import (
     EstadoReserva,
     ListaReservasHotelResponse,
     ListaReservasResponse,
+    ReservaDetalleResponse,
 )
 from app.services.hotel_service import obtener_habitaciones_hotel
 from app.services.hotel_service import obtener_detalles_habitaciones_por_ids
-from app.services.reserva_service import crear_reserva_service, reserva_to_response
+from app.services.reserva_service import (
+    cancelar_reserva_service,
+    crear_reserva_service,
+    reserva_to_detalle_response,
+    reserva_to_response,
+)
 from travelhub_common.security import get_current_user, User
 
 router = APIRouter(prefix="/reservas", tags=["reservas"])
@@ -121,26 +127,55 @@ async def listar_reservas_hotel(
     )
 
 
-@router.get("/{reserva_id}", response_model=ReservaResponse, status_code=status.HTTP_200_OK)
+@router.get("/{reserva_id}", response_model=ReservaDetalleResponse, status_code=status.HTTP_200_OK)
 async def obtener_reserva(
     reserva_id: uuid.UUID,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Retorna el detalle de una reserva por su ID.
+    stmt = select(Reserva).where(
+        Reserva.id == reserva_id,
+        Reserva.viajero_id == current_user.id,
+    )
+    result = await db.execute(stmt)
+    reserva = result.scalar_one_or_none()
 
-    En la implementacion real:
-    - Consultar PostgreSQL por ID
-    - Levantar 404 si no existe
-    """
-    # TODO: reemplazar con consulta real a la BD
-    return ReservaResponse(
-        id=reserva_id,
-        habitacion_id=uuid.uuid4(),
-        fecha_entrada=date(2026, 4, 1),
-        fecha_salida=date(2026, 4, 5),
-        num_huespedes=2,
-        estado=EstadoReserva.confirmada,
-        pago_id=None,
-        created_at=datetime.now(UTC),
+    if reserva is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Reserva no encontrada",
+        )
+
+    habitacion_id = reserva.habitaciones_ids[0] if reserva.habitaciones_ids else None
+    if habitacion_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Reserva sin habitaciones asociadas",
+        )
+
+    detalles_por_habitacion = await obtener_detalles_habitaciones_por_ids(
+        request.headers.get("Authorization"),
+        [habitacion_id],
+    )
+    detalle_habitacion = detalles_por_habitacion.get(habitacion_id)
+    if detalle_habitacion is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No fue posible obtener el detalle de la habitacion asociada",
+        )
+
+    return reserva_to_detalle_response(reserva, detalle_habitacion)
+
+
+@router.patch("/{reserva_id}/cancelar", response_model=ReservaResponse, status_code=status.HTTP_200_OK)
+async def cancelar_reserva(
+    reserva_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return await cancelar_reserva_service(
+        db=db,
+        reserva_id=reserva_id,
+        current_user=current_user,
     )

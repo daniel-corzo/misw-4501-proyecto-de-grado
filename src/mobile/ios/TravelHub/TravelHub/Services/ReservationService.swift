@@ -10,6 +10,8 @@ import Foundation
 protocol ReservationService {
     func create(reservation: NewReservation) async throws
     func fetchReservations(estado: String) async throws -> ListReservationsResponse
+    func fetchReservationDetail(id: UUID) async throws -> ReservationDetailDTO
+    func cancelReservation(id: UUID) async throws -> ReservationDetailDTO
 }
 
 final class ReservationServiceImpl: ReservationService {
@@ -47,5 +49,19 @@ final class ReservationServiceImpl: ReservationService {
         let url = components.url!
 
         return try await httpService.get(url: url, token: token)
+    }
+
+    func fetchReservationDetail(id: UUID) async throws -> ReservationDetailDTO {
+        let token = try tokenStore.readToken() ?? ""
+        let url = HttpRoutes.reservas.url.appendingPathComponent(id.uuidString)
+        return try await httpService.get(url: url, token: token)
+    }
+
+    func cancelReservation(id: UUID) async throws -> ReservationDetailDTO {
+        let token = try tokenStore.readToken() ?? ""
+        let url = HttpRoutes.reservas.url
+            .appendingPathComponent(id.uuidString)
+            .appendingPathComponent("cancelar")
+        return try await httpService.patch(url: url, token: token)
     }
 }
