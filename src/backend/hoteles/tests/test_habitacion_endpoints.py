@@ -83,7 +83,10 @@ async def test_crear_habitacion_endpoint_authenticated(override_client, mock_db_
         usuario_id=uuid.uuid4(),
     )
     mock_db_session.execute = AsyncMock(
-        return_value=_ScalarResult(mock_hotel)
+        side_effect=[
+            _ScalarResult(mock_hotel),
+            _ScalarResult(None),
+        ]
     )
 
     response = await override_client.post("/hoteles/habitaciones", json=body)

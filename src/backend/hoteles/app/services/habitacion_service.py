@@ -38,6 +38,23 @@ def _build_habitacion_response(habitacion: Habitacion) -> HabitacionDetalleRespo
     )
 
 
+async def _check_duplicate_habitacion(
+    db: AsyncSession, hotel_id: uuid.UUID, numero: str, habitacion_id: uuid.UUID
+) -> None:
+    duplicate_result = await db.execute(
+        select(Habitacion.id).where(
+            Habitacion.hotel_id == hotel_id,
+            Habitacion.numero == numero,
+            Habitacion.id != habitacion_id,
+        )
+    )
+    if duplicate_result.scalar_one_or_none() is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Ya existe una habitación con ese número en este hotel",
+        )
+
+
 async def crear_habitacion_service(
     db: AsyncSession, hotel: Hotel, body: CrearHabitacionRequest
 ) -> HabitacionDetalleResponse:
@@ -100,19 +117,7 @@ async def actualizar_habitacion_service(
             detail="Habitación no encontrada",
         )
 
-    duplicate_result = await db.execute(
-        select(Habitacion.id).where(
-            Habitacion.hotel_id == hotel.id,
-            Habitacion.numero == body.numero,
-            Habitacion.id != habitacion_id,
-        )
-    )
-    duplicate_habitacion_id = duplicate_result.scalar_one_or_none()
-    if duplicate_habitacion_id is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Ya existe una habitación con ese número en este hotel",
-        )
+    await _check_duplicate_habitacion(db, hotel.id, body.numero, habitacion_id)
 
     habitacion.capacidad = body.capacidad
     habitacion.numero = body.numero
