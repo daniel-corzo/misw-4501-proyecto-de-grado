@@ -13,10 +13,7 @@ const POPULAR_AMENITIES = [
   { value: 'PARKING', label: 'Parqueadero' },
 ];
 
-const POPULAR_AMENITY_VALUES = new Set(POPULAR_AMENITIES.map(a => a.value));
-
-const ALL_AMENITIES = [
-  ...POPULAR_AMENITIES,
+const EXTRA_AMENITIES = [
   { value: 'GYM', label: 'Gimnasio' },
   { value: 'SPA', label: 'Spa y bienestar' },
   { value: 'RESTAURANT', label: 'Restaurante' },
@@ -36,31 +33,9 @@ const ALL_AMENITIES = [
   { value: 'SHUTTLE', label: 'Transporte' },
 ];
 
-const EXTRA_AMENITIES = ALL_AMENITIES.filter(a => !POPULAR_AMENITY_VALUES.has(a.value));
-
-const AMENIDAD_LABELS: Record<string, string> = {
-  POOL: 'Piscina',
-  GYM: 'Gimnasio',
-  SPA: 'Spa',
-  RESTAURANT: 'Restaurante',
-  BAR: 'Bar',
-  WIFI: 'WiFi gratis',
-  PARKING: 'Parqueadero',
-  AIR_CONDITIONING: 'Aire acondicionado',
-  ROOM_SERVICE: 'Servicio a la habitación',
-  LAUNDRY: 'Lavandería',
-  CONCIERGE: 'Conserje',
-  BEACH_ACCESS: 'Acceso a playa',
-  SKI_ACCESS: 'Acceso a esquí',
-  PET_FRIENDLY: 'Admite mascotas',
-  SMOKING_AREA: 'Zona de fumadores',
-  EV_CHARGING: 'Carga eléctrica',
-  BUSINESS_CENTER: 'Centro de negocios',
-  CONFERENCE_ROOM: 'Sala de conferencias',
-  CHILDREN_PLAYGROUND: 'Parque infantil',
-  SHUTTLE: 'Transporte',
-  BREAKFAST_INCLUDED: 'Desayuno incluido',
-};
+const AMENIDAD_LABELS: Record<string, string> = Object.fromEntries(
+  [...POPULAR_AMENITIES, ...EXTRA_AMENITIES].map(a => [a.value, a.label])
+);
 
 @Component({
   selector: 'app-hotels-list',
@@ -335,10 +310,6 @@ export class HotelsListComponent implements OnInit {
     this.orden = 'rating_desc';
     this.page = 0;
     this.loadHotels();
-  }
-
-  hasAmenidad(hotel: HotelListItem, value: string): boolean {
-    return hotel.amenidades?.includes(value) ?? false;
   }
 
   getAmenidadLabel(value: string): string {

@@ -132,7 +132,7 @@ async def listar_hoteles_service(
                 ciudad=hotel.ciudad,
                 pais=hotel.pais,
                 estrellas=hotel.estrellas,
-                amenidades=getattr(hotel, 'amenidades', None) or [],
+                amenidades=hotel.amenidades or [],
                 imagenes=hotel.imagenes or [],
                 precio_minimo=int(precio_minimo),
                 created_at=hotel.created_at,

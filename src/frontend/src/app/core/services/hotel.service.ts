@@ -105,6 +105,6 @@ export class HotelService {
   }
 
   listCountries(): Observable<{ paises: string[] }> {
-    return this.http.get<{ paises: string[] }>(`${this.baseUrl}/hoteles/paises`);
+    return this.api.get<{ paises: string[] }>('/hoteles/paises');
   }
 }

@@ -44,6 +44,7 @@ async def test_listar_hoteles_service_returns_filtered_result():
         ciudad="Bogota",
         pais="Colombia",
         estrellas=4,
+        amenidades=[],
         imagenes=["img1.jpg", "img2.jpg"],
         created_at=created_at,
     )
@@ -321,6 +322,7 @@ async def test_listar_hoteles_service_filters_by_ciudad():
         ciudad="Bogota",
         pais="Colombia",
         estrellas=4,
+        amenidades=[],
         imagenes=[],
         created_at=created_at,
     )
@@ -361,6 +363,7 @@ async def test_listar_hoteles_service_filters_by_capacidad_min():
         ciudad="Medellin",
         pais="Colombia",
         estrellas=3,
+        amenidades=[],
         imagenes=[],
         created_at=created_at,
     )
@@ -401,6 +404,7 @@ async def test_listar_hoteles_service_nombre_asc():
         ciudad="Bogota",
         pais="Colombia",
         estrellas=5,
+        amenidades=[],
         imagenes=[],
         created_at=created_at,
     )
@@ -440,6 +444,7 @@ async def test_listar_hoteles_service_nombre_desc():
         ciudad="Bogota",
         pais="Colombia",
         estrellas=4,
+        amenidades=[],
         imagenes=[],
         created_at=created_at,
     )

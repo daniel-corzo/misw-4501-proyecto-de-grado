@@ -255,6 +255,7 @@ async def test_get_hoteles_returns_list_with_imagenes_and_precio_minimo(override
         ciudad="Bogota",
         pais="Colombia",
         estrellas=4,
+        amenidades=[],
         imagenes=["hotel-lista.jpg"],
         created_at=datetime.now(UTC),
     )
@@ -417,6 +418,7 @@ async def test_get_hoteles_filters_by_ciudad(override_client, mock_db_session):
         ciudad="Bogota",
         pais="Colombia",
         estrellas=4,
+        amenidades=[],
         imagenes=[],
         created_at=datetime.now(UTC),
     )
@@ -444,6 +446,7 @@ async def test_get_hoteles_filters_by_capacidad_min(override_client, mock_db_ses
         ciudad="Medellin",
         pais="Colombia",
         estrellas=3,
+        amenidades=[],
         imagenes=[],
         created_at=datetime.now(UTC),
     )
@@ -471,6 +474,7 @@ async def test_get_hoteles_orden_nombre_asc(override_client, mock_db_session):
         ciudad="Bogota",
         pais="Colombia",
         estrellas=5,
+        amenidades=[],
         imagenes=[],
         created_at=datetime.now(UTC),
     )
@@ -497,6 +501,7 @@ async def test_get_hoteles_orden_nombre_desc(override_client, mock_db_session):
         ciudad="Bogota",
         pais="Colombia",
         estrellas=4,
+        amenidades=[],
         imagenes=[],
         created_at=datetime.now(UTC),
     )
