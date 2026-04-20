@@ -7,11 +7,35 @@ import { HotelService, HotelListItem, HotelListParams } from '../../../core/serv
 const LIMIT = 10;
 
 const POPULAR_AMENITIES = [
-  { value: 'POOL', label: 'Swimming Pool' },
-  { value: 'WIFI', label: 'Free WiFi' },
-  { value: 'GYM', label: 'Fitness Center' },
-  { value: 'SPA', label: 'Spa & Wellness' },
+  { value: 'POOL', label: 'Piscina' },
+  { value: 'WIFI', label: 'WiFi gratis' },
+  { value: 'GYM', label: 'Gimnasio' },
+  { value: 'SPA', label: 'Spa y bienestar' },
 ];
+
+const AMENIDAD_LABELS: Record<string, string> = {
+  POOL: 'Piscina',
+  GYM: 'Gimnasio',
+  SPA: 'Spa',
+  RESTAURANT: 'Restaurante',
+  BAR: 'Bar',
+  WIFI: 'WiFi gratis',
+  PARKING: 'Parqueadero',
+  AIR_CONDITIONING: 'Aire acondicionado',
+  ROOM_SERVICE: 'Servicio a la habitación',
+  LAUNDRY: 'Lavandería',
+  CONCIERGE: 'Conserje',
+  BEACH_ACCESS: 'Acceso a playa',
+  SKI_ACCESS: 'Acceso a esquí',
+  PET_FRIENDLY: 'Admite mascotas',
+  SMOKING_AREA: 'Zona de fumadores',
+  EV_CHARGING: 'Carga eléctrica',
+  BUSINESS_CENTER: 'Centro de negocios',
+  CONFERENCE_ROOM: 'Sala de conferencias',
+  CHILDREN_PLAYGROUND: 'Parque infantil',
+  SHUTTLE: 'Transporte',
+  BREAKFAST_INCLUDED: 'Desayuno incluido',
+};
 
 @Component({
   selector: 'app-hotels-list',
@@ -203,6 +227,10 @@ export class HotelsListComponent implements OnInit {
 
   hasAmenidad(hotel: HotelListItem, value: string): boolean {
     return hotel.amenidades?.includes(value) ?? false;
+  }
+
+  getAmenidadLabel(value: string): string {
+    return AMENIDAD_LABELS[value] ?? value;
   }
 
   getStars(count: number): boolean[] {

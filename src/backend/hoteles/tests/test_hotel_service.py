@@ -101,26 +101,25 @@ async def test_listar_hoteles_service_raises_on_invalid_price_range():
 
 
 @pytest.mark.anyio
-async def test_listar_hoteles_service_raises_when_amenidad_no_es_popular():
+async def test_listar_hoteles_service_accepts_gym_and_returns_empty():
     db = AsyncMock()
-    db.execute = AsyncMock()
+    db.execute = AsyncMock(side_effect=[_ScalarResult(0), _RowsResult([])])
 
-    with pytest.raises(HTTPException) as exc:
-        await listar_hoteles_service(
-            db=db,
-            limit=10,
-            offset=0,
-            orden="rating_desc",
-            precio_min=None,
-            precio_max=None,
-            rango_50_1000=False,
-            estrellas=None,
-            amenidades_populares=[AmenidadHotel.GYM],
-        )
+    result = await listar_hoteles_service(
+        db=db,
+        limit=10,
+        offset=0,
+        orden="rating_desc",
+        precio_min=None,
+        precio_max=None,
+        rango_50_1000=False,
+        estrellas=None,
+        amenidades_populares=[AmenidadHotel.GYM],
+    )
 
-    assert exc.value.status_code == 400
-    assert "amenidades populares" in exc.value.detail
-    db.execute.assert_not_awaited()
+    assert result.total == 0
+    assert result.hoteles == []
+    assert db.execute.await_count == 2
 
 
 @pytest.mark.anyio

@@ -27,14 +27,6 @@ from app.schemas.hotel import (
 
 OrdenHoteles = Literal["precio_asc", "precio_desc", "rating_desc", "nombre_asc", "nombre_desc"]
 
-AMENIDADES_POPULARES_PERMITIDAS = {
-    AmenidadHotel.WIFI,
-    AmenidadHotel.POOL,
-    AmenidadHotel.PET_FRIENDLY,
-    AmenidadHotel.BREAKFAST_INCLUDED,
-    AmenidadHotel.PARKING,
-}
-
 
 async def listar_hoteles_service(
     db: AsyncSession,
@@ -86,15 +78,6 @@ async def listar_hoteles_service(
             base_query = base_query.where(Hotel.estrellas.in_(estrellas_limpias))
 
     if amenidades_populares:
-        amenidades_no_permitidas = [a.value for a in amenidades_populares if a not in AMENIDADES_POPULARES_PERMITIDAS]
-        if amenidades_no_permitidas:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=(
-                    "Solo se permiten amenidades populares en el filtro: "
-                    "WIFI, POOL, PET_FRIENDLY, BREAKFAST_INCLUDED, PARKING"
-                ),
-            )
         valores_amenidades = [amenidad.value for amenidad in amenidades_populares]
         base_query = base_query.where(Hotel.amenidades.contains(valores_amenidades))
 

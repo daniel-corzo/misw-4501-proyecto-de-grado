@@ -3,8 +3,8 @@
   <!-- ── Sidebar ──────────────────────────────────────────────── -->
   <aside class="hotels-filters">
     <div class="hotels-filters__header">
-      <span class="hotels-filters__title">Filters</span>
-      <button class="hotels-filters__clear" type="button" (click)="clearFilters()">Clear all</button>
+      <span class="hotels-filters__title">Filtros</span>
+      <button class="hotels-filters__clear" type="button" (click)="clearFilters()">Limpiar todo</button>
     </div>
 
     <!-- Price per night -->
@@ -13,7 +13,7 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
         </svg>
-        Price per night
+        Precio por noche
       </h3>
       <div class="price-slider">
         <div class="price-slider__labels">
@@ -54,7 +54,7 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
         </svg>
-        Star Rating
+        Calificación
       </h3>
       @for (star of starOptions; track star) {
         <label class="hotels-filters__checkbox-row">
@@ -80,7 +80,7 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
         </svg>
-        Amenities
+        Comodidades
       </h3>
       @for (amenity of popularAmenities; track amenity.value) {
         <label class="hotels-filters__checkbox-row">
@@ -100,25 +100,25 @@
 
     <!-- Breadcrumb -->
     <nav class="breadcrumb">
-      <a class="breadcrumb__link" routerLink="/">Home</a>
+      <a class="breadcrumb__link" routerLink="/">Inicio</a>
       <span class="breadcrumb__sep">›</span>
-      <span>Search Results</span>
+      <span>Resultados de búsqueda</span>
     </nav>
 
     <!-- Title + sort -->
     <div class="hotels-main__header">
       <div>
         <h1 class="hotels-main__title">
-          Hotels{{ ciudad ? ' in ' + ciudad : '' }}
+          Hoteles{{ ciudad ? ' en ' + ciudad : '' }}
         </h1>
         <p class="hotels-main__subtitle">
-          {{ total }} {{ total === 1 ? 'property' : 'properties' }} found
+          {{ total }} {{ total === 1 ? 'propiedad encontrada' : 'propiedades encontradas' }}
           @if (dateRangeLabel) { · {{ dateRangeLabel }} }
-          @if (huespedes > 1) { · {{ huespedes }} guests }
+          @if (huespedes > 1) { · {{ huespedes }} huéspedes }
         </p>
       </div>
       <div class="sort-control">
-        <label class="sort-control__label">Sort by:</label>
+        <label class="sort-control__label">Ordenar por:</label>
         <select class="sort-control__select" [(ngModel)]="orden" (change)="onOrdenChange()">
           @for (opt of sortOptions; track opt.value) {
             <option [value]="opt.value">{{ opt.label }}</option>
@@ -140,7 +140,21 @@
     <!-- Empty -->
     @if (!loading && !error && hoteles.length === 0) {
       <div class="hotels-main__empty">
-        No se encontraron hoteles con los filtros seleccionados.
+        <div class="hotels-main__empty-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none">
+            <circle cx="34" cy="34" r="18" fill="var(--color-primary)" opacity="0.15"/>
+            <circle cx="34" cy="34" r="18" stroke="var(--color-primary)" stroke-width="2.5"/>
+            <line x1="47" y1="47" x2="62" y2="62" stroke="var(--color-primary)" stroke-width="3" stroke-linecap="round"/>
+            <path d="M28 34 h12 M34 28 v12" stroke="var(--color-primary)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+          </svg>
+        </div>
+        <h2 class="hotels-main__empty-title">Ningún hotel coincide con tu búsqueda</h2>
+        <p class="hotels-main__empty-subtitle">
+          Intenta ajustar los filtros o ampliar el rango de precio para descubrir más opciones.
+        </p>
+        <button class="hotels-main__empty-btn" type="button" (click)="clearFilters()">
+          Limpiar filtros
+        </button>
       </div>
     }
 
@@ -193,10 +207,9 @@
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
                   Cancelación gratis
                 </span>
-                @if (hasAmenidad(hotel, 'WIFI')) {
+                @for (amenidad of hotel.amenidades; track amenidad) {
                   <span class="badge badge--muted">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
-                    Free WiFi
+                    {{ getAmenidadLabel(amenidad) }}
                   </span>
                 }
               </div>
@@ -220,7 +233,7 @@
             class="pagination__btn"
             [disabled]="page === 0"
             (click)="goToPage(page - 1)"
-            aria-label="Previous"
+            aria-label="Anterior"
           >‹</button>
 
           @for (p of visiblePages; track $index) {
@@ -239,7 +252,7 @@
             class="pagination__btn"
             [disabled]="page === totalPages - 1"
             (click)="goToPage(page + 1)"
-            aria-label="Next"
+            aria-label="Siguiente"
           >›</button>
         </nav>
       }
