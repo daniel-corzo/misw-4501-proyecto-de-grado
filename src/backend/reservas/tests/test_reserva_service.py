@@ -5,8 +5,9 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from fastapi import HTTPException
 
+from app.models.reserva import Reserva
 from app.schemas.reserva import CrearReservaRequest
-from app.services.reserva_service import crear_reserva_service
+from app.services.reserva_service import cancelar_reserva_service, crear_reserva_service
 from travelhub_common.security import RoleEnum, User
 
 USER_ID = uuid.uuid4()
@@ -16,6 +17,12 @@ HAB_ID = uuid.uuid4()
 def _execute_result_no_conflict():
     r = MagicMock()
     r.scalar_one_or_none.return_value = None
+    return r
+
+
+def _execute_result_with_reserva(reserva: Reserva):
+    r = MagicMock()
+    r.scalar_one_or_none.return_value = reserva
     return r
 
 
@@ -41,6 +48,21 @@ def _body():
         fecha_entrada=date(2026, 6, 1),
         fecha_salida=date(2026, 6, 4),
         num_huespedes=1,
+    )
+
+
+def _build_reserva(estado: str) -> Reserva:
+    now = datetime.now(UTC)
+    return Reserva(
+        id=uuid.uuid4(),
+        check_in=now,
+        check_out=now,
+        estado=estado,
+        personas=1,
+        viajero_id=USER_ID,
+        habitaciones_ids=[HAB_ID],
+        pago_id=None,
+        created_at=now,
     )
 
 
@@ -74,3 +96,54 @@ async def test_crear_reserva_service_409_overlap_conflict(mock_db):
 
     assert exc.value.status_code == 409
     mock_db.add.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_cancelar_reserva_service_success(mock_db):
+    reserva = _build_reserva("confirmada")
+    mock_db.execute = AsyncMock(return_value=_execute_result_with_reserva(reserva))
+    current = User(id=USER_ID, email="viajero@test.com", role=RoleEnum.USER)
+
+    out = await cancelar_reserva_service(
+        db=mock_db,
+        reserva_id=reserva.id,
+        current_user=current,
+    )
+
+    assert out.estado.value == "cancelada"
+    assert mock_db.commit.await_count == 1
+    assert mock_db.refresh.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_cancelar_reserva_service_404_not_found(mock_db):
+    mock_db.execute = AsyncMock(return_value=_execute_result_no_conflict())
+    current = User(id=USER_ID, email="viajero@test.com", role=RoleEnum.USER)
+
+    with pytest.raises(HTTPException) as exc:
+        await cancelar_reserva_service(
+            db=mock_db,
+            reserva_id=uuid.uuid4(),
+            current_user=current,
+        )
+
+    assert exc.value.status_code == 404
+    assert mock_db.commit.await_count == 0
+
+
+@pytest.mark.asyncio
+async def test_cancelar_reserva_service_409_when_already_cancelled(mock_db):
+    reserva = _build_reserva("cancelada")
+    mock_db.execute = AsyncMock(return_value=_execute_result_with_reserva(reserva))
+    current = User(id=USER_ID, email="viajero@test.com", role=RoleEnum.USER)
+
+    with pytest.raises(HTTPException) as exc:
+        await cancelar_reserva_service(
+            db=mock_db,
+            reserva_id=reserva.id,
+            current_user=current,
+        )
+
+    assert exc.value.status_code == 409
+    assert exc.value.detail == "La reserva ya está cancelada"
+    assert mock_db.commit.await_count == 0

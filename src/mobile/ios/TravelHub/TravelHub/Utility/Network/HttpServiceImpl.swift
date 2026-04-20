@@ -100,4 +100,13 @@ final class HttpServiceImpl: HttpService {
 
         return try await self.makeRequest(request)
     }
+
+    func patch<V: Decodable>(url: URL, token: String) async throws -> V {
+        var request = URLRequest(url: url)
+        request.httpMethod = "PATCH"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        return try await self.makeRequest(request)
+    }
 }
