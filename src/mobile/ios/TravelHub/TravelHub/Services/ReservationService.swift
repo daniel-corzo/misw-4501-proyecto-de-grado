@@ -11,7 +11,8 @@ protocol ReservationService {
     func create(reservation: NewReservation) async throws
     func fetchReservations(estado: String) async throws -> ListReservationsResponse
     func fetchReservationDetail(id: UUID) async throws -> ReservationDetailDTO
-    func cancelReservation(id: UUID) async throws -> ReservationDetailDTO
+    @discardableResult
+    func cancelReservation(id: UUID) async throws -> ReservationListItemDTO
 }
 
 final class ReservationServiceImpl: ReservationService {
@@ -57,7 +58,8 @@ final class ReservationServiceImpl: ReservationService {
         return try await httpService.get(url: url, token: token)
     }
 
-    func cancelReservation(id: UUID) async throws -> ReservationDetailDTO {
+    @discardableResult
+    func cancelReservation(id: UUID) async throws -> ReservationListItemDTO {
         let token = try tokenStore.readToken() ?? ""
         let url = HttpRoutes.reservas.url
             .appendingPathComponent(id.uuidString)

@@ -209,6 +209,51 @@ async def test_get_reservas_usuario_activas_returns_200(override_client, mock_db
 
 
 @pytest.mark.asyncio
+async def test_get_reservas_usuario_activas_orders_by_fecha_entrada(override_client, mock_db_session):
+    now = datetime.now(UTC)
+    reserva_tardia = _build_reserva(
+        estado="confirmada",
+        check_out=now + timedelta(days=10),
+        created_at=now + timedelta(minutes=10),
+    )
+    reserva_temprana = _build_reserva(
+        estado="pendiente",
+        check_out=now + timedelta(days=5),
+        created_at=now,
+    )
+
+    reservas = [reserva_tardia, reserva_temprana]
+
+    result = MagicMock()
+    scalar_result = MagicMock()
+    scalar_result.all.return_value = reservas
+    result.scalars.return_value = scalar_result
+    mock_db_session.execute = AsyncMock(return_value=result)
+
+    detalles = {
+        HABITACION_ID: HabitacionReservaDetalleResponse(
+            id=HABITACION_ID,
+            nombre_habitacion="Deluxe Room",
+            nombre_hotel="Grand Hyatt Regency",
+            imagenes_hotel=["https://cdn.example.com/hoteles/grand-hyatt-1.jpg"],
+        )
+    }
+
+    with patch(
+        "app.routers.reservas.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value=detalles),
+    ):
+        response = await override_client.get("/reservas?estado=activas")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert [reserva["fecha_entrada"] for reserva in data["reservas"]] == [
+        reserva_temprana.check_in.date().isoformat(),
+        reserva_tardia.check_in.date().isoformat(),
+    ]
+
+
+@pytest.mark.asyncio
 async def test_get_reservas_usuario_canceladas_returns_200(override_client, mock_db_session):
     now = datetime.now(UTC)
     reservas = [

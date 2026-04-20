@@ -65,15 +65,19 @@ async def listar_reservas_usuario(
             ]),
             Reserva.check_out >= now_utc,
         )
+        stmt = stmt.order_by(Reserva.check_in.asc())
     elif estado == FiltroReservasUsuario.pasadas:
         stmt = stmt.where(
             Reserva.estado != EstadoReserva.cancelada.value,
             Reserva.check_out < now_utc,
         )
-
-    stmt = stmt.order_by(Reserva.created_at.desc())
+    else:
+        stmt = stmt.order_by(Reserva.created_at.desc())
     result = await db.execute(stmt)
     reservas_db = result.scalars().all()
+
+    if estado == FiltroReservasUsuario.activas:
+        reservas_db = sorted(reservas_db, key=lambda reserva: reserva.check_in)
 
     habitacion_ids = list(
         {
