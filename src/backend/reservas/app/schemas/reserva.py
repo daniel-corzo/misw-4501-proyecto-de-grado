@@ -13,6 +13,12 @@ class EstadoReserva(str, Enum):
     completada = "completada"
 
 
+class FiltroReservasUsuario(str, Enum):
+    activas = "activas"
+    canceladas = "canceladas"
+    pasadas = "pasadas"
+
+
 class CrearReservaRequest(BaseModel):
     habitacion_id: UUID
     fecha_entrada: date
@@ -30,6 +36,9 @@ class CrearReservaRequest(BaseModel):
 class ReservaResponse(BaseModel):
     id: UUID
     habitacion_id: UUID
+    nombre_habitacion: Optional[str] = None
+    nombre_hotel: Optional[str] = None
+    imagenes_hotel: List[str] = Field(default_factory=list)
     fecha_entrada: date
     fecha_salida: date
     num_huespedes: int
@@ -41,3 +50,27 @@ class ReservaResponse(BaseModel):
 class ListaReservasResponse(BaseModel):
     total: int
     reservas: List[ReservaResponse]
+
+
+class HabitacionHotelResponse(BaseModel):
+    id: UUID
+    capacidad: int
+    numero: str
+    descripcion: Optional[str] = None
+    imagenes: List[str] = Field(default_factory=list)
+    monto: int
+    impuestos: int
+    disponible: bool
+
+
+class HabitacionReservaDetalleResponse(BaseModel):
+    id: UUID
+    nombre_habitacion: str
+    nombre_hotel: str
+    imagenes_hotel: List[str] = Field(default_factory=list)
+
+
+class ListaReservasHotelResponse(BaseModel):
+    total: int
+    reservas: List[ReservaResponse]
+    habitaciones: List[HabitacionHotelResponse]

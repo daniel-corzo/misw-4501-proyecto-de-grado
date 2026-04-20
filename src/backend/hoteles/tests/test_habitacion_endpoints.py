@@ -201,3 +201,32 @@ async def test_listar_habitaciones_endpoint_authenticated(override_client, mock_
     assert data["total"] == 1
     assert len(data["habitaciones"]) == 1
     assert data["habitaciones"][0]["numero"] == "101"
+
+
+@pytest.mark.asyncio
+async def test_listar_habitaciones_resumen_endpoint_authenticated(override_client, mock_db_session):
+    from app.schemas.hotel import ListaHabitacionesResumenResponse, HabitacionResumenResponse
+
+    with patch("app.routers.hoteles.listar_habitaciones_resumen_por_ids_service", autospec=True) as mock_service:
+        mock_service.return_value = ListaHabitacionesResumenResponse(
+            total=1,
+            habitaciones=[
+                HabitacionResumenResponse(
+                    id=uuid.uuid4(),
+                    nombre_habitacion="Suite ejecutiva",
+                    nombre_hotel="Hotel Test",
+                    imagenes_hotel=["https://cdn.example.com/hotel-test-1.jpg"],
+                )
+            ],
+        )
+
+        response = await override_client.get(
+            "/hoteles/habitaciones/resumen?habitacion_ids=00000000-0000-4000-8000-000000000010"
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 1
+    assert data["habitaciones"][0]["nombre_habitacion"] == "Suite ejecutiva"
+    assert data["habitaciones"][0]["nombre_hotel"] == "Hotel Test"
+    assert data["habitaciones"][0]["imagenes_hotel"] == ["https://cdn.example.com/hotel-test-1.jpg"]

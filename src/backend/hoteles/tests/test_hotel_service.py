@@ -9,6 +9,7 @@ from fastapi import HTTPException
 from app.schemas.hotel import AmenidadHotel, CrearHotelRequest
 from app.services.hotel_service import (
     crear_hotel_service,
+    listar_habitaciones_resumen_por_ids_service,
     listar_hoteles_service,
     obtener_hotel_service,
 )
@@ -31,6 +32,53 @@ class _RowsResult:
 
     def all(self):
         return self._rows
+
+
+@pytest.mark.anyio
+async def test_listar_habitaciones_resumen_por_ids_service_returns_mapped_values():
+    habitacion_id = uuid.uuid4()
+    db = AsyncMock()
+    db.execute = AsyncMock(
+        return_value=_RowsResult(
+            [
+                SimpleNamespace(
+                    id=habitacion_id,
+                    numero="301",
+                    descripcion="Suite ejecutiva",
+                    nombre_hotel="Hotel Prueba",
+                    imagenes_hotel=["https://cdn.example.com/hotel-prueba-1.jpg"],
+                )
+            ]
+        )
+    )
+
+    response = await listar_habitaciones_resumen_por_ids_service(
+        db=db,
+        habitacion_ids=[habitacion_id],
+    )
+
+    assert response.total == 1
+    assert len(response.habitaciones) == 1
+    assert response.habitaciones[0].id == habitacion_id
+    assert response.habitaciones[0].nombre_habitacion == "Suite ejecutiva"
+    assert response.habitaciones[0].nombre_hotel == "Hotel Prueba"
+    assert response.habitaciones[0].imagenes_hotel == ["https://cdn.example.com/hotel-prueba-1.jpg"]
+    db.execute.assert_awaited_once()
+
+
+@pytest.mark.anyio
+async def test_listar_habitaciones_resumen_por_ids_service_empty_ids_returns_empty_without_query():
+    db = AsyncMock()
+    db.execute = AsyncMock()
+
+    response = await listar_habitaciones_resumen_por_ids_service(
+        db=db,
+        habitacion_ids=[],
+    )
+
+    assert response.total == 0
+    assert response.habitaciones == []
+    db.execute.assert_not_awaited()
 
 
 @pytest.mark.anyio

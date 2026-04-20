@@ -22,7 +22,7 @@ struct MainView: View {
             }
             
             NavigationStack {
-                Text("Bookings View")
+                MyBookingsView()
             }
             .tabItem {
                 Label(LocalizedStringResource.TabBar.bookings, systemImage: "calendar")
