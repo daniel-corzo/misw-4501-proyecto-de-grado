@@ -208,6 +208,160 @@ $slider-row-h: 20px;
 
 .hotels-main { min-width: 0; }
 
+/* Country select */
+
+.hotels-filters__select {
+  width: 100%;
+  border: 1px solid var(--color-border, #e5e5ea);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 0.875rem;
+  background: #fff;
+  appearance: auto;
+  cursor: pointer;
+
+  &:focus { outline: 2px solid var(--color-primary, #0077ff); outline-offset: 1px; }
+}
+
+/* Amenities toggle */
+
+.hotels-filters__toggle {
+  background: none;
+  border: none;
+  padding: 4px 0 0;
+  color: var(--color-primary, #0077ff);
+  font-size: 0.82rem;
+  cursor: pointer;
+  display: block;
+
+  &:hover { text-decoration: underline; }
+}
+
+/* Guests stepper */
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.stepper__btn {
+  width: 30px;
+  height: 30px;
+  border: 1.5px solid var(--color-border, #e5e5ea);
+  border-radius: 50%;
+  background: #fff;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.12s ease, color 0.12s ease;
+
+  &:hover:not(:disabled) {
+    border-color: var(--color-primary, #0077ff);
+    color: var(--color-primary, #0077ff);
+  }
+
+  &:disabled { opacity: 0.35; cursor: not-allowed; }
+}
+
+.stepper__value {
+  font-size: 1rem;
+  font-weight: 600;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Search bar row + date pickers */
+
+.search-bar-row {
+  display: flex;
+  gap: var(--space-sm, 12px);
+  align-items: stretch;
+  margin-bottom: var(--space-md, 16px);
+}
+
+.city-search {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.date-inputs {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.date-inputs__group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.date-inputs__label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.date-inputs__input {
+  border: 1.5px solid var(--color-border, #e5e5ea);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 0.875rem;
+  background: #fff;
+  color: var(--color-text, #1c1c1e);
+  cursor: pointer;
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary, #0077ff);
+    box-shadow: 0 0 0 3px rgba(0, 119, 255, 0.12);
+  }
+}
+
+/* City search bar */
+
+.city-search {
+  display: flex;
+  align-items: center;
+  position: relative;
+  background: #fff;
+  border: 1.5px solid var(--color-border, #e5e5ea);
+  border-radius: 8px;
+  padding: 0 14px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:focus-within {
+    border-color: var(--color-primary, #0077ff);
+    box-shadow: 0 0 0 3px rgba(0, 119, 255, 0.12);
+  }
+}
+
+.city-search__icon {
+  flex-shrink: 0;
+  color: var(--color-text-muted, #64748b);
+  pointer-events: none;
+}
+
+.city-search__input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 11px 10px;
+  font-size: 0.95rem;
+  color: var(--color-text, #1c1c1e);
+
+  &::placeholder { color: var(--color-text-muted, #64748b); }
+}
+
 .breadcrumb {
   display: flex;
   align-items: center;
@@ -340,6 +494,12 @@ $slider-row-h: 20px;
   display: flex;
   flex-direction: column;
   gap: var(--space-md, 16px);
+  transition: opacity 0.2s ease;
+
+  &--loading {
+    opacity: 0.55;
+    pointer-events: none;
+  }
 }
 
 .hotel-card {

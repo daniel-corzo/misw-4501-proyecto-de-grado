@@ -10,6 +10,7 @@ from app.schemas.hotel import AmenidadHotel, CrearHotelRequest
 from app.services.hotel_service import (
     crear_hotel_service,
     listar_hoteles_service,
+    listar_paises_service,
     obtener_hotel_service,
 )
 
@@ -655,3 +656,16 @@ async def test_crear_hotel_service_raises_500_on_unknown_user_creation_error(moc
 
     assert exc.value.status_code == 500
     assert "Error al crear el usuario para el hotel" in exc.value.detail
+
+
+@pytest.mark.anyio
+async def test_listar_paises_service():
+    db = AsyncMock()
+    db.execute = AsyncMock(
+        return_value=_RowsResult([("Argentina",), ("Brasil",), ("Colombia",)])
+    )
+
+    response = await listar_paises_service(db=db)
+
+    assert response.paises == ["Argentina", "Brasil", "Colombia"]
+    assert db.execute.await_count == 1

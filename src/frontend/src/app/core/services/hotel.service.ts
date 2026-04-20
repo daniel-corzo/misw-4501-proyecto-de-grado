@@ -103,4 +103,8 @@ export class HotelService {
   getHotelById(id: string): Observable<HotelDetalle> {
     return this.api.get<HotelDetalle>(`/hoteles/${id}`);
   }
+
+  listCountries(): Observable<{ paises: string[] }> {
+    return this.http.get<{ paises: string[] }>(`${this.baseUrl}/hoteles/paises`);
+  }
 }

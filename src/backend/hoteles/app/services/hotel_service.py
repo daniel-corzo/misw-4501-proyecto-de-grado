@@ -7,7 +7,7 @@ from travelhub_common.security import RoleEnum, get_current_user, User
 from app.config import get_settings
 from app.database import get_db
 from fastapi import Depends, HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,6 +21,7 @@ from app.schemas.hotel import (
     HotelDetalleResponse,
     HotelListItemResponse,
     ListaHotelesResponse,
+    ListaPaisesResponse,
     PoliticaDetalleResponse,
 )
 
@@ -82,7 +83,13 @@ async def listar_hoteles_service(
         base_query = base_query.where(Hotel.amenidades.contains(valores_amenidades))
 
     if ciudad:
-        base_query = base_query.where(Hotel.ciudad.ilike(f"%{ciudad}%"))
+        pattern = func.unaccent(f"%{ciudad}%")
+        base_query = base_query.where(
+            or_(
+                func.unaccent(Hotel.ciudad).ilike(pattern),
+                func.unaccent(Hotel.pais).ilike(pattern),
+            )
+        )
 
     if capacidad_min is not None:
         hoteles_con_capacidad = (
@@ -133,6 +140,13 @@ async def listar_hoteles_service(
             for hotel, precio_minimo in hoteles
         ],
     )
+
+
+async def listar_paises_service(db: AsyncSession) -> ListaPaisesResponse:
+    result = await db.execute(
+        select(Hotel.pais).distinct().order_by(Hotel.pais.asc())
+    )
+    return ListaPaisesResponse(paises=[row[0] for row in result.all()])
 
 
 async def obtener_hotel_service(db: AsyncSession, hotel_id):

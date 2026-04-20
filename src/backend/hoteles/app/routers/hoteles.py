@@ -9,6 +9,7 @@ from app.schemas.hotel import (
     CrearHotelRequest,
     HotelDetalleResponse,
     ListaHotelesResponse,
+    ListaPaisesResponse,
     CrearHabitacionRequest,
     HabitacionDetalleResponse,
     ListaHabitacionesResponse,
@@ -18,6 +19,7 @@ from app.services.hotel_service import (
     crear_hotel_service,
     get_hotel_by_user,
     listar_hoteles_service,
+    listar_paises_service,
     obtener_hotel_service,
 )
 from app.services.habitacion_service import (
@@ -99,6 +101,14 @@ async def listar_habitaciones(
     current_hotel: Annotated[Hotel, Depends(get_hotel_by_user)] = None
 ):
     return await listar_habitaciones_service(db=db, hotel=current_hotel, limit=limit, offset=offset)
+
+
+@router.get("/paises", response_model=ListaPaisesResponse, status_code=status.HTTP_200_OK)
+async def listar_paises(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return await listar_paises_service(db=db)
 
 
 @router.get(

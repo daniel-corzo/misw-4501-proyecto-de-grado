@@ -98,6 +98,10 @@ class ListaHabitacionesResponse(BaseModel):
     habitaciones: List[HabitacionDetalleResponse]
 
 
+class ListaPaisesResponse(BaseModel):
+    paises: List[str]
+
+
 class HotelDetalleResponse(BaseModel):
     id: UUID
     nombre: str

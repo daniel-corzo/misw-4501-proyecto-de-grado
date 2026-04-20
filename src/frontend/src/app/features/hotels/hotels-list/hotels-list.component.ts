@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HotelService, HotelListItem, HotelListParams } from '../../../core/services/hotel.service';
@@ -9,9 +9,34 @@ const LIMIT = 10;
 const POPULAR_AMENITIES = [
   { value: 'POOL', label: 'Piscina' },
   { value: 'WIFI', label: 'WiFi gratis' },
+  { value: 'BREAKFAST_INCLUDED', label: 'Desayuno incluido' },
+  { value: 'PARKING', label: 'Parqueadero' },
+];
+
+const POPULAR_AMENITY_VALUES = new Set(POPULAR_AMENITIES.map(a => a.value));
+
+const ALL_AMENITIES = [
+  ...POPULAR_AMENITIES,
   { value: 'GYM', label: 'Gimnasio' },
   { value: 'SPA', label: 'Spa y bienestar' },
+  { value: 'RESTAURANT', label: 'Restaurante' },
+  { value: 'BAR', label: 'Bar' },
+  { value: 'AIR_CONDITIONING', label: 'Aire acondicionado' },
+  { value: 'ROOM_SERVICE', label: 'Servicio a la habitación' },
+  { value: 'LAUNDRY', label: 'Lavandería' },
+  { value: 'CONCIERGE', label: 'Conserje' },
+  { value: 'BEACH_ACCESS', label: 'Acceso a playa' },
+  { value: 'SKI_ACCESS', label: 'Acceso a esquí' },
+  { value: 'PET_FRIENDLY', label: 'Admite mascotas' },
+  { value: 'SMOKING_AREA', label: 'Zona de fumadores' },
+  { value: 'EV_CHARGING', label: 'Carga eléctrica' },
+  { value: 'BUSINESS_CENTER', label: 'Centro de negocios' },
+  { value: 'CONFERENCE_ROOM', label: 'Sala de conferencias' },
+  { value: 'CHILDREN_PLAYGROUND', label: 'Parque infantil' },
+  { value: 'SHUTTLE', label: 'Transporte' },
 ];
+
+const EXTRA_AMENITIES = ALL_AMENITIES.filter(a => !POPULAR_AMENITY_VALUES.has(a.value));
 
 const AMENIDAD_LABELS: Record<string, string> = {
   POOL: 'Piscina',
@@ -47,9 +72,11 @@ const AMENIDAD_LABELS: Record<string, string> = {
 export class HotelsListComponent implements OnInit {
   private readonly hotelService = inject(HotelService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly limit = LIMIT;
   readonly popularAmenities = POPULAR_AMENITIES;
+  readonly extraAmenities = EXTRA_AMENITIES;
   readonly starOptions = [5, 4, 3];
   readonly sortOptions: { value: NonNullable<HotelListParams['orden']>; label: string }[] = [
     { value: 'rating_desc', label: 'Recomendados' },
@@ -101,6 +128,13 @@ export class HotelsListComponent implements OnInit {
   orden: NonNullable<HotelListParams['orden']> = 'rating_desc';
   page = 0;
 
+  // Countries for dropdown
+  paises: string[] = [];
+  selectedPais = '';
+
+  // Amenities expand toggle
+  showAllAmenities = false;
+
   // Results
   hoteles: HotelListItem[] = [];
   total = 0;
@@ -109,6 +143,11 @@ export class HotelsListComponent implements OnInit {
   imageErrors = new Set<string>();
 
   private priceDebounce: ReturnType<typeof setTimeout> | null = null;
+  private cityDebounce: ReturnType<typeof setTimeout> | null = null;
+
+  get today(): string {
+    return new Date().toISOString().split('T')[0];
+  }
 
   get totalPages(): number {
     return Math.max(1, Math.ceil(this.total / this.limit));
@@ -133,11 +172,16 @@ export class HotelsListComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.hotelService.listCountries().subscribe({
+      next: res => { this.paises = res.paises; },
+    });
+
     this.route.queryParams.subscribe(params => {
       this.ciudad = params['ciudad'] || '';
       this.checkIn = params['checkIn'] || '';
       this.checkOut = params['checkOut'] || '';
       this.huespedes = params['huespedes'] ? Number(params['huespedes']) : 1;
+      this.selectedPais = this.paises.includes(this.ciudad) ? this.ciudad : '';
       this.page = 0;
       this.loadHotels();
     });
@@ -179,6 +223,74 @@ export class HotelsListComponent implements OnInit {
       this.page = 0;
       this.loadHotels();
     }, 300);
+  }
+
+  onCityInput(): void {
+    if (this.cityDebounce) clearTimeout(this.cityDebounce);
+    this.selectedPais = '';
+    this.cityDebounce = setTimeout(() => this.applyCityFilter(), 400);
+  }
+
+  onCitySubmit(event: Event): void {
+    event.preventDefault();
+    if (this.cityDebounce) clearTimeout(this.cityDebounce);
+    this.applyCityFilter();
+  }
+
+  onPaisChange(): void {
+    this.ciudad = this.selectedPais;
+    this.applyCityFilter();
+  }
+
+  private applyCityFilter(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { ciudad: this.ciudad || null },
+      queryParamsHandling: 'merge',
+    });
+    // loadHotels() se dispara vía queryParams.subscribe en ngOnInit
+  }
+
+  decrementHuespedes(): void {
+    if (this.huespedes > 1) {
+      this.huespedes--;
+      this.syncHuespedes();
+    }
+  }
+
+  incrementHuespedes(): void {
+    if (this.huespedes < 20) {
+      this.huespedes++;
+      this.syncHuespedes();
+    }
+  }
+
+  private syncHuespedes(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { huespedes: this.huespedes > 1 ? this.huespedes : null },
+      queryParamsHandling: 'merge',
+    });
+    this.page = 0;
+    this.loadHotels();
+  }
+
+  onDateChange(): void {
+    const checkOutMin = this.checkIn
+      ? new Date(new Date(this.checkIn).getTime() + 86400000).toISOString().split('T')[0]
+      : '';
+    if (this.checkOut && this.checkOut <= this.checkIn) {
+      this.checkOut = checkOutMin;
+    }
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        checkIn: this.checkIn || null,
+        checkOut: this.checkOut || null,
+      },
+      queryParamsHandling: 'merge',
+    });
+    // Las fechas aún no se envían al backend (disponibilidad por fechas pendiente con equipo)
   }
 
   toggleStar(star: number): void {
