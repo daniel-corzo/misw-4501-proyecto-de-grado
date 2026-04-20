@@ -3,7 +3,7 @@
   margin: 0 calc(-1 * var(--space-lg));
   background:
     linear-gradient(160deg, rgba(10, 35, 66, 0.55) 0%, rgba(10, 35, 66, 0.35) 55%, rgba(10, 35, 66, 0.55) 100%),
-    url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1800&q=80') center/cover no-repeat;
+    url('/images/hero-search.jpg') center/cover no-repeat;
   padding: calc(var(--space-2xl) * 1.4) var(--space-lg);
   border-bottom: 1px solid var(--color-border);
 }
