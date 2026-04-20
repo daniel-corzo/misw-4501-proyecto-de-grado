@@ -20,30 +20,42 @@ struct DateRangePickerView: View {
         repeating: GridItem(.flexible(), spacing: 0),
         count: 7
     )
-    
-    private let weekDaySymbols: [String] = Calendar.current.shortStandaloneWeekdaySymbols.map {
-        String($0.prefix(1)).uppercased()
-    }
 
+    private var calendar: Calendar {
+        Calendar.current
+    }
+    private var weekDaySymbols: [String] {
+        let symbols = calendar.shortStandaloneWeekdaySymbols
+        let firstWeekdayIndex = calendar.firstWeekday - 1
+        let rotatedSymbols =
+            Array(symbols[firstWeekdayIndex...])
+            + Array(symbols[..<firstWeekdayIndex])
+        return rotatedSymbols.map {
+            String($0.prefix(1)).uppercased()
+        }
+    }
     private var daysInMonth: [Date?] {
         guard
-            let monthStart = Calendar.current.date(
-                from: Calendar.current.dateComponents(
+            let monthStart = calendar.date(
+                from: calendar.dateComponents(
                     [.year, .month],
                     from: currentMonth
                 )
             ),
-            let range = Calendar.current.range(
+            let range = calendar.range(
                 of: .day,
                 in: .month,
                 for: monthStart
             )
         else { return [] }
-
-        let weekday = Calendar.current.component(.weekday, from: monthStart)
-        let leadingEmpties: [Date?] = Array(repeating: nil, count: weekday - 1)
+        let weekday = calendar.component(.weekday, from: monthStart)
+        let leadingEmptyCount = (weekday - calendar.firstWeekday + 7) % 7
+        let leadingEmpties: [Date?] = Array(
+            repeating: nil,
+            count: leadingEmptyCount
+        )
         let days: [Date?] = range.compactMap {
-            Calendar.current.date(byAdding: .day, value: $0 - 1, to: monthStart)
+            calendar.date(byAdding: .day, value: $0 - 1, to: monthStart)
         }
         return leadingEmpties + days
     }
@@ -179,7 +191,8 @@ private struct DayCell: View {
     private var isFirstColumn: Bool { columnIndex == 0 }
     private var isLastColumn: Bool { columnIndex == 6 }
     private var isPast: Bool {
-        Calendar.current.compare(date, to: .now, toGranularity: .day) != .orderedDescending
+        Calendar.current.compare(date, to: .now, toGranularity: .day)
+            != .orderedDescending
     }
 
     var body: some View {
@@ -187,7 +200,9 @@ private struct DayCell: View {
             .font(.subheadline)
             .fontWeight(isStart || isEnd ? .bold : .regular)
             .foregroundStyle(
-                isPast ? Color(.systemGray4) : isStart || isEnd ? .white : isInRange ? .accent : .primary
+                isPast
+                    ? Color(.systemGray4)
+                    : isStart || isEnd ? .white : isInRange ? .accent : .primary
             )
             .frame(maxWidth: .infinity)
             .frame(height: 40)

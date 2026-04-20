@@ -59,7 +59,7 @@ async def crear_reserva_service(
     if conflict.scalar_one_or_none() is not None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="La habitacion ya tiene una reserva activa en las fechas solicitadas",
+            detail="La habitación ya tiene una reserva activa en las fechas solicitadas",
         )
 
     reserva = Reserva(

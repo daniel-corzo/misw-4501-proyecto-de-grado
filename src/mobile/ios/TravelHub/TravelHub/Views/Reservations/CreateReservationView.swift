@@ -71,13 +71,15 @@ struct CreateReservationView: View {
         .safeAreaInset(edge: .bottom) {
             Button {
                 // TODO: Navigate to payment
-                Task {
-                    await self.viewModel.create(
-                        habitacionId: self.selectedHabitacion!.id,
-                        fechaEntrada: self.dateRange.start,
-                        fechaSalida: self.dateRange.end,
-                        numHuespedes: self.guests
-                    )
+                if let selectedHabitacion = self.selectedHabitacion {
+                    Task {
+                        await self.viewModel.create(
+                            habitacionId: selectedHabitacion.id,
+                            fechaEntrada: self.dateRange.start,
+                            fechaSalida: self.dateRange.end,
+                            numHuespedes: self.guests
+                        )
+                    }
                 }
             } label: {
                 HStack {
