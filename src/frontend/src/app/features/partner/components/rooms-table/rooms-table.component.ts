@@ -3,6 +3,12 @@ import { CommonModule } from '@angular/common';
 import { RoomFormModalComponent } from '../room-form-modal/room-form-modal.component';
 import { ApiService } from '../../../../core/services/api.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { HabitacionDetalle } from '../../../../core/services/hotel.service';
+
+interface ListaHabitacionesResponse {
+  total: number;
+  habitaciones: HabitacionDetalle[];
+}
 
 @Component({
   selector: 'app-rooms-table',
@@ -13,8 +19,8 @@ import { ToastService } from '../../../../core/services/toast.service';
 })
 export class RoomsTableComponent implements OnInit {
   isFormModalOpen = false;
-  allRooms: any[] = [];
-  rooms: any[] = [];
+  selectedRoom: HabitacionDetalle | null = null;
+  rooms: HabitacionDetalle[] = [];
   loading = false;
   
   // Pagination variables
@@ -32,7 +38,7 @@ export class RoomsTableComponent implements OnInit {
 
   loadRooms() {
     this.loading = true;
-    this.api.get<any>('/hoteles/habitaciones', { "limit": this.limit, "offset": this.offset }).subscribe({
+    this.api.get<ListaHabitacionesResponse | HabitacionDetalle[]>('/hoteles/habitaciones', { limit: this.limit, offset: this.offset }).subscribe({
       next: (data) => {
         if (Array.isArray(data)) {
           this.rooms = data;
@@ -70,11 +76,18 @@ export class RoomsTableComponent implements OnInit {
   }
 
   openFormModal() {
+    this.selectedRoom = null;
+    this.isFormModalOpen = true;
+  }
+
+  openEditModal(room: HabitacionDetalle) {
+    this.selectedRoom = room;
     this.isFormModalOpen = true;
   }
 
   closeFormModal() {
     this.isFormModalOpen = false;
+    this.selectedRoom = null;
     this.loadRooms();
   }
 }
