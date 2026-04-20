@@ -7,24 +7,24 @@
     <div class="search-bar">
       <div class="search-bar__field">
         <label class="search-bar__label">Destino</label>
-        <input class="search-bar__input" type="text" placeholder="Ciudad o hotel" />
+        <input class="search-bar__input" type="text" placeholder="Ciudad o país" [(ngModel)]="ciudad" />
       </div>
       <div class="search-bar__divider"></div>
       <div class="search-bar__field">
         <label class="search-bar__label">Check-in</label>
-        <input class="search-bar__input" type="date" />
+        <input class="search-bar__input" type="date" [(ngModel)]="checkIn" />
       </div>
       <div class="search-bar__divider"></div>
       <div class="search-bar__field">
         <label class="search-bar__label">Check-out</label>
-        <input class="search-bar__input" type="date" />
+        <input class="search-bar__input" type="date" [(ngModel)]="checkOut" />
       </div>
       <div class="search-bar__divider"></div>
       <div class="search-bar__field">
         <label class="search-bar__label">Huéspedes</label>
-        <input class="search-bar__input" type="number" placeholder="2" min="1" max="20" />
+        <input class="search-bar__input" type="number" placeholder="2" min="1" max="20" [(ngModel)]="huespedes" />
       </div>
-      <button class="search-bar__btn" type="button">Buscar</button>
+      <button class="search-bar__btn" type="button" (click)="buscar()">Buscar</button>
     </div>
   </div>
 </section>

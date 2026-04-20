@@ -1,26 +1,358 @@
-@if (loading) {
-  <p class="hotels-list__status">Cargando hoteles…</p>
-}
+<div class="search-results">
 
-@if (error) {
-  <p class="hotels-list__error">{{ error }}</p>
-}
+  <!-- ── Sidebar ──────────────────────────────────────────────── -->
+  <aside class="hotels-filters">
+    <div class="hotels-filters__header">
+      <span class="hotels-filters__title">Filtros</span>
+      <button class="hotels-filters__clear" type="button" (click)="clearFilters()">Limpiar todo</button>
+    </div>
 
-@if (!loading && !error) {
-  <div class="hotels-list">
-    <h1 class="hotels-list__title">Hoteles</h1>
-    @if (hoteles.length === 0) {
-      <p class="hotels-list__empty">No hay hoteles disponibles.</p>
-    } @else {
-      <ul class="hotels-list__ul">
-        @for (h of hoteles; track h.id) {
-          <li class="hotels-list__li">
-            <a class="hotels-list__link" [routerLink]="['/hotels', h.id]">{{ h.nombre }}</a>
-            <span class="hotels-list__meta"> — {{ h.ciudad }}, {{ h.pais }}</span>
-          </li>
-        }
-      </ul>
-      <p class="hotels-list__count">Mostrando {{ hoteles.length }} de {{ total }}</p>
+    <!-- Country -->
+    @if (paises.length > 0) {
+      <section class="hotels-filters__section">
+        <h3 class="hotels-filters__section-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          País
+        </h3>
+        <select class="hotels-filters__select" [(ngModel)]="selectedPais" (change)="onPaisChange()">
+          <option value="">Todos los países</option>
+          @for (pais of paises; track pais) {
+            <option [value]="pais">{{ pais }}</option>
+          }
+        </select>
+      </section>
     }
-  </div>
-}
+
+    <!-- Guests stepper -->
+    <section class="hotels-filters__section">
+      <h3 class="hotels-filters__section-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Huéspedes
+      </h3>
+      <div class="stepper">
+        <button class="stepper__btn" type="button" (click)="decrementHuespedes()" [disabled]="huespedes <= 1" aria-label="Reducir huéspedes">−</button>
+        <span class="stepper__value">{{ huespedes }}</span>
+        <button class="stepper__btn" type="button" (click)="incrementHuespedes()" [disabled]="huespedes >= 20" aria-label="Aumentar huéspedes">+</button>
+      </div>
+    </section>
+
+    <!-- Price per night -->
+    <section class="hotels-filters__section">
+      <h3 class="hotels-filters__section-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+        </svg>
+        Precio por noche
+      </h3>
+      <div class="price-slider">
+        <div class="price-slider__labels">
+          <span>${{ precioMin.toLocaleString('es-CO') }}</span>
+          <span>{{ precioMax >= PRICE_MAX ? '$' + PRICE_MAX.toLocaleString('es-CO') + '+' : '$' + precioMax.toLocaleString('es-CO') }}</span>
+        </div>
+        <div class="price-slider__row">
+          <div class="price-slider__track">
+            <div
+              class="price-slider__fill"
+              [style.left.%]="priceMinPct"
+              [style.right.%]="100 - priceMaxPct"
+            ></div>
+          </div>
+          <input
+            class="price-slider__input price-slider__input--min"
+            type="range"
+            [min]="PRICE_MIN" [max]="PRICE_MAX" [step]="PRICE_STEP"
+            [(ngModel)]="precioMin"
+            (input)="onPriceMinInput()"
+            aria-label="Precio mínimo"
+          />
+          <input
+            class="price-slider__input price-slider__input--max"
+            type="range"
+            [min]="PRICE_MIN" [max]="PRICE_MAX" [step]="PRICE_STEP"
+            [(ngModel)]="precioMax"
+            (input)="onPriceMaxInput()"
+            aria-label="Precio máximo"
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- Star Rating -->
+    <section class="hotels-filters__section">
+      <h3 class="hotels-filters__section-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+        Calificación
+      </h3>
+      @for (star of starOptions; track star) {
+        <label class="hotels-filters__checkbox-row">
+          <input
+            type="checkbox"
+            [checked]="selectedStars.has(star)"
+            (change)="toggleStar(star)"
+          />
+          <span class="star-row">
+            @for (filled of getStars(star); track $index) {
+              <svg class="star-icon" [class.star-icon--filled]="filled" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+            }
+          </span>
+        </label>
+      }
+    </section>
+
+    <!-- Amenities -->
+    <section class="hotels-filters__section">
+      <h3 class="hotels-filters__section-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        Comodidades
+      </h3>
+      @for (amenity of popularAmenities; track amenity.value) {
+        <label class="hotels-filters__checkbox-row">
+          <input
+            type="checkbox"
+            [checked]="selectedAmenidades.has(amenity.value)"
+            (change)="toggleAmenidad(amenity.value)"
+          />
+          <span>{{ amenity.label }}</span>
+        </label>
+      }
+      @if (showAllAmenities) {
+        @for (amenity of extraAmenities; track amenity.value) {
+          <label class="hotels-filters__checkbox-row">
+            <input
+              type="checkbox"
+              [checked]="selectedAmenidades.has(amenity.value)"
+              (change)="toggleAmenidad(amenity.value)"
+            />
+            <span>{{ amenity.label }}</span>
+          </label>
+        }
+      }
+      <button
+        class="hotels-filters__toggle"
+        type="button"
+        (click)="showAllAmenities = !showAllAmenities"
+      >
+        {{ showAllAmenities ? 'Ver menos' : 'Ver más (+' + extraAmenities.length + ')' }}
+      </button>
+    </section>
+  </aside>
+
+  <!-- ── Main results ──────────────────────────────────────────── -->
+  <main class="hotels-main">
+
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+      <a class="breadcrumb__link" routerLink="/">Inicio</a>
+      <span class="breadcrumb__sep">›</span>
+      <span>Resultados de búsqueda</span>
+    </nav>
+
+    <!-- Search bar row: ciudad + fechas -->
+    <div class="search-bar-row">
+    <!-- City search bar -->
+    <form class="city-search" (submit)="onCitySubmit($event)">
+      <svg class="city-search__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input
+        class="city-search__input"
+        type="text"
+        placeholder="Buscar por ciudad o país…"
+        [(ngModel)]="ciudad"
+        name="ciudad"
+        autocomplete="off"
+        (input)="onCityInput()"
+        aria-label="Filtrar por ciudad"
+      />
+    </form>
+
+    <!-- Date pickers -->
+    <div class="date-inputs">
+      <label class="date-inputs__group">
+        <span class="date-inputs__label">Entrada</span>
+        <input
+          class="date-inputs__input"
+          type="date"
+          [(ngModel)]="checkIn"
+          name="checkIn"
+          [min]="today"
+          (change)="onDateChange()"
+          aria-label="Fecha de entrada"
+        />
+      </label>
+      <label class="date-inputs__group">
+        <span class="date-inputs__label">Salida</span>
+        <input
+          class="date-inputs__input"
+          type="date"
+          [(ngModel)]="checkOut"
+          name="checkOut"
+          [min]="checkIn || today"
+          (change)="onDateChange()"
+          aria-label="Fecha de salida"
+        />
+      </label>
+    </div>
+    </div>
+
+    <!-- Title + sort -->
+    <div class="hotels-main__header">
+      <div>
+        <h1 class="hotels-main__title">
+          Hoteles{{ ciudad ? ' en ' + ciudad : '' }}
+        </h1>
+        <p class="hotels-main__subtitle">
+          {{ total }} {{ total === 1 ? 'propiedad encontrada' : 'propiedades encontradas' }}
+          @if (dateRangeLabel) { · {{ dateRangeLabel }} }
+          @if (huespedes > 1) { · {{ huespedes }} huéspedes }
+        </p>
+      </div>
+      <div class="sort-control">
+        <label class="sort-control__label" for="sort-control-select">Ordenar por:</label>
+        <select id="sort-control-select" class="sort-control__select" [(ngModel)]="orden" (change)="onOrdenChange()">
+          @for (opt of sortOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <!-- Initial loading (solo cuando aún no hay resultados previos) -->
+    @if (loading && hoteles.length === 0) {
+      <div class="hotels-main__status">Cargando hoteles…</div>
+    }
+
+    <!-- Error -->
+    @if (!loading && error) {
+      <div class="hotels-main__error">{{ error }}</div>
+    }
+
+    <!-- Empty -->
+    @if (!loading && !error && hoteles.length === 0) {
+      <div class="hotels-main__empty">
+        <div class="hotels-main__empty-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none">
+            <circle cx="34" cy="34" r="18" fill="var(--color-primary)" opacity="0.15"/>
+            <circle cx="34" cy="34" r="18" stroke="var(--color-primary)" stroke-width="2.5"/>
+            <line x1="47" y1="47" x2="62" y2="62" stroke="var(--color-primary)" stroke-width="3" stroke-linecap="round"/>
+            <path d="M28 34 h12 M34 28 v12" stroke="var(--color-primary)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+          </svg>
+        </div>
+        <h2 class="hotels-main__empty-title">Ningún hotel coincide con tu búsqueda</h2>
+        <p class="hotels-main__empty-subtitle">
+          Intenta ajustar los filtros o ampliar el rango de precio para descubrir más opciones.
+        </p>
+        <button class="hotels-main__empty-btn" type="button" (click)="clearFilters()">
+          Limpiar filtros
+        </button>
+      </div>
+    }
+
+    <!-- Hotel cards (se mantienen visibles durante recargas para evitar parpadeo) -->
+    @if (!error && hoteles.length > 0) {
+      <div class="hotel-list" [class.hotel-list--loading]="loading" [attr.aria-busy]="loading">
+        @for (hotel of hoteles; track hotel.id) {
+          <article class="hotel-card">
+            <div class="hotel-card__image-wrap">
+              @if (hasValidImage(hotel)) {
+                <img
+                  class="hotel-card__image"
+                  [src]="getImageUrl(hotel)"
+                  [alt]="hotel.nombre"
+                  loading="lazy"
+                  (error)="onImageError(hotel.id)"
+                />
+              } @else {
+                <div class="hotel-card__image hotel-card__image--placeholder" aria-hidden="true">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 21h18"/>
+                    <path d="M5 21V7l7-4 7 4v14"/>
+                    <path d="M9 9h2M9 13h2M9 17h2M13 9h2M13 13h2M13 17h2"/>
+                  </svg>
+                </div>
+              }
+            </div>
+
+            <div class="hotel-card__body">
+              <div class="hotel-card__meta">
+                <span class="star-row">
+                  @for (filled of getStars(hotel.estrellas); track $index) {
+                    <svg class="star-icon" [class.star-icon--filled]="filled" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                  }
+                </span>
+                <span class="hotel-card__type">Hotel</span>
+              </div>
+
+              <h2 class="hotel-card__name">{{ hotel.nombre }}</h2>
+
+              <p class="hotel-card__location">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                {{ hotel.ciudad }}, {{ hotel.pais }}
+              </p>
+
+              <div class="hotel-card__badges">
+                <span class="badge badge--green">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                  Cancelación gratis
+                </span>
+                @for (amenidad of hotel.amenidades; track amenidad) {
+                  <span class="badge badge--muted">
+                    {{ getAmenidadLabel(amenidad) }}
+                  </span>
+                }
+              </div>
+            </div>
+
+            <div class="hotel-card__price-block">
+              <p class="hotel-card__price">
+                ${{ hotel.precio_minimo.toLocaleString('es-CO') }}
+              </p>
+              <p class="hotel-card__price-label">Precio total (incl. imp.)</p>
+              <a class="hotel-card__btn" [routerLink]="['/hotels', hotel.id]">Ver detalle</a>
+            </div>
+          </article>
+        }
+      </div>
+
+      <!-- Pagination -->
+      @if (totalPages > 1) {
+        <nav class="pagination">
+          <button
+            class="pagination__btn"
+            [disabled]="page === 0"
+            (click)="goToPage(page - 1)"
+            aria-label="Anterior"
+          >‹</button>
+
+          @for (p of visiblePages; track $index) {
+            @if (p === '...') {
+              <span class="pagination__ellipsis">…</span>
+            } @else {
+              <button
+                class="pagination__btn"
+                [class.pagination__btn--active]="page === p"
+                (click)="goToPage(p)"
+              >{{ p + 1 }}</button>
+            }
+          }
+
+          <button
+            class="pagination__btn"
+            [disabled]="page === totalPages - 1"
+            (click)="goToPage(page + 1)"
+            aria-label="Siguiente"
+          >›</button>
+        </nav>
+      }
+    }
+  </main>
+
+</div>

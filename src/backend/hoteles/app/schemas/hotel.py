@@ -62,6 +62,7 @@ class HotelListItemResponse(BaseModel):
     ciudad: str
     pais: str
     estrellas: int
+    amenidades: List[str] = Field(default_factory=list)
     imagenes: List[str] = Field(default_factory=list)
     precio_minimo: int
     created_at: datetime
@@ -95,6 +96,10 @@ class HabitacionDetalleResponse(BaseModel):
 class ListaHabitacionesResponse(BaseModel):
     total: int
     habitaciones: List[HabitacionDetalleResponse]
+
+
+class ListaPaisesResponse(BaseModel):
+    paises: List[str]
 
 
 class HabitacionResumenResponse(BaseModel):

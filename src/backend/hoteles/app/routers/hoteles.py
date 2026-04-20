@@ -9,6 +9,7 @@ from app.schemas.hotel import (
     CrearHotelRequest,
     HotelDetalleResponse,
     ListaHotelesResponse,
+    ListaPaisesResponse,
     CrearHabitacionRequest,
     HabitacionDetalleResponse,
     ListaHabitacionesResponse,
@@ -20,6 +21,7 @@ from app.services.hotel_service import (
     get_hotel_by_user,
     listar_habitaciones_resumen_por_ids_service,
     listar_hoteles_service,
+    listar_paises_service,
     obtener_hotel_service,
 )
 from app.services.habitacion_service import (
@@ -44,6 +46,8 @@ async def listar_hoteles(
     rango_50_1000: bool = Query(default=False),
     estrellas: list[int] | None = Query(default=None),
     amenidades_populares: list[AmenidadHotel] | None = Query(default=None),
+    ciudad: str | None = Query(default=None, max_length=100),
+    capacidad_min: int | None = Query(default=None, ge=1, le=20),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -57,6 +61,8 @@ async def listar_hoteles(
         rango_50_1000=rango_50_1000,
         estrellas=estrellas,
         amenidades_populares=amenidades_populares,
+        ciudad=ciudad,
+        capacidad_min=capacidad_min,
     )
 
 
@@ -98,6 +104,14 @@ async def listar_habitaciones(
     current_hotel: Annotated[Hotel, Depends(get_hotel_by_user)] = None
 ):
     return await listar_habitaciones_service(db=db, hotel=current_hotel, limit=limit, offset=offset)
+
+
+@router.get("/paises", response_model=ListaPaisesResponse, status_code=status.HTTP_200_OK)
+async def listar_paises(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return await listar_paises_service(db=db)
 
 
 @router.put(
