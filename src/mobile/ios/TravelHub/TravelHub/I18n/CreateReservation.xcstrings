@@ -1,193 +1,251 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "accountOverview" : {
+    "guests" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ACCOUNT OVERVIEW"
+            "value" : "Guests"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "RESUMEN DE LA CUENTA"
+            "value" : "Huéspedes"
           }
         }
       }
     },
-    "bookingHistory" : {
+    "navigationTitle" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Booking History"
+            "value" : "Create Booking"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Historial de Reservas"
+            "value" : "Crear Reserva"
           }
         }
       }
     },
-    "logOut" : {
+    "occupancyTaxes" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Log Out"
+            "value" : "Occupancy taxes"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cerrar Sesión"
+            "value" : "Impuestos"
           }
         }
       }
     },
-    "notifications" : {
+    "perNight" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Notifications"
+            "value" : "/night"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Notificaciones"
+            "value" : "/noche"
           }
         }
       }
     },
-    "paymentMethods" : {
+    "pricePerNight" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Payment Methods"
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "$%1$(pricePerNight)@ x %2$(nights)lld night"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "$%1$(pricePerNight)@ x %2$(nights)lld nights"
+                }
+              }
+            }
           }
         },
         "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Medios de Pago"
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "$%1$(pricePerNight)@ x %2$(nights)lld noche"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "$%1$(pricePerNight)@ x %2$(nights)lld noches"
+                }
+              }
+            }
           }
         }
       }
     },
-    "personalInformation" : {
+    "proceedToPayment" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Personal Information"
+            "value" : "Proceed to Payment"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Información Personal"
+            "value" : "Realizar Pago"
           }
         }
       }
     },
-    "preferences" : {
+    "reservationCreatedDescription" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "PREFERENCES"
+            "value" : "Your reservation was created successfully!"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "PREFERENCIAS"
+            "value" : "Su reserva fue creada exitosamente!"
           }
         }
       }
     },
-    "privacyAndSecurity" : {
+    "reservationCreatedTitle" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Privacy & Security"
+            "value" : "Reservation Created"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Privacidad y Seguridad"
+            "value" : "Reserva Creada"
           }
         }
       }
     },
-    "supportAndFaq" : {
+    "roomNumber" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Support & FAQ"
+            "value" : "Room %1$(roomNumber)@"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Soporte y FAQ"
+            "value" : "Habitación %(roomNumber)@"
           }
         }
       }
     },
-    "title" : {
+    "selectedHotel" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Profile"
+            "value" : "Selected Hotel"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Perfil"
+            "value" : "Hotel Seleccionado"
           }
         }
       }
     },
-    "viewYourPastStays" : {
+    "selectRoom" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "View your past stays"
+            "value" : "Select Room"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ver estancias pasadas"
+            "value" : "Seleccionar Habitación"
+          }
+        }
+      }
+    },
+    "serviceFee" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Service fee"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tarifa por servicio"
+          }
+        }
+      }
+    },
+    "total" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Total"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Total"
           }
         }
       }
     }
   },
-  "version" : "1.1"
+  "version" : "1.2"
 }

@@ -48,7 +48,6 @@ async def obtener_reserva(
     # TODO: reemplazar con consulta real a la BD
     return ReservaResponse(
         id=reserva_id,
-        usuario_id=uuid.uuid4(),
         habitacion_id=uuid.uuid4(),
         fecha_entrada=date(2026, 4, 1),
         fecha_salida=date(2026, 4, 5),

@@ -23,6 +23,7 @@ from app.services.hotel_service import (
     obtener_hotel_service,
 )
 from app.services.habitacion_service import (
+    actualizar_habitacion_service,
     crear_habitacion_service,
     listar_habitaciones_service,
 )
@@ -109,6 +110,28 @@ async def listar_paises(
     current_user: User = Depends(get_current_user),
 ):
     return await listar_paises_service(db=db)
+
+
+@router.put(
+    "/habitaciones/{habitacion_id}",
+    response_model=HabitacionDetalleResponse,
+    status_code=status.HTTP_200_OK,
+    dependencies=[
+        Depends(RoleChecker([RoleEnum.MANAGER, RoleEnum.USER]))
+    ],
+)
+async def actualizar_habitacion(
+    habitacion_id: uuid.UUID,
+    body: CrearHabitacionRequest,
+    db: AsyncSession = Depends(get_db),
+    current_hotel: Annotated[Hotel, Depends(get_hotel_by_user)] = None,
+):
+    return await actualizar_habitacion_service(
+        db=db,
+        hotel=current_hotel,
+        habitacion_id=habitacion_id,
+        body=body,
+    )
 
 
 @router.get(

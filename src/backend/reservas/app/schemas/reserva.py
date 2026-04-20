@@ -14,7 +14,6 @@ class EstadoReserva(str, Enum):
 
 
 class CrearReservaRequest(BaseModel):
-    usuario_id: UUID
     habitacion_id: UUID
     fecha_entrada: date
     fecha_salida: date
@@ -30,7 +29,6 @@ class CrearReservaRequest(BaseModel):
 
 class ReservaResponse(BaseModel):
     id: UUID
-    usuario_id: UUID
     habitacion_id: UUID
     fecha_entrada: date
     fecha_salida: date

@@ -46,6 +46,14 @@ protocol HttpService {
     ///     - token: The bearer token for authorization
     ///
     func post<V: Decodable>(url: URL, token: String?) async throws -> V
+    
+    /// Sends a POST request with an authorization token and body
+    ///
+    /// - Parameters:
+    ///     - url: The URL to which the request will be made
+    ///     - token: The bearer token for authorization
+    ///     - body: The request's body
+    func post<T: Encodable, V: Decodable>(url: URL, body: T, token: String) async throws -> V
 
     /// Sends a GET request
     ///

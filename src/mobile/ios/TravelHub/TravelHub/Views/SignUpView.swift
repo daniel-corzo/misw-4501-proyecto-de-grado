@@ -16,15 +16,17 @@ struct SignUpView: View {
     @State private var isLoading: Bool = false
 
     var agreementText: AttributedString {
+        let termsText = String(localized: .SignUp.terms)
+        let privacyPolicyText = String(localized: .SignUp.privacyPolicy)
         var text = AttributedString(
-            "I agree to the Terms of Service and Privacy Policy"
+            String(localized: .SignUp.agreeToTerms(termsText: termsText, privacyPolicyText: privacyPolicyText))
         )
 
-        if let termsRange = text.range(of: "Terms of Service") {
+        if let termsRange = text.range(of: termsText) {
             text[termsRange].foregroundColor = .blue
         }
 
-        if let privacyRange = text.range(of: "Privacy Policy") {
+        if let privacyRange = text.range(of: privacyPolicyText) {
             text[privacyRange].foregroundColor = .blue
         }
 
