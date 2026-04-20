@@ -28,6 +28,7 @@ from app.services.habitacion_service import (
     actualizar_habitacion_service,
     crear_habitacion_service,
     listar_habitaciones_service,
+    obtener_habitacion_por_id_service,
 )
 from app.models.hotel import Hotel
 from travelhub_common.security import get_current_user, User, RoleChecker, RoleEnum
@@ -151,6 +152,18 @@ async def listar_habitaciones_resumen_por_ids(
         habitacion_ids=habitacion_ids,
     )
 
+
+@router.get(
+    "/habitaciones/{habitacion_id}",
+    response_model=HabitacionDetalleResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def obtener_habitacion(
+    habitacion_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return await obtener_habitacion_por_id_service(db=db, habitacion_id=habitacion_id)
 
 @router.get(
     "/{hotel_id}", response_model=HotelDetalleResponse, status_code=status.HTTP_200_OK

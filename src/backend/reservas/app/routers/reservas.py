@@ -1,7 +1,7 @@
 import uuid
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, status, Depends, Request, HTTPException
+from fastapi import APIRouter, status, Depends, Request, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,8 +23,9 @@ from app.services.reserva_service import (
     crear_reserva_service,
     reserva_to_detalle_response,
     reserva_to_response,
+    listar_reservas_usuario_service
 )
-from travelhub_common.security import get_current_user, User
+from travelhub_common.security import get_current_user, User, RoleEnum
 
 router = APIRouter(prefix="/reservas", tags=["reservas"])
 
@@ -180,3 +181,19 @@ async def cancelar_reserva(
         reserva_id=reserva_id,
         current_user=current_user,
     )
+
+
+@router.get("/usuario/{usuario_id}", response_model=ListaReservasResponse, status_code=status.HTTP_200_OK)
+async def listar_reservas_usuario(
+    usuario_id: uuid.UUID,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role != RoleEnum.ADMIN and current_user.id != usuario_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tienes permiso para ver las reservas de este usuario",
+        )
+    return await listar_reservas_usuario_service(db=db, usuario_id=usuario_id, skip=skip, limit=limit, current_user=current_user)

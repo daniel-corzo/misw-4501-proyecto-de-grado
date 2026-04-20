@@ -7,10 +7,11 @@ from fastapi import HTTPException
 
 from app.models.reserva import Reserva
 from app.schemas.reserva import CrearReservaRequest
-from app.services.reserva_service import cancelar_reserva_service, crear_reserva_service
+from app.services.reserva_service import cancelar_reserva_service, crear_reserva_service, listar_reservas_usuario_service
 from travelhub_common.security import RoleEnum, User
 
 USER_ID = uuid.uuid4()
+OTHER_ID = uuid.uuid4()
 HAB_ID = uuid.uuid4()
 
 
@@ -147,3 +148,42 @@ async def test_cancelar_reserva_service_409_when_already_cancelled(mock_db):
     assert exc.value.status_code == 409
     assert exc.value.detail == "La reserva ya está cancelada"
     assert mock_db.commit.await_count == 0
+
+@pytest.mark.asyncio
+async def test_listar_reservas_usuario_service(mock_db):
+    current = User(id=USER_ID, email="user@test.com", role=RoleEnum.USER)
+    
+    mock_db.execute = AsyncMock()
+    mock_count_result = MagicMock()
+    mock_count_result.scalar_one.return_value = 1
+    
+    mock_reserva = MagicMock()
+    mock_reserva.id = uuid.uuid4()
+    mock_reserva.viajero_id = USER_ID
+    mock_reserva.habitaciones_ids = [HAB_ID]
+    mock_reserva.check_in = datetime.now()
+    mock_reserva.check_out = datetime.now()
+    mock_reserva.personas = 2
+    mock_reserva.estado = "confirmada"
+    mock_reserva.pago_id = None
+    mock_reserva.created_at = datetime.now(UTC)
+    
+    mock_list_result = MagicMock()
+    mock_list_result.scalars().all.return_value = [mock_reserva]
+    
+    mock_db.execute.side_effect = [mock_count_result, mock_list_result]
+    
+    response = await listar_reservas_usuario_service(db=mock_db, usuario_id=USER_ID, skip=0, limit=10, current_user=current)
+    
+    assert response.total == 1
+    assert len(response.reservas) == 1
+    assert response.reservas[0].id == mock_reserva.id
+
+@pytest.mark.asyncio
+async def test_listar_reservas_usuario_forbidden(mock_db):
+    current = User(id=USER_ID, email="user@test.com", role=RoleEnum.USER)
+    
+    with pytest.raises(HTTPException) as exc:
+        await listar_reservas_usuario_service(db=mock_db, usuario_id=OTHER_ID, skip=0, limit=10, current_user=current)
+    
+    assert exc.value.status_code == 403

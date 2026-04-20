@@ -13,6 +13,7 @@ from travelhub_common.security import RoleEnum, User, get_current_user
 from app.models.reserva import Reserva
 
 USER_ID = uuid.UUID("00000000-0000-4000-8000-000000000001")
+OTHER_USER_ID = uuid.UUID("00000000-0000-4000-8000-000000000003")
 HABITACION_ID = uuid.UUID("00000000-0000-4000-8000-000000000002")
 
 
@@ -197,15 +198,39 @@ async def test_get_reservas_usuario_activas_returns_200(override_client, mock_db
     ):
         response = await override_client.get("/reservas?estado=activas")
 
+@pytest.mark.asyncio
+async def test_get_reservas_usuario_200(override_client, mock_db_session):
+    mock_count_result = MagicMock()
+    mock_count_result.scalar_one.return_value = 1
+    
+    mock_reserva = MagicMock()
+    mock_reserva.id = uuid.uuid4()
+    mock_reserva.viajero_id = USER_ID
+    mock_reserva.habitaciones_ids = [HABITACION_ID]
+    mock_reserva.check_in = datetime(2026, 5, 1, tzinfo=UTC)
+    mock_reserva.check_out = datetime(2026, 5, 5, tzinfo=UTC)
+    mock_reserva.personas = 2
+    mock_reserva.estado = "pendiente"
+    mock_reserva.pago_id = None
+    mock_reserva.created_at = datetime.now(UTC)
+    
+    mock_list_result = MagicMock()
+    mock_list_result.scalars().all.return_value = [mock_reserva]
+    
+    mock_db_session.execute = AsyncMock(side_effect=[mock_count_result, mock_list_result])
+    
+    response = await override_client.get(f"/reservas/usuario/{USER_ID}?skip=0&limit=10")
+    
     assert response.status_code == 200
     data = response.json()
     assert data["total"] == 1
     assert len(data["reservas"]) == 1
-    assert data["reservas"][0]["estado"] == "confirmada"
-    assert data["reservas"][0]["nombre_habitacion"] == "Deluxe Room"
-    assert data["reservas"][0]["nombre_hotel"] == "Grand Hyatt Regency"
-    assert data["reservas"][0]["imagenes_hotel"] == ["https://cdn.example.com/hoteles/grand-hyatt-1.jpg"]
-    assert mock_db_session.execute.await_count == 1
+    assert data["reservas"][0]["estado"] == "pendiente"
+    assert data["reservas"][0]["habitacion_id"] == str(HABITACION_ID)
+    assert data["reservas"][0]["nombre_habitacion"] is None
+    assert data["reservas"][0]["nombre_hotel"] is None
+    assert data["reservas"][0]["imagenes_hotel"] == []
+    assert mock_db_session.execute.await_count == 2
 
 
 @pytest.mark.asyncio
@@ -434,6 +459,7 @@ async def test_get_reservas_hotel_returns_200(override_client, mock_db_session):
     assert data["total"] == 1
     assert len(data["reservas"]) == 1
     assert len(data["habitaciones"]) == 1
+    assert data["reservas"][0]["estado"] == "confirmada"
     assert data["reservas"][0]["habitacion_id"] == str(HABITACION_ID)
 
 
@@ -592,3 +618,11 @@ async def test_patch_reserva_cancelar_401_missing_authorization(mock_db_session)
         assert response.status_code == 401
     finally:
         app.dependency_overrides.clear()
+
+
+@pytest.mark.asyncio
+async def test_get_reservas_usuario_403(override_client):
+    response = await override_client.get(f"/reservas/usuario/{OTHER_USER_ID}?skip=0&limit=10")
+    
+    assert response.status_code == 403
+    assert response.json()["detail"] == "No tienes permiso para ver las reservas de este usuario"

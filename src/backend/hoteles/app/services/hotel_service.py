@@ -203,6 +203,7 @@ async def obtener_hotel_service(db: AsyncSession, hotel_id):
         habitaciones=[
             HabitacionDetalleResponse(
                 id=habitacion.id,
+                hotel_id=hotel.id,
                 capacidad=habitacion.capacidad,
                 numero=habitacion.numero,
                 descripcion=habitacion.descripcion,

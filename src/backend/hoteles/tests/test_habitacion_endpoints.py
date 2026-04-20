@@ -182,6 +182,7 @@ async def test_listar_habitaciones_endpoint_authenticated(override_client, mock_
             habitaciones=[
                 HabitacionDetalleResponse(
                     id=uuid.uuid4(),
+                    hotel_id=hotel_id,
                     capacidad=2,
                     numero="101",
                     descripcion="Vista al mar",

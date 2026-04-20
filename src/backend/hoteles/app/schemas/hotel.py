@@ -84,6 +84,7 @@ class PoliticaDetalleResponse(BaseModel):
 
 class HabitacionDetalleResponse(BaseModel):
     id: UUID
+    hotel_id: UUID
     capacidad: int
     numero: str
     descripcion: Optional[str] = None

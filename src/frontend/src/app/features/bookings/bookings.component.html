@@ -1,4 +1,52 @@
-<div class="bookings-page">
-  <h1>Mis Reservas</h1>
-  <p>Aquí podrás ver y gestionar tus reservas de alojamiento.</p>
+<div class="bookings-page container">
+  <div class="header">
+    <h1>Mis Reservas de Hotel</h1>
+    <p>Administra tus próximas reservas y revisa tus reservas pasadas en un solo lugar.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab" [class.active]="activeTab === 'upcoming'" (click)="setTab('upcoming')">Reservas Próximas</button>
+    <button class="tab" [class.active]="activeTab === 'past'" (click)="setTab('past')">Reservas Pasadas</button>
+  </div>
+
+  <div class="bookings-list" *ngIf="!loading">
+    <div class="list-header">
+      <h2>Reservas Confirmadas</h2>
+      <span class="count-badge">{{ bookings.length }} RESERVAS ENCONTRADAS</span>
+    </div>
+
+    <div class="booking-card" *ngFor="let b of bookings">
+      <div class="image-wrapper">
+        <img [src]="b.image" [alt]="b.hotelName">
+      </div>
+      <div class="details">
+        <div class="booking-id">ID RESERVA: {{ b.id }}</div>
+        <div class="status" [class.confirmed]="b.status === 'confirmada'" [class.pending]="b.status === 'pendiente'">
+          <span class="dot"></span> {{ b.statusLabel }}
+        </div>
+        <h3>{{ b.hotelName }}</h3>
+        <div class="info-row">
+          <span><i class="calendar-icon"></i> {{ b.checkIn }} - {{ b.checkOut }} ({{ b.nights }} noches)</span>
+          <span><i class="location-icon"></i> {{ b.location }}</span>
+          <span><i class="user-icon"></i> {{ b.guests }} Adultos</span>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" [routerLink]="['/bookings', b.id]">
+            <i class="settings-icon"></i> Manejar Estancia
+          </button>
+          <button class="btn btn-secondary" (click)="printVoucher(b)">
+            <i class="download-icon"></i> Voucher
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="bookings.length === 0" class="no-bookings">
+      <p>No tienes reservas activas en este momento.</p>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading-state">
+    <p>Cargando reservas...</p>
+  </div>
 </div>
