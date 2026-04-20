@@ -20,7 +20,7 @@ struct PriceBreakdownView: View {
     }
 
     private var subtotal: Double { habitacion.monto * Double(nights) }
-    private var serviceFee: Double { 50000 }
+    private var serviceFee: Double { 0 }
     private var total: Double { subtotal + habitacion.impuestos + serviceFee }
 
     var body: some View {

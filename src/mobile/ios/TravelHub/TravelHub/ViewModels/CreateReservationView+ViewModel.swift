@@ -24,6 +24,7 @@ extension CreateReservationView {
             numHuespedes: Int
         ) async {
             isLoading = true
+            defer { isLoading = false }
 
             let newReservation = NewReservation(
                 habitacionID: habitacionId,
@@ -50,8 +51,6 @@ extension CreateReservationView {
             } catch {
                 toastManager.error(error.localizedDescription)
             }
-
-            isLoading = false
         }
     }
 }
