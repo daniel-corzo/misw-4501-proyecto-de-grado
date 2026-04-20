@@ -1,4 +1,5 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -44,10 +45,11 @@ const AMENIDAD_LABELS: Record<string, string> = Object.fromEntries(
   templateUrl: './hotels-list.component.html',
   styleUrl: './hotels-list.component.scss',
 })
-export class HotelsListComponent implements OnInit {
+export class HotelsListComponent implements OnInit, OnDestroy {
   private readonly hotelService = inject(HotelService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly limit = LIMIT;
   readonly popularAmenities = POPULAR_AMENITIES;
@@ -147,19 +149,29 @@ export class HotelsListComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.hotelService.listCountries().subscribe({
-      next: res => { this.paises = res.paises; },
-    });
+    this.hotelService.listCountries()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(res => {
+        this.paises = res.paises;
+        this.selectedPais = this.paises.includes(this.ciudad) ? this.ciudad : '';
+      });
 
-    this.route.queryParams.subscribe(params => {
-      this.ciudad = params['ciudad'] || '';
-      this.checkIn = params['checkIn'] || '';
-      this.checkOut = params['checkOut'] || '';
-      this.huespedes = params['huespedes'] ? Number(params['huespedes']) : 1;
-      this.selectedPais = this.paises.includes(this.ciudad) ? this.ciudad : '';
-      this.page = 0;
-      this.loadHotels();
-    });
+    this.route.queryParams
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(params => {
+        this.ciudad = params['ciudad'] || '';
+        this.checkIn = params['checkIn'] || '';
+        this.checkOut = params['checkOut'] || '';
+        this.huespedes = params['huespedes'] ? Number(params['huespedes']) : 1;
+        this.selectedPais = this.paises.includes(this.ciudad) ? this.ciudad : '';
+        this.page = 0;
+        this.loadHotels();
+      });
+  }
+
+  ngOnDestroy(): void {
+    if (this.priceDebounce) clearTimeout(this.priceDebounce);
+    if (this.cityDebounce) clearTimeout(this.cityDebounce);
   }
 
   loadHotels(): void {
@@ -246,8 +258,6 @@ export class HotelsListComponent implements OnInit {
       queryParams: { huespedes: this.huespedes > 1 ? this.huespedes : null },
       queryParamsHandling: 'merge',
     });
-    this.page = 0;
-    this.loadHotels();
   }
 
   onDateChange(): void {

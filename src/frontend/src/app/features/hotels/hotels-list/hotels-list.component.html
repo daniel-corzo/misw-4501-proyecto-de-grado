@@ -214,8 +214,8 @@
         </p>
       </div>
       <div class="sort-control">
-        <label class="sort-control__label">Ordenar por:</label>
-        <select class="sort-control__select" [(ngModel)]="orden" (change)="onOrdenChange()">
+        <label class="sort-control__label" for="sort-control-select">Ordenar por:</label>
+        <select id="sort-control-select" class="sort-control__select" [(ngModel)]="orden" (change)="onOrdenChange()">
           @for (opt of sortOptions; track opt.value) {
             <option [value]="opt.value">{{ opt.label }}</option>
           }

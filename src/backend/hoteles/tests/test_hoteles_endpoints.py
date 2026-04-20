@@ -521,7 +521,7 @@ async def test_get_hoteles_orden_nombre_desc(override_client, mock_db_session):
 
 
 @pytest.mark.asyncio
-async def test_get_hoteles_returns_400_for_invalid_capacidad_min(override_client, mock_db_session):
+async def test_get_hoteles_returns_422_for_invalid_capacidad_min(override_client, mock_db_session):
     response = await override_client.get("/hoteles?capacidad_min=0")
     assert response.status_code == 422
 
