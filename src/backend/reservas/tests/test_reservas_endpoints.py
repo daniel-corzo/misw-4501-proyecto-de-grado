@@ -109,7 +109,7 @@ async def test_post_reservas_409_overlap(mock_db_session):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.post("/reservas", json=_valid_payload())
         assert response.status_code == 409
-        assert "habitacion" in response.json()["detail"].lower()
+        assert "habitación" in response.json()["detail"].lower()
         mock_db_session.add.assert_not_called()
     finally:
         app.dependency_overrides.clear()
