@@ -28,6 +28,7 @@ def _is_duplicate_habitacion_numero_error(exc: IntegrityError) -> bool:
 def _build_habitacion_response(habitacion: Habitacion) -> HabitacionDetalleResponse:
     return HabitacionDetalleResponse(
         id=habitacion.id,
+        hotel_id=habitacion.hotel_id,
         capacidad=habitacion.capacidad,
         numero=habitacion.numero,
         descripcion=habitacion.descripcion,
@@ -109,6 +110,7 @@ async def actualizar_habitacion_service(
             Habitacion.hotel_id == hotel.id,
         )
     )
+
     habitacion = result.scalar_one_or_none()
 
     if habitacion is None:
@@ -140,6 +142,21 @@ async def actualizar_habitacion_service(
         raise
 
     return _build_habitacion_response(habitacion)
+
+
+async def obtener_habitacion_por_id_service(db: AsyncSession, habitacion_id: uuid.UUID) -> HabitacionDetalleResponse:
+    stmt = select(Habitacion).where(Habitacion.id == habitacion_id)
+    result = await db.execute(stmt)
+    habitacion = result.scalar_one_or_none()
+
+    if not habitacion:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Habitación no encontrada",
+        )
+
+    return _build_habitacion_response(habitacion)
+
 
 
 async def listar_habitaciones_service(

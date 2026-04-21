@@ -4,6 +4,7 @@ import { ApiService } from './api.service';
 
 export interface HabitacionDetalle {
   id: string;
+  hotel_id?: string;
   capacidad: number;
   numero: string;
   descripcion: string | null;
@@ -100,5 +101,9 @@ export class HotelService {
 
   listCountries(): Observable<{ paises: string[] }> {
     return this.api.get<{ paises: string[] }>('/hoteles/paises');
+  }
+  
+  getRoomById(id: string): Observable<HabitacionDetalle> {
+    return this.api.get<HabitacionDetalle>(`/hoteles/habitaciones/${id}`);
   }
 }

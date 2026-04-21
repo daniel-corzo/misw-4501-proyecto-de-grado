@@ -2,9 +2,9 @@ import uuid
 from datetime import date, datetime, time, timezone
 
 from fastapi import HTTPException, status
-from sqlalchemy import and_, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from travelhub_common.security import User
+from travelhub_common.security import User, RoleEnum
 
 from app.models.reserva import Reserva
 from app.schemas.reserva import (
@@ -15,6 +15,7 @@ from app.schemas.reserva import (
     ReservaHabitacionDetalleCompletoResponse,
     ReservaHotelDetalleResponse,
     ReservaResponse,
+    ListaReservasResponse
 )
 
 
@@ -180,3 +181,38 @@ async def cancelar_reserva_service(
     await db.commit()
     await db.refresh(reserva)
     return reserva_to_response(reserva)
+
+    
+async def listar_reservas_usuario_service(
+    db: AsyncSession,
+    usuario_id: uuid.UUID,
+    skip: int,
+    limit: int,
+    current_user: User,
+) -> ListaReservasResponse:
+    if current_user.role != RoleEnum.ADMIN and current_user.id != usuario_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tienes permiso para ver las reservas de este usuario",
+        )
+
+    # Count overall
+    count_query = select(func.count(Reserva.id)).where(Reserva.viajero_id == usuario_id)
+    total_result = await db.execute(count_query)
+    total = total_result.scalar_one()
+
+    # Get page
+    stmt = (
+        select(Reserva)
+        .where(Reserva.viajero_id == usuario_id)
+        .order_by(Reserva.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    result = await db.execute(stmt)
+    reservas = result.scalars().all()
+
+    return ListaReservasResponse(
+        total=total,
+        reservas=[reserva_to_response(r) for r in reservas]
+    )
