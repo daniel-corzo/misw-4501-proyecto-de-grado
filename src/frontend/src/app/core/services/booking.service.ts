@@ -2,16 +2,18 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 
+export type BookingStatus = 'pendiente' | 'confirmada' | 'cancelada' | 'completada';
+
 export interface BookingResponse {
   id: string;
-  usuario_id: string;
   habitacion_id: string;
+  nombre_habitacion: string;
+  nombre_hotel: string;
+  imagenes_hotel: string[];
   fecha_entrada: string;
   fecha_salida: string;
   num_huespedes: number;
-  estado: string;
-  pago_id: string | null;
-  created_at: string;
+  estado: BookingStatus;
 }
 
 export interface BookingListResponse {

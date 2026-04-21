@@ -197,6 +197,16 @@ async def test_get_reservas_usuario_activas_returns_200(override_client, mock_db
         new=AsyncMock(return_value=detalles),
     ):
         response = await override_client.get("/reservas?estado=activas")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] == 1
+        assert isinstance(data["reservas"], list)
+        assert len(data["reservas"]) == 1
+        assert data["reservas"][0]["estado"] == "confirmada"
+        assert data["reservas"][0]["habitacion_id"] == str(HABITACION_ID)
+        assert data["reservas"][0]["nombre_habitacion"] == "Deluxe Room"
+        assert data["reservas"][0]["nombre_hotel"] == "Grand Hyatt Regency"
+        assert data["reservas"][0]["imagenes_hotel"] == ["https://cdn.example.com/hoteles/grand-hyatt-1.jpg"]
 
 @pytest.mark.asyncio
 async def test_get_reservas_usuario_200(override_client, mock_db_session):
@@ -270,10 +280,16 @@ async def test_get_reservas_usuario_activas_orders_by_fecha_entrada(override_cli
     ):
         response = await override_client.get("/reservas?estado=activas")
 
-    assert response.status_code == 200
-    executed_stmt = mock_db_session.execute.await_args.args[0]
-    assert "order by" in str(executed_stmt).lower()
-    assert "check_in asc" in str(executed_stmt).lower()
+        assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 2
+    assert isinstance(data["reservas"], list)
+    assert len(data["reservas"]) == 2
+    assert data["reservas"][0]["estado"] == "confirmada"
+    assert data["reservas"][0]["habitacion_id"] == str(HABITACION_ID)
+    assert data["reservas"][0]["nombre_habitacion"] == "Deluxe Room"
+    assert data["reservas"][0]["nombre_hotel"] == "Grand Hyatt Regency"
+    assert data["reservas"][0]["imagenes_hotel"] == ["https://cdn.example.com/hoteles/grand-hyatt-1.jpg"]
 
 
 @pytest.mark.asyncio

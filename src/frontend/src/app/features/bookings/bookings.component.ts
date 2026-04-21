@@ -31,6 +31,11 @@ export class BookingsComponent implements OnInit {
   private readonly bookingService = inject(BookingService);
   private readonly hotelService = inject(HotelService);
   private readonly authService = inject(AuthService);
+  private readonly dateFormat: Intl.DateTimeFormatOptions = {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  };
 
   activeTab: 'upcoming' | 'past' = 'upcoming';
   bookings: BookingDisplay[] = [];
@@ -46,7 +51,10 @@ export class BookingsComponent implements OnInit {
 
   loadBookings(): void {
     const user = this.authService.userProfile();
-    if (!user) return;
+    if (!user) {
+      this.loading = false;
+      return;
+    }
 
     this.loading = true;
     this.bookingService.getUserBookings(user.id, { limit: 50 }).pipe(
@@ -82,17 +90,17 @@ export class BookingsComponent implements OnInit {
   }
 
   private mapToDisplay(booking: BookingResponse, hotel: HotelDetalle): BookingDisplay {
-    const start = new Date(booking.fecha_entrada);
-    const end = new Date(booking.fecha_salida);
-    const nights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const start = this.parseBackendDate(booking.fecha_entrada);
+    const end = this.parseBackendDate(booking.fecha_salida);
+    const nights = this.calculateNights(start, end);
     
     return {
       id: booking.id,
       hotelName: hotel.nombre,
       location: `${hotel.ciudad}, ${hotel.pais}`,
       image: hotel.imagenes?.[0] || 'assets/images/hotel3.avif',
-      checkIn: start.toLocaleDateString('es-ES', { month: 'short', day: 'numeric', year: 'numeric' }),
-      checkOut: end.toLocaleDateString('es-ES', { month: 'short', day: 'numeric', year: 'numeric' }),
+      checkIn: this.formatDisplayDate(start),
+      checkOut: this.formatDisplayDate(end),
       nights: nights,
       guests: booking.num_huespedes,
       status: booking.estado,
@@ -101,17 +109,17 @@ export class BookingsComponent implements OnInit {
   }
 
   private mapToDisplayFallback(booking: BookingResponse): BookingDisplay {
-    const start = new Date(booking.fecha_entrada);
-    const end = new Date(booking.fecha_salida);
-    const nights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const start = this.parseBackendDate(booking.fecha_entrada);
+    const end = this.parseBackendDate(booking.fecha_salida);
+    const nights = this.calculateNights(start, end);
     
     return {
       id: booking.id,
       hotelName: 'Hotel Desconocido',
       location: 'Ubicación Desconocida',
       image: 'assets/images/hotel3.avif',
-      checkIn: start.toLocaleDateString('es-ES', { month: 'short', day: 'numeric', year: 'numeric' }),
-      checkOut: end.toLocaleDateString('es-ES', { month: 'short', day: 'numeric', year: 'numeric' }),
+      checkIn: this.formatDisplayDate(start),
+      checkOut: this.formatDisplayDate(end),
       nights: nights,
       guests: booking.num_huespedes,
       status: booking.estado,
@@ -119,22 +127,74 @@ export class BookingsComponent implements OnInit {
     };
   }
 
-  printVoucher(booking: BookingDisplay): void {
-    const content = `
-      <h1>Voucher de Reserva</h1>
-      <p><strong>ID Reserva:</strong> ${booking.id}</p>
-      <p><strong>Hotel:</strong> ${booking.hotelName}</p>
-      <p><strong>Lugar:</strong> ${booking.location}</p>
-      <p><strong>Check-in:</strong> ${booking.checkIn}</p>
-      <p><strong>Check-out:</strong> ${booking.checkOut}</p>
-      <p><strong>Huéspedes:</strong> ${booking.guests} Adultos</p>
-      <p><strong>Estado:</strong> ${booking.statusLabel}</p>
-    `;
-    const win = window.open('', '', 'width=600,height=600');
-    if (win) {
-      win.document.write('<html><head><title>Voucher</title></head><body>' + content + '</body></html>');
-      win.document.close();
-      win.print();
+  private parseBackendDate(value: string): Date {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (match) {
+      const year = Number(match[1]);
+      const monthIndex = Number(match[2]) - 1;
+      const day = Number(match[3]);
+      return new Date(year, monthIndex, day);
     }
+
+    return new Date(value);
+  }
+
+  private formatDisplayDate(date: Date): string {
+    return date.toLocaleDateString('es-ES', this.dateFormat);
+  }
+
+  private calculateNights(start: Date, end: Date): number {
+    const startUtc = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate());
+    const endUtc = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate());
+    return Math.max(0, Math.round((endUtc - startUtc) / (1000 * 60 * 60 * 24)));
+  }
+
+  printVoucher(booking: BookingDisplay): void {
+    const win = window.open('', '', 'width=600,height=600');
+    if (!win) return;
+
+    const doc = win.document;
+    doc.title = 'Voucher';
+    doc.documentElement.lang = 'es';
+
+    while (doc.body.firstChild) {
+      doc.body.removeChild(doc.body.firstChild);
+    }
+
+    while (doc.head.firstChild) {
+      doc.head.removeChild(doc.head.firstChild);
+    }
+
+    const style = doc.createElement('style');
+    style.textContent = `
+      body { font-family: Arial, sans-serif; padding: 24px; }
+      h1 { margin-bottom: 16px; }
+      p { margin: 8px 0; }
+      strong { display: inline-block; min-width: 110px; }
+    `;
+    doc.head.appendChild(style);
+
+    const title = doc.createElement('h1');
+    title.textContent = 'Voucher de Reserva';
+    doc.body.appendChild(title);
+
+    const appendField = (label: string, value: string): void => {
+      const row = doc.createElement('p');
+      const key = doc.createElement('strong');
+      key.textContent = `${label}:`;
+      row.appendChild(key);
+      row.appendChild(doc.createTextNode(` ${value}`));
+      doc.body.appendChild(row);
+    };
+
+    appendField('ID Reserva', booking.id);
+    appendField('Hotel', booking.hotelName);
+    appendField('Lugar', booking.location);
+    appendField('Check-in', booking.checkIn);
+    appendField('Check-out', booking.checkOut);
+    appendField('Huéspedes', `${booking.guests} Adultos`);
+    appendField('Estado', booking.statusLabel);
+
+    win.print();
   }
 }

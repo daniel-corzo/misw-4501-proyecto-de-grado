@@ -191,9 +191,4 @@ async def listar_reservas_usuario(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    if current_user.role != RoleEnum.ADMIN and current_user.id != usuario_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No tienes permiso para ver las reservas de este usuario",
-        )
     return await listar_reservas_usuario_service(db=db, usuario_id=usuario_id, skip=skip, limit=limit, current_user=current_user)
