@@ -10,6 +10,7 @@ from app.models.reserva import Reserva
 from app.schemas.reserva import (
     CrearReservaRequest,
     FiltroReservasUsuario,
+    ModificarReservaRequest,
     ReservaResponse,
     EstadoReserva,
     ListaReservasHotelResponse,
@@ -23,7 +24,8 @@ from app.services.reserva_service import (
     crear_reserva_service,
     reserva_to_detalle_response,
     reserva_to_response,
-    listar_reservas_usuario_service
+    modificar_reserva_service,
+    listar_reservas_usuario_service,
 )
 from travelhub_common.security import get_current_user, User, RoleEnum
 
@@ -168,6 +170,40 @@ async def obtener_reserva(
         )
 
     return reserva_to_detalle_response(reserva, detalle_habitacion)
+
+
+@router.patch("/{reserva_id}", response_model=ReservaResponse, status_code=status.HTTP_200_OK)
+async def modificar_reserva(
+    request: Request,
+    reserva_id: uuid.UUID,
+    body: ModificarReservaRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Actualiza fechas, número de huéspedes y/o habitación de una reserva activa del viajero."""
+    reserva = await modificar_reserva_service(
+        db=db,
+        reserva_id=reserva_id,
+        body=body,
+        current_user=current_user,
+    )
+    habitacion_id = reserva.habitaciones_ids[0] if reserva.habitaciones_ids else None
+    if habitacion_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Reserva sin habitaciones asociadas",
+        )
+    detalles_por_habitacion = await obtener_detalles_habitaciones_por_ids(
+        request.headers.get("Authorization"),
+        [habitacion_id],
+    )
+    detalle = detalles_por_habitacion.get(habitacion_id)
+    return reserva_to_response(
+        reserva,
+        nombre_habitacion=detalle.nombre_habitacion if detalle else None,
+        nombre_hotel=detalle.nombre_hotel if detalle else None,
+        imagenes_hotel=detalle.imagenes_hotel if detalle else [],
+    )
 
 
 @router.patch("/{reserva_id}/cancelar", response_model=ReservaResponse, status_code=status.HTTP_200_OK)

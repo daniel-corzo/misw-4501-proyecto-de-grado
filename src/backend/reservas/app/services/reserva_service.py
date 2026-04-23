@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime, time, timezone
+from datetime import UTC, date, datetime, time, timezone
 
 from fastapi import HTTPException, status
 from sqlalchemy import and_, func, select
@@ -11,11 +11,12 @@ from app.schemas.reserva import (
     CrearReservaRequest,
     EstadoReserva,
     HabitacionReservaDetalleResponse,
+    ModificarReservaRequest,
     ReservaDetalleResponse,
     ReservaHabitacionDetalleCompletoResponse,
     ReservaHotelDetalleResponse,
     ReservaResponse,
-    ListaReservasResponse
+    ListaReservasResponse,
 )
 
 
@@ -98,6 +99,26 @@ def reserva_to_detalle_response(
     )
 
 
+async def _habitacion_tiene_conflicto(
+    db: AsyncSession,
+    habitacion_id: uuid.UUID,
+    check_in: datetime,
+    check_out: datetime,
+    exclude_reserva_id: uuid.UUID | None = None,
+) -> bool:
+    conditions = [
+        Reserva.habitaciones_ids.contains([habitacion_id]),
+        Reserva.check_in < check_out,
+        Reserva.check_out > check_in,
+        Reserva.estado.in_([EstadoReserva.pendiente.value, EstadoReserva.confirmada.value]),
+    ]
+    if exclude_reserva_id is not None:
+        conditions.append(Reserva.id != exclude_reserva_id)
+    stmt = select(Reserva.id).where(and_(*conditions)).limit(1)
+    conflict = await db.execute(stmt)
+    return conflict.scalar_one_or_none() is not None
+
+
 async def crear_reserva_service(
     db: AsyncSession,
     body: CrearReservaRequest,
@@ -106,22 +127,7 @@ async def crear_reserva_service(
     check_in = _fecha_to_utc_start(body.fecha_entrada)
     check_out = _fecha_to_utc_start(body.fecha_salida)
 
-    conflict_stmt = (
-        select(Reserva.id)
-        .where(
-            and_(
-                Reserva.habitaciones_ids.contains([body.habitacion_id]),
-                Reserva.check_in < check_out,
-                Reserva.check_out > check_in,
-                Reserva.estado.in_(
-                    [EstadoReserva.pendiente.value, EstadoReserva.confirmada.value]
-                ),
-            )
-        )
-        .limit(1)
-    )
-    conflict = await db.execute(conflict_stmt)
-    if conflict.scalar_one_or_none() is not None:
+    if await _habitacion_tiene_conflicto(db, body.habitacion_id, check_in, check_out):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="La habitación ya tiene una reserva activa en las fechas solicitadas",
@@ -182,7 +188,93 @@ async def cancelar_reserva_service(
     await db.refresh(reserva)
     return reserva_to_response(reserva)
 
-    
+
+async def modificar_reserva_service(
+    db: AsyncSession,
+    reserva_id: uuid.UUID,
+    body: ModificarReservaRequest,
+    current_user: User,
+) -> Reserva:
+    stmt = select(Reserva).where(Reserva.id == reserva_id)
+    result = await db.execute(stmt)
+    reserva = result.scalar_one_or_none()
+    if reserva is None or reserva.viajero_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Reserva no encontrada",
+        )
+
+    if reserva.estado not in (
+        EstadoReserva.pendiente.value,
+        EstadoReserva.confirmada.value,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="No se puede modificar una reserva en este estado",
+        )
+
+    now_utc = datetime.now(UTC)
+    if reserva.check_out < now_utc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No se puede modificar una reserva pasada",
+        )
+
+    fecha_entrada = (
+        body.fecha_entrada
+        if body.fecha_entrada is not None
+        else reserva.check_in.date()
+    )
+    fecha_salida = (
+        body.fecha_salida
+        if body.fecha_salida is not None
+        else reserva.check_out.date()
+    )
+    check_in = _fecha_to_utc_start(fecha_entrada)
+    check_out = _fecha_to_utc_start(fecha_salida)
+
+    if check_out <= check_in:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="fecha_salida debe ser posterior a fecha_entrada",
+        )
+
+    if body.habitacion_id is not None:
+        habitacion_id = body.habitacion_id
+    else:
+        habitacion_id = (
+            reserva.habitaciones_ids[0] if reserva.habitaciones_ids else None
+        )
+        if habitacion_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Reserva sin habitaciones asociadas",
+            )
+
+    if await _habitacion_tiene_conflicto(
+        db,
+        habitacion_id,
+        check_in,
+        check_out,
+        exclude_reserva_id=reserva.id,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="La habitación ya tiene una reserva activa en las fechas solicitadas",
+        )
+
+    reserva.check_in = check_in
+    reserva.check_out = check_out
+    reserva.habitaciones_ids = [habitacion_id]
+    if body.num_huespedes is not None:
+        reserva.personas = body.num_huespedes
+
+    await db.flush()
+    await db.commit()
+    await db.refresh(reserva)
+    return reserva
+
+
 async def listar_reservas_usuario_service(
     db: AsyncSession,
     usuario_id: uuid.UUID,

@@ -621,6 +621,59 @@ async def test_patch_reserva_cancelar_409_when_already_cancelada(override_client
 
 
 @pytest.mark.asyncio
+async def test_patch_reserva_200(override_client, mock_db_session):
+    rid = uuid.uuid4()
+    now = datetime.now(UTC)
+    reserva = Reserva(
+        id=rid,
+        check_in=now + timedelta(days=1),
+        check_out=now + timedelta(days=3),
+        estado="pendiente",
+        personas=2,
+        viajero_id=USER_ID,
+        habitaciones_ids=[HABITACION_ID],
+        pago_id=None,
+        created_at=now,
+    )
+    load_result = MagicMock()
+    load_result.scalar_one_or_none.return_value = reserva
+    no_conflict = MagicMock()
+    no_conflict.scalar_one_or_none.return_value = None
+    mock_db_session.execute = AsyncMock(side_effect=[load_result, no_conflict])
+
+    detalles = {
+        HABITACION_ID: HabitacionReservaDetalleResponse(
+            id=HABITACION_ID,
+            nombre_habitacion="Suite",
+            nombre_hotel="Hotel Demo",
+            imagenes_hotel=[],
+        )
+    }
+
+    with patch(
+        "app.routers.reservas.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value=detalles),
+    ):
+        response = await override_client.patch(
+            f"/reservas/{rid}",
+            json={"num_huespedes": 3},
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["num_huespedes"] == 3
+    assert mock_db_session.commit.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_patch_reserva_422_empty_body(override_client):
+    rid = uuid.uuid4()
+    response = await override_client.patch(f"/reservas/{rid}", json={})
+
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_patch_reserva_cancelar_401_missing_authorization(mock_db_session):
     async def override_get_db():
         yield mock_db_session
@@ -637,8 +690,28 @@ async def test_patch_reserva_cancelar_401_missing_authorization(mock_db_session)
 
 
 @pytest.mark.asyncio
+async def test_patch_reserva_401_missing_authorization(mock_db_session):
+    async def override_get_db():
+        yield mock_db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    try:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            rid = uuid.uuid4()
+            response = await client.patch(
+                f"/reservas/{rid}",
+                json={"num_huespedes": 2},
+            )
+
+        assert response.status_code == 401
+    finally:
+        app.dependency_overrides.clear()
+
+
+@pytest.mark.asyncio
 async def test_get_reservas_usuario_403(override_client):
     response = await override_client.get(f"/reservas/usuario/{OTHER_USER_ID}?skip=0&limit=10")
-    
+
     assert response.status_code == 403
     assert response.json()["detail"] == "No tienes permiso para ver las reservas de este usuario"
