@@ -101,6 +101,8 @@ async def listar_reservas_usuario(
                 nombre_habitacion=detalle_habitacion.nombre_habitacion if detalle_habitacion else None,
                 nombre_hotel=detalle_habitacion.nombre_hotel if detalle_habitacion else None,
                 imagenes_hotel=detalle_habitacion.imagenes_hotel if detalle_habitacion else [],
+                ciudad_hotel=detalle_habitacion.ciudad_hotel if detalle_habitacion else None,
+                pais_hotel=detalle_habitacion.pais_hotel if detalle_habitacion else None,
             )
         )
 
@@ -203,6 +205,8 @@ async def modificar_reserva(
         nombre_habitacion=detalle.nombre_habitacion if detalle else None,
         nombre_hotel=detalle.nombre_hotel if detalle else None,
         imagenes_hotel=detalle.imagenes_hotel if detalle else [],
+        ciudad_hotel=detalle.ciudad_hotel if detalle else None,
+        pais_hotel=detalle.pais_hotel if detalle else None,
     )
 
 

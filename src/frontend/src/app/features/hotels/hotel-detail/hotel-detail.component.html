@@ -54,6 +54,7 @@
               [src]="hotel.imagenes[selectedImageIndex]"
               [alt]="hotel.nombre + ' imagen ' + (selectedImageIndex + 1)"
               loading="eager"
+              (error)="onImageError($event)"
             />
           </div>
           @if (hotel.imagenes.length > 1) {
@@ -70,6 +71,7 @@
                     [src]="img"
                     [alt]="hotel.nombre + ' miniatura ' + ($index + 1)"
                     loading="lazy"
+                    (error)="onImageError($event)"
                   />
                   @if ($index === 3 && hotel.imagenes.length > 4) {
                     <span class="gallery__thumb-more">+{{ hotel.imagenes.length - 4 }} photos</span>
@@ -154,7 +156,7 @@
             <div class="room-card" [class.room-card--selected]="selectedRoom?.id === room.id" [class.room-card--unavailable]="!room.disponible">
               <div class="room-card__image">
                 @if (room.imagenes.length > 0) {
-                  <img class="room-card__img" [src]="room.imagenes[0]" [alt]="'Habitación ' + room.numero" loading="lazy" />
+                  <img class="room-card__img" [src]="room.imagenes[0]" [alt]="'Habitación ' + room.numero" loading="lazy" (error)="onImageError($event)" />
                 } @else {
                   <div class="room-card__img-placeholder"></div>
                 }

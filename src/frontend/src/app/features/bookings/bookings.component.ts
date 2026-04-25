@@ -1,10 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { BookingService, BookingResponse } from '../../core/services/booking.service';
-import { HotelService, HotelDetalle } from '../../core/services/hotel.service';
+import { BookingService, BookingResponse, BookingFilter } from '../../core/services/booking.service';
 import { AuthService } from '../../core/services/auth.service';
-import { forkJoin, of } from 'rxjs';
-import { map, switchMap, catchError } from 'rxjs/operators';
 import { RouterModule } from '@angular/router';
 
 interface BookingDisplay {
@@ -29,7 +26,6 @@ interface BookingDisplay {
 })
 export class BookingsComponent implements OnInit {
   private readonly bookingService = inject(BookingService);
-  private readonly hotelService = inject(HotelService);
   private readonly authService = inject(AuthService);
   private readonly dateFormat: Intl.DateTimeFormatOptions = {
     month: 'short',
@@ -37,50 +33,34 @@ export class BookingsComponent implements OnInit {
     year: 'numeric'
   };
 
-  activeTab: 'upcoming' | 'past' = 'upcoming';
+  activeTab: 'upcoming' | 'past' | 'cancelled' = 'upcoming';
   bookings: BookingDisplay[] = [];
   loading = true;
+
+  readonly placeholderImage = 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 width%3D%22280%22 height%3D%22200%22 viewBox%3D%220 0 280 200%22%3E%3Crect width%3D%22280%22 height%3D%22200%22 fill%3D%22%23f1f3f4%22%2F%3E%3Crect x%3D%22100%22 y%3D%2267%22 width%3D%2280%22 height%3D%2266%22 rx%3D%224%22 fill%3D%22none%22 stroke%3D%22%239aa0a6%22 stroke-width%3D%223%22%2F%3E%3Ccircle cx%3D%22120%22 cy%3D%2288%22 r%3D%229%22 fill%3D%22none%22 stroke%3D%22%239aa0a6%22 stroke-width%3D%223%22%2F%3E%3Cpolyline points%3D%22100%2C133 128%2C105 148%2C120 163%2C108 180%2C133%22 fill%3D%22none%22 stroke%3D%22%239aa0a6%22 stroke-width%3D%223%22 stroke-linejoin%3D%22round%22 stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E';
 
   ngOnInit(): void {
     this.loadBookings();
   }
 
-  setTab(tab: 'upcoming' | 'past'): void {
+  setTab(tab: 'upcoming' | 'past' | 'cancelled'): void {
     this.activeTab = tab;
+    this.loadBookings();
   }
 
   loadBookings(): void {
-    const user = this.authService.userProfile();
-    if (!user) {
-      this.loading = false;
-      return;
-    }
-
     this.loading = true;
-    this.bookingService.getUserBookings(user.id, { limit: 50 }).pipe(
-      switchMap((res) => {
-        if (!res.reservas.length) return of([]);
-        
-        const bookingReqs = res.reservas.map(booking => {
-          return this.hotelService.getRoomById(booking.habitacion_id).pipe(
-            switchMap(room => {
-               if(room.hotel_id) {
-                 return this.hotelService.getHotelById(room.hotel_id).pipe(
-                    map(hotel => this.mapToDisplay(booking, hotel)),
-                    catchError(() => of(this.mapToDisplayFallback(booking)))
-                 );
-               }
-               return of(this.mapToDisplayFallback(booking));
-            }),
-            catchError(() => of(this.mapToDisplayFallback(booking)))
-          );
-        });
+    this.bookings = [];
 
-        return forkJoin(bookingReqs);
-      })
-    ).subscribe({
-      next: (data) => {
-        this.bookings = data.filter(b => b.status === 'pendiente' || b.status === 'confirmada');
+    const statusMap: Record<typeof this.activeTab, BookingFilter> = {
+      upcoming: 'activas',
+      past: 'pasadas',
+      cancelled: 'canceladas',
+    };
+
+    this.bookingService.getBookingsByStatus(statusMap[this.activeTab]).subscribe({
+      next: (res) => {
+        this.bookings = res.reservas.map(b => this.mapToDisplay(b));
         this.loading = false;
       },
       error: () => {
@@ -89,41 +69,38 @@ export class BookingsComponent implements OnInit {
     });
   }
 
-  private mapToDisplay(booking: BookingResponse, hotel: HotelDetalle): BookingDisplay {
-    const start = this.parseBackendDate(booking.fecha_entrada);
-    const end = this.parseBackendDate(booking.fecha_salida);
-    const nights = this.calculateNights(start, end);
-    
-    return {
-      id: booking.id,
-      hotelName: hotel.nombre,
-      location: `${hotel.ciudad}, ${hotel.pais}`,
-      image: hotel.imagenes?.[0] || 'assets/images/hotel3.avif',
-      checkIn: this.formatDisplayDate(start),
-      checkOut: this.formatDisplayDate(end),
-      nights: nights,
-      guests: booking.num_huespedes,
-      status: booking.estado,
-      statusLabel: booking.estado === 'confirmada' ? 'Confirmado' : 'Pendiente'
-    };
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.src = this.placeholderImage;
   }
 
-  private mapToDisplayFallback(booking: BookingResponse): BookingDisplay {
+  private mapToDisplay(booking: BookingResponse): BookingDisplay {
     const start = this.parseBackendDate(booking.fecha_entrada);
     const end = this.parseBackendDate(booking.fecha_salida);
     const nights = this.calculateNights(start, end);
-    
+    const image = booking.imagenes_hotel?.[0] || this.placeholderImage;
+    const city = booking.ciudad_hotel ?? '';
+    const country = booking.pais_hotel ?? '';
+    const location = city && country ? `${city}, ${country}` : city || country || 'Ubicación Desconocida';
+
+    const statusLabels: Record<string, string> = {
+      confirmada: 'Confirmado',
+      pendiente: 'Pendiente',
+      cancelada: 'Cancelada',
+      completada: 'Completada',
+    };
+
     return {
       id: booking.id,
-      hotelName: 'Hotel Desconocido',
-      location: 'Ubicación Desconocida',
-      image: 'assets/images/hotel3.avif',
+      hotelName: booking.nombre_hotel || 'Hotel Desconocido',
+      location,
+      image,
       checkIn: this.formatDisplayDate(start),
       checkOut: this.formatDisplayDate(end),
-      nights: nights,
+      nights,
       guests: booking.num_huespedes,
       status: booking.estado,
-      statusLabel: booking.estado === 'confirmada' ? 'Confirmado' : 'Pendiente'
+      statusLabel: statusLabels[booking.estado] ?? booking.estado,
     };
   }
 
@@ -135,7 +112,6 @@ export class BookingsComponent implements OnInit {
       const day = Number(match[3]);
       return new Date(year, monthIndex, day);
     }
-
     return new Date(value);
   }
 

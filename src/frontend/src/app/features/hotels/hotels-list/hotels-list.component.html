@@ -266,7 +266,7 @@
                   [src]="getImageUrl(hotel)"
                   [alt]="hotel.nombre"
                   loading="lazy"
-                  (error)="onImageError(hotel.id)"
+                  (error)="onImageError($event, hotel.id)"
                 />
               } @else {
                 <div class="hotel-card__image hotel-card__image--placeholder" aria-hidden="true">

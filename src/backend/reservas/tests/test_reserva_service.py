@@ -310,6 +310,38 @@ async def test_listar_reservas_usuario_forbidden(mock_db):
 
 
 @pytest.mark.asyncio
+async def test_listar_reservas_usuario_service_admin_puede_ver_otros_usuarios(mock_db):
+    admin = User(id=USER_ID, email="admin@test.com", role=RoleEnum.ADMIN)
+
+    mock_count_result = MagicMock()
+    mock_count_result.scalar_one.return_value = 1
+
+    mock_reserva = MagicMock()
+    mock_reserva.id = uuid.uuid4()
+    mock_reserva.viajero_id = OTHER_ID
+    mock_reserva.habitaciones_ids = [HAB_ID]
+    mock_reserva.check_in = datetime.now(UTC)
+    mock_reserva.check_out = datetime.now(UTC)
+    mock_reserva.personas = 1
+    mock_reserva.estado = "confirmada"
+    mock_reserva.pago_id = None
+    mock_reserva.created_at = datetime.now(UTC)
+
+    mock_list_result = MagicMock()
+    mock_list_result.scalars().all.return_value = [mock_reserva]
+
+    mock_db.execute = AsyncMock(side_effect=[mock_count_result, mock_list_result])
+
+    response = await listar_reservas_usuario_service(
+        db=mock_db, usuario_id=OTHER_ID, skip=0, limit=10, current_user=admin
+    )
+
+    assert response.total == 1
+    assert len(response.reservas) == 1
+    assert response.reservas[0].id == mock_reserva.id
+
+
+@pytest.mark.asyncio
 async def test_modificar_reserva_service_400_past(mock_db):
     now = datetime.now(UTC)
     reserva = _reserva_modificable(
