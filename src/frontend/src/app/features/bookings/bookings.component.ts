@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { BookingService, BookingResponse, BookingFilter } from '../../core/services/booking.service';
 import { AuthService } from '../../core/services/auth.service';
 import { RouterModule } from '@angular/router';
+import { PLACEHOLDER_IMAGE } from '../../shared/constants/images';
 
 interface BookingDisplay {
   id: string;
@@ -26,7 +27,6 @@ interface BookingDisplay {
 })
 export class BookingsComponent implements OnInit {
   private readonly bookingService = inject(BookingService);
-  private readonly authService = inject(AuthService);
   private readonly dateFormat: Intl.DateTimeFormatOptions = {
     month: 'short',
     day: 'numeric',
@@ -37,7 +37,14 @@ export class BookingsComponent implements OnInit {
   bookings: BookingDisplay[] = [];
   loading = true;
 
-  readonly placeholderImage = 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 width%3D%22280%22 height%3D%22200%22 viewBox%3D%220 0 280 200%22%3E%3Crect width%3D%22280%22 height%3D%22200%22 fill%3D%22%23f1f3f4%22%2F%3E%3Crect x%3D%22100%22 y%3D%2267%22 width%3D%2280%22 height%3D%2266%22 rx%3D%224%22 fill%3D%22none%22 stroke%3D%22%239aa0a6%22 stroke-width%3D%223%22%2F%3E%3Ccircle cx%3D%22120%22 cy%3D%2288%22 r%3D%229%22 fill%3D%22none%22 stroke%3D%22%239aa0a6%22 stroke-width%3D%223%22%2F%3E%3Cpolyline points%3D%22100%2C133 128%2C105 148%2C120 163%2C108 180%2C133%22 fill%3D%22none%22 stroke%3D%22%239aa0a6%22 stroke-width%3D%223%22 stroke-linejoin%3D%22round%22 stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E';
+  readonly placeholderImage = PLACEHOLDER_IMAGE;
+
+  private readonly statusLabels: Record<string, string> = {
+    confirmada: 'Confirmado',
+    pendiente: 'Pendiente',
+    cancelada: 'Cancelada',
+    completada: 'Completada',
+  };
 
   ngOnInit(): void {
     this.loadBookings();
@@ -83,13 +90,6 @@ export class BookingsComponent implements OnInit {
     const country = booking.pais_hotel ?? '';
     const location = city && country ? `${city}, ${country}` : city || country || 'Ubicación Desconocida';
 
-    const statusLabels: Record<string, string> = {
-      confirmada: 'Confirmado',
-      pendiente: 'Pendiente',
-      cancelada: 'Cancelada',
-      completada: 'Completada',
-    };
-
     return {
       id: booking.id,
       hotelName: booking.nombre_hotel || 'Hotel Desconocido',
@@ -100,7 +100,7 @@ export class BookingsComponent implements OnInit {
       nights,
       guests: booking.num_huespedes,
       status: booking.estado,
-      statusLabel: statusLabels[booking.estado] ?? booking.estado,
+      statusLabel: this.statusLabels[booking.estado] ?? booking.estado,
     };
   }
 

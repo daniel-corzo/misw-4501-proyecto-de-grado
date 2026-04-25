@@ -49,7 +49,7 @@ async def crear_reserva(
 
 
 @router.get("", response_model=ListaReservasResponse, status_code=status.HTTP_200_OK)
-async def listar_reservas_usuario(
+async def listar_reservas_por_estado(
     request: Request,
     estado: FiltroReservasUsuario,
     db: AsyncSession = Depends(get_db),

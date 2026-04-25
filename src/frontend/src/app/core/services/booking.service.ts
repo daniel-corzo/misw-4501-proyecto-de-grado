@@ -8,8 +8,8 @@ export type BookingFilter = 'activas' | 'canceladas' | 'pasadas';
 export interface BookingResponse {
   id: string;
   habitacion_id: string;
-  nombre_habitacion: string;
-  nombre_hotel: string;
+  nombre_habitacion: string | null;
+  nombre_hotel: string | null;
   imagenes_hotel: string[];
   ciudad_hotel: string | null;
   pais_hotel: string | null;
