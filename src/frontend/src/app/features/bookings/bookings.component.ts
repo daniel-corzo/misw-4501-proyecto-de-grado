@@ -134,8 +134,8 @@ export class BookingsComponent implements OnInit {
     if (!win) return;
 
     const doc = win.document;
-    doc.title = 'Voucher';
-    doc.documentElement.lang = 'es';
+    doc.title = this.t.translate('bookings.voucherWindowTitle');
+    doc.documentElement.lang = this.t.getActiveLang();
 
     while (doc.body.firstChild) {
       doc.body.removeChild(doc.body.firstChild);
