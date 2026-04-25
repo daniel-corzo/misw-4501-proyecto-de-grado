@@ -23,11 +23,11 @@ export function passwordStrengthValidator(): ValidatorFn {
     }
 
     const missing: string[] = [];
-    if (!hasMinLength) missing.push('mínimo 8 caracteres');
-    if (!hasUppercase) missing.push('una letra mayúscula');
-    if (!hasLowercase) missing.push('una letra minúscula');
-    if (!hasSpecial) missing.push('un carácter especial');
+    if (!hasMinLength) missing.push('auth.register.errors.passwordStrengthMin');
+    if (!hasUppercase) missing.push('auth.register.errors.passwordStrengthUpper');
+    if (!hasLowercase) missing.push('auth.register.errors.passwordStrengthLower');
+    if (!hasSpecial) missing.push('auth.register.errors.passwordStrengthSpecial');
 
-    return { passwordStrength: { message: `La contraseña debe tener ${missing.join(', ')}` } };
+    return { passwordStrength: { keys: missing } };
   };
 }

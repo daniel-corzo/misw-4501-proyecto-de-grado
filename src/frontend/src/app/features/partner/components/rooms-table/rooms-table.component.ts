@@ -4,6 +4,7 @@ import { RoomFormModalComponent } from '../room-form-modal/room-form-modal.compo
 import { ApiService } from '../../../../core/services/api.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { HabitacionDetalle } from '../../../../core/services/hotel.service';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 interface ListaHabitacionesResponse {
   total: number;
@@ -13,7 +14,7 @@ interface ListaHabitacionesResponse {
 @Component({
   selector: 'app-rooms-table',
   standalone: true,
-  imports: [CommonModule, RoomFormModalComponent],
+  imports: [CommonModule, RoomFormModalComponent, TranslocoPipe],
   templateUrl: './rooms-table.component.html',
   styleUrl: './rooms-table.component.scss'
 })
@@ -31,6 +32,7 @@ export class RoomsTableComponent implements OnInit {
 
   private api = inject(ApiService);
   private toast = inject(ToastService);
+  private t = inject(TranslocoService);
 
   ngOnInit() {
     this.loadRooms();
@@ -50,8 +52,8 @@ export class RoomsTableComponent implements OnInit {
         this.loading = false;
       },
       error: (body) => {
-        const errorMsg = body?.error?.detail || 'Error desconocido';
-        this.toast.danger('Error al cargar los hospedajes. ' + errorMsg);
+        const errorMsg = body?.error?.detail || '';
+        this.toast.danger(this.t.translate('partner.rooms.loadError') + (errorMsg ? ' ' + errorMsg : ''));
         this.loading = false;
       }
     });

@@ -9,7 +9,7 @@
           [attr.aria-pressed]="isSelected(item.value)"
           [disabled]="disabled"
           (click)="toggleAmenity(item.value)">
-          {{ item.label }}
+          {{ 'amenities.' + item.value | transloco }}
         </button>
       }
     </div>
@@ -20,7 +20,7 @@
     <div class="tags-list">
       @for (item of availableAmenities; track item.value) {
         @if (isSelected(item.value)) {
-          <span class="tag-badge">{{ item.label }}</span>
+          <span class="tag-badge">{{ 'amenities.' + item.value | transloco }}</span>
         }
       }
     </div>

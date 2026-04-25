@@ -7,15 +7,15 @@
         <img src="/logo.svg" alt="" aria-hidden="true" />
         <span>TravelHub</span>
       </a>
-      <p class="footer__tagline">Enjoy our hotels</p>
+      <p class="footer__tagline">{{ 'footer.tagline' | transloco }}</p>
     </div>
 
     <!-- Support -->
     <div class="footer__col">
-      <h3 class="footer__col-title">Soporte</h3>
+      <h3 class="footer__col-title">{{ 'footer.support' | transloco }}</h3>
       <ul class="footer__links">
-        <li><a routerLink="/bookings">Mis Reservas</a></li>
-        <li><a routerLink="/terms">Términos de Servicio</a></li>
+        <li><a routerLink="/bookings">{{ 'footer.myBookings' | transloco }}</a></li>
+        <li><a routerLink="/terms">{{ 'footer.terms' | transloco }}</a></li>
       </ul>
     </div>
 
@@ -23,7 +23,7 @@
 
   <div class="footer__bottom">
     <div class="footer__bottom-inner">
-      <span>© {{ year }} TravelHub. Todos los derechos reservados.</span>
+      <span>{{ 'footer.copyright' | transloco: { year: year } }}</span>
     </div>
   </div>
 </footer>

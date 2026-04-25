@@ -3,8 +3,8 @@
   <!-- ── Sidebar ──────────────────────────────────────────────── -->
   <aside class="hotels-filters">
     <div class="hotels-filters__header">
-      <span class="hotels-filters__title">Filtros</span>
-      <button class="hotels-filters__clear" type="button" (click)="clearFilters()">Limpiar todo</button>
+      <span class="hotels-filters__title">{{ 'hotels.filtersTitle' | transloco }}</span>
+      <button class="hotels-filters__clear" type="button" (click)="clearFilters()">{{ 'hotels.clearAll' | transloco }}</button>
     </div>
 
     <!-- Country -->
@@ -12,10 +12,10 @@
       <section class="hotels-filters__section">
         <h3 class="hotels-filters__section-title">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-          País
+          {{ 'hotels.country' | transloco }}
         </h3>
         <select class="hotels-filters__select" [(ngModel)]="selectedPais" (change)="onPaisChange()">
-          <option value="">Todos los países</option>
+          <option value="">{{ 'hotels.allCountries' | transloco }}</option>
           @for (pais of paises; track pais) {
             <option [value]="pais">{{ pais }}</option>
           }
@@ -27,12 +27,12 @@
     <section class="hotels-filters__section">
       <h3 class="hotels-filters__section-title">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Huéspedes
+        {{ 'hotels.guests' | transloco }}
       </h3>
       <div class="stepper">
-        <button class="stepper__btn" type="button" (click)="decrementHuespedes()" [disabled]="huespedes <= 1" aria-label="Reducir huéspedes">−</button>
+        <button class="stepper__btn" type="button" (click)="decrementHuespedes()" [disabled]="huespedes <= 1" [attr.aria-label]="'hotels.decreaseGuests' | transloco">−</button>
         <span class="stepper__value">{{ huespedes }}</span>
-        <button class="stepper__btn" type="button" (click)="incrementHuespedes()" [disabled]="huespedes >= 20" aria-label="Aumentar huéspedes">+</button>
+        <button class="stepper__btn" type="button" (click)="incrementHuespedes()" [disabled]="huespedes >= 20" [attr.aria-label]="'hotels.increaseGuests' | transloco">+</button>
       </div>
     </section>
 
@@ -42,7 +42,7 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
         </svg>
-        Precio por noche
+        {{ 'hotels.pricePerNight' | transloco }}
       </h3>
       <div class="price-slider">
         <div class="price-slider__labels">
@@ -63,7 +63,7 @@
             [min]="PRICE_MIN" [max]="PRICE_MAX" [step]="PRICE_STEP"
             [(ngModel)]="precioMin"
             (input)="onPriceMinInput()"
-            aria-label="Precio mínimo"
+            [attr.aria-label]="'hotels.pricePerNight' | transloco"
           />
           <input
             class="price-slider__input price-slider__input--max"
@@ -71,7 +71,7 @@
             [min]="PRICE_MIN" [max]="PRICE_MAX" [step]="PRICE_STEP"
             [(ngModel)]="precioMax"
             (input)="onPriceMaxInput()"
-            aria-label="Precio máximo"
+            [attr.aria-label]="'hotels.pricePerNight' | transloco"
           />
         </div>
       </div>
@@ -83,7 +83,7 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
         </svg>
-        Calificación
+        {{ 'hotels.rating' | transloco }}
       </h3>
       @for (star of starOptions; track star) {
         <label class="hotels-filters__checkbox-row">
@@ -109,7 +109,7 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
         </svg>
-        Comodidades
+        {{ 'hotels.amenities' | transloco }}
       </h3>
       @for (amenity of popularAmenities; track amenity.value) {
         <label class="hotels-filters__checkbox-row">
@@ -118,7 +118,7 @@
             [checked]="selectedAmenidades.has(amenity.value)"
             (change)="toggleAmenidad(amenity.value)"
           />
-          <span>{{ amenity.label }}</span>
+          <span>{{ 'amenities.' + amenity.value | transloco }}</span>
         </label>
       }
       @if (showAllAmenities) {
@@ -129,7 +129,7 @@
               [checked]="selectedAmenidades.has(amenity.value)"
               (change)="toggleAmenidad(amenity.value)"
             />
-            <span>{{ amenity.label }}</span>
+            <span>{{ 'amenities.' + amenity.value | transloco }}</span>
           </label>
         }
       }
@@ -138,7 +138,7 @@
         type="button"
         (click)="showAllAmenities = !showAllAmenities"
       >
-        {{ showAllAmenities ? 'Ver menos' : 'Ver más (+' + extraAmenities.length + ')' }}
+        {{ showAllAmenities ? ('hotels.showLess' | transloco) : ('hotels.showMore' | transloco: { count: extraAmenities.length }) }}
       </button>
     </section>
   </aside>
@@ -148,9 +148,9 @@
 
     <!-- Breadcrumb -->
     <nav class="breadcrumb">
-      <a class="breadcrumb__link" routerLink="/">Inicio</a>
+      <a class="breadcrumb__link" routerLink="/">{{ 'hotels.breadcrumbHome' | transloco }}</a>
       <span class="breadcrumb__sep">›</span>
-      <span>Resultados de búsqueda</span>
+      <span>{{ 'hotels.breadcrumbSearch' | transloco }}</span>
     </nav>
 
     <!-- Search bar row: ciudad + fechas -->
@@ -163,19 +163,19 @@
       <input
         class="city-search__input"
         type="text"
-        placeholder="Buscar por ciudad o país…"
+        [placeholder]="'hotels.searchPlaceholder' | transloco"
         [(ngModel)]="ciudad"
         name="ciudad"
         autocomplete="off"
         (input)="onCityInput()"
-        aria-label="Filtrar por ciudad"
+        [attr.aria-label]="'hotels.filterByCity' | transloco"
       />
     </form>
 
     <!-- Date pickers -->
     <div class="date-inputs">
       <label class="date-inputs__group">
-        <span class="date-inputs__label">Entrada</span>
+        <span class="date-inputs__label">{{ 'hotels.checkIn' | transloco }}</span>
         <input
           class="date-inputs__input"
           type="date"
@@ -183,11 +183,11 @@
           name="checkIn"
           [min]="today"
           (change)="onDateChange()"
-          aria-label="Fecha de entrada"
+          [attr.aria-label]="'hotels.checkInAria' | transloco"
         />
       </label>
       <label class="date-inputs__group">
-        <span class="date-inputs__label">Salida</span>
+        <span class="date-inputs__label">{{ 'hotels.checkOut' | transloco }}</span>
         <input
           class="date-inputs__input"
           type="date"
@@ -195,7 +195,7 @@
           name="checkOut"
           [min]="checkIn || today"
           (change)="onDateChange()"
-          aria-label="Fecha de salida"
+          [attr.aria-label]="'hotels.checkOutAria' | transloco"
         />
       </label>
     </div>
@@ -205,19 +205,19 @@
     <div class="hotels-main__header">
       <div>
         <h1 class="hotels-main__title">
-          Hoteles{{ ciudad ? ' en ' + ciudad : '' }}
+          {{ ciudad ? ('hotels.titleIn' | transloco: { city: ciudad }) : ('hotels.title' | transloco) }}
         </h1>
         <p class="hotels-main__subtitle">
-          {{ total }} {{ total === 1 ? 'propiedad encontrada' : 'propiedades encontradas' }}
+          {{ total }} {{ total === 1 ? ('hotels.propertyFound' | transloco) : ('hotels.propertiesFound' | transloco) }}
           @if (dateRangeLabel) { · {{ dateRangeLabel }} }
-          @if (huespedes > 1) { · {{ huespedes }} huéspedes }
+          @if (huespedes > 1) { · {{ huespedes }} {{ 'home.searchGuests' | transloco }} }
         </p>
       </div>
       <div class="sort-control">
-        <label class="sort-control__label" for="sort-control-select">Ordenar por:</label>
+        <label class="sort-control__label" for="sort-control-select">{{ 'hotels.sortBy' | transloco }}</label>
         <select id="sort-control-select" class="sort-control__select" [(ngModel)]="orden" (change)="onOrdenChange()">
           @for (opt of sortOptions; track opt.value) {
-            <option [value]="opt.value">{{ opt.label }}</option>
+            <option [value]="opt.value">{{ 'hotels.sort.' + opt.value | transloco }}</option>
           }
         </select>
       </div>
@@ -225,7 +225,7 @@
 
     <!-- Initial loading (solo cuando aún no hay resultados previos) -->
     @if (loading && hoteles.length === 0) {
-      <div class="hotels-main__status">Cargando hoteles…</div>
+      <div class="hotels-main__status">{{ 'hotels.loading' | transloco }}</div>
     }
 
     <!-- Error -->
@@ -244,12 +244,12 @@
             <path d="M28 34 h12 M34 28 v12" stroke="var(--color-primary)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
           </svg>
         </div>
-        <h2 class="hotels-main__empty-title">Ningún hotel coincide con tu búsqueda</h2>
+        <h2 class="hotels-main__empty-title">{{ 'hotels.emptyTitle' | transloco }}</h2>
         <p class="hotels-main__empty-subtitle">
-          Intenta ajustar los filtros o ampliar el rango de precio para descubrir más opciones.
+          {{ 'hotels.emptySubtitle' | transloco }}
         </p>
         <button class="hotels-main__empty-btn" type="button" (click)="clearFilters()">
-          Limpiar filtros
+          {{ 'hotels.clearFilters' | transloco }}
         </button>
       </div>
     }
@@ -288,7 +288,7 @@
                     </svg>
                   }
                 </span>
-                <span class="hotel-card__type">Hotel</span>
+                <span class="hotel-card__type">{{ 'hotels.badge' | transloco }}</span>
               </div>
 
               <h2 class="hotel-card__name">{{ hotel.nombre }}</h2>
@@ -301,11 +301,11 @@
               <div class="hotel-card__badges">
                 <span class="badge badge--green">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-                  Cancelación gratis
+                  {{ 'hotels.freeCancellation' | transloco }}
                 </span>
                 @for (amenidad of hotel.amenidades; track amenidad) {
                   <span class="badge badge--muted">
-                    {{ getAmenidadLabel(amenidad) }}
+                    {{ 'amenities.' + amenidad | transloco }}
                   </span>
                 }
               </div>
@@ -315,8 +315,8 @@
               <p class="hotel-card__price">
                 ${{ hotel.precio_minimo.toLocaleString('es-CO') }}
               </p>
-              <p class="hotel-card__price-label">Precio total (incl. imp.)</p>
-              <a class="hotel-card__btn" [routerLink]="['/hotels', hotel.id]">Ver detalle</a>
+              <p class="hotel-card__price-label">{{ 'hotels.totalPrice' | transloco }}</p>
+              <a class="hotel-card__btn" [routerLink]="['/hotels', hotel.id]">{{ 'hotels.viewDetail' | transloco }}</a>
             </div>
           </article>
         }
@@ -329,7 +329,7 @@
             class="pagination__btn"
             [disabled]="page === 0"
             (click)="goToPage(page - 1)"
-            aria-label="Anterior"
+            [attr.aria-label]="'hotels.prevPage' | transloco"
           >‹</button>
 
           @for (p of visiblePages; track $index) {
@@ -348,7 +348,7 @@
             class="pagination__btn"
             [disabled]="page === totalPages - 1"
             (click)="goToPage(page + 1)"
-            aria-label="Siguiente"
+            [attr.aria-label]="'hotels.nextPage' | transloco"
           >›</button>
         </nav>
       }
