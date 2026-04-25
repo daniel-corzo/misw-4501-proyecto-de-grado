@@ -162,7 +162,7 @@
                 }
               </div>
               <div class="room-card__info">
-                <h3 class="room-card__name">{{ room.descripcion || (('hotelDetail.selectRoom' | transloco) + ' ' + room.numero) }}</h3>
+                <h3 class="room-card__name">{{ room.descripcion || ('hotelDetail.roomNumber' | transloco: { number: room.numero }) }}</h3>
                 <p class="room-card__capacity">{{ room.capacidad }} {{ room.capacidad === 1 ? ('hotelDetail.guest' | transloco) : ('hotelDetail.guests' | transloco) }}</p>
                 <p class="room-card__price">
                   <span class="room-card__price-amount">${{ formatPrice(room.monto) }}</span>
