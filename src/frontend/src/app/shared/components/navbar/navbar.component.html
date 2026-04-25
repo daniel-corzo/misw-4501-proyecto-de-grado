@@ -60,21 +60,7 @@
         </div>
 
         <!-- Language Switcher -->
-        <div class="navbar__avatar-wrap" (click)="toggleLangMenu($event)">
-          <div class="navbar__user-info" style="cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 50%; padding: 4px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-languages"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
-          </div>
-          @if (langMenuOpen) {
-            <div class="navbar__dropdown" (click)="$event.stopPropagation()">
-              <button class="navbar__dropdown-item" type="button" (click)="setLang('es')">
-                <span [style.fontWeight]="currentLang === 'es' ? 'bold' : 'normal'">Español</span>
-              </button>
-              <button class="navbar__dropdown-item" type="button" (click)="setLang('en')">
-                 <span [style.fontWeight]="currentLang === 'en' ? 'bold' : 'normal'">English</span>
-              </button>
-            </div>
-          }
-        </div>
+        <ng-container [ngTemplateOutlet]="langSwitcher"></ng-container>
 
       } @else {
         <!-- Unauthenticated state -->
@@ -82,25 +68,29 @@
           <button class="navbar__link" type="button" (click)="auth.openLoginModal()">{{ 'navbar.login' | transloco }}</button>
           <button class="navbar__btn-primary" type="button" (click)="auth.openRegisterModal()">{{ 'navbar.register' | transloco }}</button>
         </div>
-        
-        <!-- Language Switcher Unauthenticated -->
-        <div class="navbar__avatar-wrap" (click)="toggleLangMenu($event)">
-          <div class="navbar__user-info" style="cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 50%; padding: 4px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-languages"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
-          </div>
-          @if (langMenuOpen) {
-            <div class="navbar__dropdown" (click)="$event.stopPropagation()">
-              <button class="navbar__dropdown-item" type="button" (click)="setLang('es')">
-                <span [style.fontWeight]="currentLang === 'es' ? 'bold' : 'normal'">Español</span>
-              </button>
-              <button class="navbar__dropdown-item" type="button" (click)="setLang('en')">
-                 <span [style.fontWeight]="currentLang === 'en' ? 'bold' : 'normal'">English</span>
-              </button>
-            </div>
-          }
-        </div>
+
+        <!-- Language Switcher -->
+        <ng-container [ngTemplateOutlet]="langSwitcher"></ng-container>
       }
     </div>
 
   </div>
 </nav>
+
+<ng-template #langSwitcher>
+  <div class="navbar__avatar-wrap" (click)="toggleLangMenu($event)">
+    <div class="navbar__lang-btn">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-languages"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
+    </div>
+    @if (langMenuOpen) {
+      <div class="navbar__dropdown" (click)="$event.stopPropagation()">
+        <button class="navbar__dropdown-item" type="button" (click)="setLang('es')">
+          <span [style.fontWeight]="currentLang === 'es' ? 'bold' : 'normal'">Español</span>
+        </button>
+        <button class="navbar__dropdown-item" type="button" (click)="setLang('en')">
+          <span [style.fontWeight]="currentLang === 'en' ? 'bold' : 'normal'">English</span>
+        </button>
+      </div>
+    }
+  </div>
+</ng-template>

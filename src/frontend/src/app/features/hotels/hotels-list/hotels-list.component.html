@@ -63,7 +63,7 @@
             [min]="PRICE_MIN" [max]="PRICE_MAX" [step]="PRICE_STEP"
             [(ngModel)]="precioMin"
             (input)="onPriceMinInput()"
-            [attr.aria-label]="'hotels.pricePerNight' | transloco"
+            [attr.aria-label]="'hotels.minPriceAria' | transloco"
           />
           <input
             class="price-slider__input price-slider__input--max"
@@ -71,7 +71,7 @@
             [min]="PRICE_MIN" [max]="PRICE_MAX" [step]="PRICE_STEP"
             [(ngModel)]="precioMax"
             (input)="onPriceMaxInput()"
-            [attr.aria-label]="'hotels.pricePerNight' | transloco"
+            [attr.aria-label]="'hotels.maxPriceAria' | transloco"
           />
         </div>
       </div>

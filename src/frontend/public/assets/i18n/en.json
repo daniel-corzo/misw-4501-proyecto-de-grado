@@ -140,6 +140,8 @@
     "decreaseGuests": "Decrease guests",
     "increaseGuests": "Increase guests",
     "pricePerNight": "Price per night",
+    "minPriceAria": "Minimum price per night",
+    "maxPriceAria": "Maximum price per night",
     "rating": "Rating",
     "amenities": "Amenities",
     "showMore": "Show more (+{{ count }})",

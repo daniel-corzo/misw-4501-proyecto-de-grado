@@ -1,4 +1,5 @@
 import { Component, inject, HostListener, ElementRef, DestroyRef } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink, RouterLinkActive, Router, NavigationStart } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs';
@@ -8,7 +9,7 @@ import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, TranslocoPipe],
+  imports: [RouterLink, RouterLinkActive, TranslocoPipe, NgTemplateOutlet],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.scss',
 })

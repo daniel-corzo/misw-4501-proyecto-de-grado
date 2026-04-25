@@ -140,6 +140,8 @@
     "decreaseGuests": "Reducir huéspedes",
     "increaseGuests": "Aumentar huéspedes",
     "pricePerNight": "Precio por noche",
+    "minPriceAria": "Precio mínimo por noche",
+    "maxPriceAria": "Precio máximo por noche",
     "rating": "Calificación",
     "amenities": "Comodidades",
     "showMore": "Ver más (+{{ count }})",
