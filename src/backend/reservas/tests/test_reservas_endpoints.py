@@ -715,3 +715,144 @@ async def test_get_reservas_usuario_403(override_client):
 
     assert response.status_code == 403
     assert response.json()["detail"] == "No tienes permiso para ver las reservas de este usuario"
+
+
+@pytest.mark.asyncio
+async def test_get_reservas_usuario_pasadas_returns_200(override_client, mock_db_session):
+    now = datetime.now(UTC)
+    reservas = [
+        _build_reserva(
+            estado="confirmada",
+            check_out=now - timedelta(days=2),
+            created_at=now - timedelta(days=5),
+        )
+    ]
+
+    result = MagicMock()
+    scalar_result = MagicMock()
+    scalar_result.all.return_value = reservas
+    result.scalars.return_value = scalar_result
+    mock_db_session.execute = AsyncMock(return_value=result)
+
+    detalles = {
+        HABITACION_ID: HabitacionReservaDetalleResponse(
+            id=HABITACION_ID,
+            nombre_habitacion="Classic Room",
+            nombre_hotel="Hotel Boutique Paris",
+            imagenes_hotel=["https://cdn.example.com/hoteles/paris-1.jpg"],
+            ciudad_hotel="Paris",
+            pais_hotel="France",
+        )
+    }
+
+    with patch(
+        "app.routers.reservas.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value=detalles),
+    ):
+        response = await override_client.get("/reservas?estado=pasadas")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 1
+    assert isinstance(data["reservas"], list)
+    assert len(data["reservas"]) == 1
+    reserva = data["reservas"][0]
+    assert reserva["estado"] == "confirmada"
+    assert reserva["habitacion_id"] == str(HABITACION_ID)
+    assert reserva["nombre_habitacion"] == "Classic Room"
+    assert reserva["nombre_hotel"] == "Hotel Boutique Paris"
+    assert reserva["imagenes_hotel"] == ["https://cdn.example.com/hoteles/paris-1.jpg"]
+    assert reserva["ciudad_hotel"] == "Paris"
+    assert reserva["pais_hotel"] == "France"
+
+
+@pytest.mark.asyncio
+async def test_get_reservas_activas_includes_ciudad_pais(override_client, mock_db_session):
+    now = datetime.now(UTC)
+    reservas = [
+        _build_reserva(
+            estado="confirmada",
+            check_out=now + timedelta(days=5),
+            created_at=now,
+        )
+    ]
+
+    result = MagicMock()
+    scalar_result = MagicMock()
+    scalar_result.all.return_value = reservas
+    result.scalars.return_value = scalar_result
+    mock_db_session.execute = AsyncMock(return_value=result)
+
+    detalles = {
+        HABITACION_ID: HabitacionReservaDetalleResponse(
+            id=HABITACION_ID,
+            nombre_habitacion="Deluxe Room",
+            nombre_hotel="Grand Hyatt Regency",
+            imagenes_hotel=[],
+            ciudad_hotel="Santorini",
+            pais_hotel="Greece",
+        )
+    }
+
+    with patch(
+        "app.routers.reservas.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value=detalles),
+    ):
+        response = await override_client.get("/reservas?estado=activas")
+
+    assert response.status_code == 200
+    data = response.json()
+    reserva = data["reservas"][0]
+    assert reserva["ciudad_hotel"] == "Santorini"
+    assert reserva["pais_hotel"] == "Greece"
+
+
+@pytest.mark.asyncio
+async def test_get_reservas_activas_sql_excludes_cancelled_and_past(override_client, mock_db_session):
+    now = datetime.now(UTC)
+    result = MagicMock()
+    scalar_result = MagicMock()
+    scalar_result.all.return_value = []
+    result.scalars.return_value = scalar_result
+    mock_db_session.execute = AsyncMock(return_value=result)
+
+    with patch(
+        "app.routers.reservas.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value={}),
+    ):
+        response = await override_client.get("/reservas?estado=activas")
+
+    assert response.status_code == 200
+    executed_stmt = mock_db_session.execute.await_args.args[0]
+    stmt_str = str(executed_stmt).lower()
+    assert "check_out" in stmt_str
+    assert "order by" in stmt_str
+    assert "check_in" in stmt_str
+
+
+@pytest.mark.asyncio
+async def test_get_reservas_pasadas_sql_excludes_canceladas(override_client, mock_db_session):
+    result = MagicMock()
+    scalar_result = MagicMock()
+    scalar_result.all.return_value = []
+    result.scalars.return_value = scalar_result
+    mock_db_session.execute = AsyncMock(return_value=result)
+
+    with patch(
+        "app.routers.reservas.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value={}),
+    ):
+        response = await override_client.get("/reservas?estado=pasadas")
+
+    assert response.status_code == 200
+    executed_stmt = mock_db_session.execute.await_args.args[0]
+    stmt_str = str(executed_stmt).lower()
+    assert "check_out" in stmt_str
+    assert "created_at desc" in stmt_str
+
+
+@pytest.mark.asyncio
+async def test_get_reservas_estado_missing_returns_422(override_client):
+    response = await override_client.get("/reservas")
+
+    assert response.status_code == 422

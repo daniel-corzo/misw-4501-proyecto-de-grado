@@ -1,11 +1,9 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { BookingService, BookingResponse } from '../../core/services/booking.service';
-import { HotelService, HotelDetalle } from '../../core/services/hotel.service';
+import { BookingService, BookingResponse, BookingFilter } from '../../core/services/booking.service';
 import { AuthService } from '../../core/services/auth.service';
-import { forkJoin, of } from 'rxjs';
-import { map, switchMap, catchError } from 'rxjs/operators';
 import { RouterModule } from '@angular/router';
+import { PLACEHOLDER_IMAGE } from '../../shared/constants/images';
 
 interface BookingDisplay {
   id: string;
@@ -29,58 +27,47 @@ interface BookingDisplay {
 })
 export class BookingsComponent implements OnInit {
   private readonly bookingService = inject(BookingService);
-  private readonly hotelService = inject(HotelService);
-  private readonly authService = inject(AuthService);
   private readonly dateFormat: Intl.DateTimeFormatOptions = {
     month: 'short',
     day: 'numeric',
     year: 'numeric'
   };
 
-  activeTab: 'upcoming' | 'past' = 'upcoming';
+  activeTab: 'upcoming' | 'past' | 'cancelled' = 'upcoming';
   bookings: BookingDisplay[] = [];
   loading = true;
+
+  readonly placeholderImage = PLACEHOLDER_IMAGE;
+
+  private readonly statusLabels: Record<string, string> = {
+    confirmada: 'Confirmado',
+    pendiente: 'Pendiente',
+    cancelada: 'Cancelada',
+    completada: 'Completada',
+  };
 
   ngOnInit(): void {
     this.loadBookings();
   }
 
-  setTab(tab: 'upcoming' | 'past'): void {
+  setTab(tab: 'upcoming' | 'past' | 'cancelled'): void {
     this.activeTab = tab;
+    this.loadBookings();
   }
 
   loadBookings(): void {
-    const user = this.authService.userProfile();
-    if (!user) {
-      this.loading = false;
-      return;
-    }
-
     this.loading = true;
-    this.bookingService.getUserBookings(user.id, { limit: 50 }).pipe(
-      switchMap((res) => {
-        if (!res.reservas.length) return of([]);
-        
-        const bookingReqs = res.reservas.map(booking => {
-          return this.hotelService.getRoomById(booking.habitacion_id).pipe(
-            switchMap(room => {
-               if(room.hotel_id) {
-                 return this.hotelService.getHotelById(room.hotel_id).pipe(
-                    map(hotel => this.mapToDisplay(booking, hotel)),
-                    catchError(() => of(this.mapToDisplayFallback(booking)))
-                 );
-               }
-               return of(this.mapToDisplayFallback(booking));
-            }),
-            catchError(() => of(this.mapToDisplayFallback(booking)))
-          );
-        });
+    this.bookings = [];
 
-        return forkJoin(bookingReqs);
-      })
-    ).subscribe({
-      next: (data) => {
-        this.bookings = data.filter(b => b.status === 'pendiente' || b.status === 'confirmada');
+    const statusMap: Record<typeof this.activeTab, BookingFilter> = {
+      upcoming: 'activas',
+      past: 'pasadas',
+      cancelled: 'canceladas',
+    };
+
+    this.bookingService.getBookingsByStatus(statusMap[this.activeTab]).subscribe({
+      next: (res) => {
+        this.bookings = res.reservas.map(b => this.mapToDisplay(b));
         this.loading = false;
       },
       error: () => {
@@ -89,41 +76,31 @@ export class BookingsComponent implements OnInit {
     });
   }
 
-  private mapToDisplay(booking: BookingResponse, hotel: HotelDetalle): BookingDisplay {
-    const start = this.parseBackendDate(booking.fecha_entrada);
-    const end = this.parseBackendDate(booking.fecha_salida);
-    const nights = this.calculateNights(start, end);
-    
-    return {
-      id: booking.id,
-      hotelName: hotel.nombre,
-      location: `${hotel.ciudad}, ${hotel.pais}`,
-      image: hotel.imagenes?.[0] || 'assets/images/hotel3.avif',
-      checkIn: this.formatDisplayDate(start),
-      checkOut: this.formatDisplayDate(end),
-      nights: nights,
-      guests: booking.num_huespedes,
-      status: booking.estado,
-      statusLabel: booking.estado === 'confirmada' ? 'Confirmado' : 'Pendiente'
-    };
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.src = this.placeholderImage;
   }
 
-  private mapToDisplayFallback(booking: BookingResponse): BookingDisplay {
+  private mapToDisplay(booking: BookingResponse): BookingDisplay {
     const start = this.parseBackendDate(booking.fecha_entrada);
     const end = this.parseBackendDate(booking.fecha_salida);
     const nights = this.calculateNights(start, end);
-    
+    const image = booking.imagenes_hotel?.[0] || this.placeholderImage;
+    const city = booking.ciudad_hotel ?? '';
+    const country = booking.pais_hotel ?? '';
+    const location = city && country ? `${city}, ${country}` : city || country || 'Ubicación Desconocida';
+
     return {
       id: booking.id,
-      hotelName: 'Hotel Desconocido',
-      location: 'Ubicación Desconocida',
-      image: 'assets/images/hotel3.avif',
+      hotelName: booking.nombre_hotel || 'Hotel Desconocido',
+      location,
+      image,
       checkIn: this.formatDisplayDate(start),
       checkOut: this.formatDisplayDate(end),
-      nights: nights,
+      nights,
       guests: booking.num_huespedes,
       status: booking.estado,
-      statusLabel: booking.estado === 'confirmada' ? 'Confirmado' : 'Pendiente'
+      statusLabel: this.statusLabels[booking.estado] ?? booking.estado,
     };
   }
 
@@ -135,7 +112,6 @@ export class BookingsComponent implements OnInit {
       const day = Number(match[3]);
       return new Date(year, monthIndex, day);
     }
-
     return new Date(value);
   }
 

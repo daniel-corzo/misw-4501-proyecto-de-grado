@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HotelService, HotelListItem, HotelListParams } from '../../../core/services/hotel.service';
+import { PLACEHOLDER_IMAGE } from '../../../shared/constants/images';
 
 const LIMIT = 10;
 
@@ -338,7 +339,11 @@ export class HotelsListComponent implements OnInit, OnDestroy {
     return !!this.getImageUrl(hotel) && !this.imageErrors.has(hotel.id);
   }
 
-  onImageError(hotelId: string): void {
+  readonly placeholderImage = PLACEHOLDER_IMAGE;
+
+  onImageError(event: Event, hotelId: string): void {
+    const img = event.target as HTMLImageElement;
+    img.src = this.placeholderImage;
     this.imageErrors.add(hotelId);
     this.imageErrors = new Set(this.imageErrors);
   }

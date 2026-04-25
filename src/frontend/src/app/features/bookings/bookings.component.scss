@@ -136,6 +136,12 @@
           color: #f29900;
           .dot { background-color: #f29900; }
         }
+
+        &.cancelled {
+          background-color: #f1f3f4;
+          color: #5f6368;
+          .dot { background-color: #5f6368; }
+        }
       }
 
       h3 {

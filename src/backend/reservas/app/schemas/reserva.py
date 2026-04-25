@@ -59,6 +59,8 @@ class ReservaResponse(BaseModel):
     nombre_habitacion: Optional[str] = None
     nombre_hotel: Optional[str] = None
     imagenes_hotel: List[str] = Field(default_factory=list)
+    ciudad_hotel: Optional[str] = None
+    pais_hotel: Optional[str] = None
     fecha_entrada: date
     fecha_salida: date
     num_huespedes: int

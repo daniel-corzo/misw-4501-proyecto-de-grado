@@ -29,6 +29,8 @@ def reserva_to_response(
     nombre_habitacion: str | None = None,
     nombre_hotel: str | None = None,
     imagenes_hotel: list[str] | None = None,
+    ciudad_hotel: str | None = None,
+    pais_hotel: str | None = None,
 ) -> ReservaResponse:
     habitacion_id = reserva.habitaciones_ids[0] if reserva.habitaciones_ids else None
     if habitacion_id is None:
@@ -42,6 +44,8 @@ def reserva_to_response(
         nombre_habitacion=nombre_habitacion,
         nombre_hotel=nombre_hotel,
         imagenes_hotel=imagenes_hotel or [],
+        ciudad_hotel=ciudad_hotel,
+        pais_hotel=pais_hotel,
         fecha_entrada=reserva.check_in.date(),
         fecha_salida=reserva.check_out.date(),
         num_huespedes=reserva.personas,

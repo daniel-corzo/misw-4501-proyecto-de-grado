@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { HotelService, HotelDetalle, HabitacionDetalle } from '../../../core/services/hotel.service';
+import { PLACEHOLDER_IMAGE } from '../../../shared/constants/images';
 import { AmenitiesTagsComponent } from '../components/amenities-tags/amenities-tags.component';
 
 @Component({
@@ -83,5 +84,12 @@ export class HotelDetailComponent implements OnInit {
 
   formatPrice(amount: number): string {
     return amount.toLocaleString('es-CO');
+  }
+
+  readonly placeholderImage = PLACEHOLDER_IMAGE;
+
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.src = this.placeholderImage;
   }
 }

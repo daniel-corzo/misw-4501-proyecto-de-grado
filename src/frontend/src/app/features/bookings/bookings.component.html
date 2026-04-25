@@ -7,21 +7,29 @@
   <div class="tabs">
     <button class="tab" [class.active]="activeTab === 'upcoming'" (click)="setTab('upcoming')">Reservas Próximas</button>
     <button class="tab" [class.active]="activeTab === 'past'" (click)="setTab('past')">Reservas Pasadas</button>
+    <button class="tab" [class.active]="activeTab === 'cancelled'" (click)="setTab('cancelled')">Reservas Canceladas</button>
   </div>
 
   <div class="bookings-list" *ngIf="!loading">
     <div class="list-header">
-      <h2>Reservas Confirmadas</h2>
+      <h2>
+        <ng-container *ngIf="activeTab === 'upcoming'">Reservas Próximas</ng-container>
+        <ng-container *ngIf="activeTab === 'past'">Reservas Pasadas</ng-container>
+        <ng-container *ngIf="activeTab === 'cancelled'">Reservas Canceladas</ng-container>
+      </h2>
       <span class="count-badge">{{ bookings.length }} RESERVAS ENCONTRADAS</span>
     </div>
 
     <div class="booking-card" *ngFor="let b of bookings">
       <div class="image-wrapper">
-        <img [src]="b.image" [alt]="b.hotelName">
+        <img [src]="b.image" [alt]="b.hotelName" (error)="onImageError($event)">
       </div>
       <div class="details">
         <div class="booking-id">ID RESERVA: {{ b.id }}</div>
-        <div class="status" [class.confirmed]="b.status === 'confirmada'" [class.pending]="b.status === 'pendiente'">
+        <div class="status"
+          [class.confirmed]="b.status === 'confirmada'"
+          [class.pending]="b.status === 'pendiente'"
+          [class.cancelled]="b.status === 'cancelada'">
           <span class="dot"></span> {{ b.statusLabel }}
         </div>
         <h3>{{ b.hotelName }}</h3>
@@ -31,7 +39,7 @@
           <span><i class="user-icon"></i> {{ b.guests }} Adultos</span>
         </div>
         <div class="actions">
-          <button class="btn btn-primary" [routerLink]="['/bookings', b.id]">
+          <button class="btn btn-primary" [routerLink]="['/bookings', b.id]" *ngIf="b.status !== 'cancelada'">
             <i class="settings-icon"></i> Manejar Estancia
           </button>
           <button class="btn btn-secondary" (click)="printVoucher(b)">
@@ -42,7 +50,9 @@
     </div>
 
     <div *ngIf="bookings.length === 0" class="no-bookings">
-      <p>No tienes reservas activas en este momento.</p>
+      <p *ngIf="activeTab === 'upcoming'">No tienes reservas activas en este momento.</p>
+      <p *ngIf="activeTab === 'past'">No tienes reservas pasadas registradas.</p>
+      <p *ngIf="activeTab === 'cancelled'">No tienes reservas canceladas.</p>
     </div>
   </div>
 
