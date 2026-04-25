@@ -11,7 +11,8 @@
     "register": "Registrarse",
     "notifications": "Notificaciones",
     "roleTraveler": "Viajero",
-    "rolePartner": "Hotelero"
+    "rolePartner": "Hotelero",
+    "changeLanguage": "Cambiar idioma"
   },
   "auth": {
     "roleTraveler": "Viajero",

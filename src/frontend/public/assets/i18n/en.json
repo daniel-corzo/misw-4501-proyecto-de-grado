@@ -11,7 +11,8 @@
     "register": "Register",
     "notifications": "Notifications",
     "roleTraveler": "Traveler",
-    "rolePartner": "Hotel Partner"
+    "rolePartner": "Hotel Partner",
+    "changeLanguage": "Change language"
   },
   "auth": {
     "roleTraveler": "Traveler",
