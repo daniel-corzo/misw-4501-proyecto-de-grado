@@ -1,10 +1,10 @@
 import { HttpInterceptorFn } from '@angular/common/http';
-import { inject } from '@angular/core';
-import { TranslocoService } from '@jsverse/transloco';
 
 export const languageInterceptor: HttpInterceptorFn = (req, next) => {
-  const translocoService = inject(TranslocoService);
-  const currentLang = translocoService.getActiveLang();
+  const currentLang =
+    (typeof localStorage !== 'undefined' && localStorage.getItem('appLang')) ||
+    (typeof navigator !== 'undefined' && navigator.language?.slice(0, 2)) ||
+    'es';
 
   const clonedRequest = req.clone({
     headers: req.headers.set('Accept-Language', currentLang)
