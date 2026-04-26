@@ -286,12 +286,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Total for modify"
+            "value" : "Total for modification"
           }
         },
         "es" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "Total por modificación"
           }
         }

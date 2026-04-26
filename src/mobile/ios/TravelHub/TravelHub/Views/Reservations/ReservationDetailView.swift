@@ -9,6 +9,7 @@ struct ReservationDetailView: View {
     let reservationId: UUID
 
     @Environment(\.reservationService) private var reservationService
+    @Environment(\.hotelService) private var hotelService
     @Environment(\.toastManager) private var toastManager
     @Environment(\.dismiss) private var dismiss
 
@@ -32,6 +33,7 @@ struct ReservationDetailView: View {
         .task {
             viewModel.reservationService = reservationService
             viewModel.toastManager = toastManager
+            viewModel.hotelService = hotelService
             await viewModel.fetchDetail(reservationId: reservationId)
             
             if let reservation = self.viewModel.reservation, let hotelId = reservation.hotel.id {

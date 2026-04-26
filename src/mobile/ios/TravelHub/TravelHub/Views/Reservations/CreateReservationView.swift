@@ -32,6 +32,10 @@ struct CreateReservationView: View {
         if self.reservation != nil && !self.wasModified {
             return true
         }
+        
+        if self.viewModel.isLoading {
+            return true
+        }
 
         return false
     }
@@ -134,22 +138,28 @@ struct CreateReservationView: View {
                 // TODO: Navigate to payment
                 Task {
                     if let reservation = self.reservation {
-                        await self.viewModel.modify(
+                        let didSave = await self.viewModel.modify(
                             id: reservation.id,
                             habitacionId: self.selectedHabitacion.id,
                             fechaEntrada: self.dateRange.start,
                             fechaSalida: self.dateRange.end,
                             numHuespedes: self.guests
                         )
-                        dismiss()
+                        
+                        if didSave {
+                            dismiss()
+                        }
                     } else {
-                        await self.viewModel.create(
+                        let didSave = await self.viewModel.create(
                             habitacionId: selectedHabitacion.id,
                             fechaEntrada: self.dateRange.start,
                             fechaSalida: self.dateRange.end,
                             numHuespedes: self.guests
                         )
-                        router.navigateWithoutHistory(to: .myBookings)
+                        
+                        if didSave {
+                            router.navigateWithoutHistory(to: .myBookings)
+                        }
                     }
                 }
             } label: {
@@ -179,8 +189,6 @@ struct CreateReservationView: View {
         }
         .onAppear {
             if let reservation = self.reservation {
-                print(reservation.fechaEntrada)
-                print(reservation.fechaSalida)
                 self.dateRange = .init(
                     start: reservation.fechaEntrada,
                     end: reservation.fechaSalida
@@ -188,7 +196,7 @@ struct CreateReservationView: View {
                 self.guests = reservation.numHuespedes
                 self.selectedHabitacion = self.hotel.habitaciones.first(where: {
                     $0.id == reservation.habitacionID
-                })!
+                }) ?? self.hotel.habitaciones.first!
             } else {
                 self.selectedHabitacion = self.hotel.habitaciones.first!
             }

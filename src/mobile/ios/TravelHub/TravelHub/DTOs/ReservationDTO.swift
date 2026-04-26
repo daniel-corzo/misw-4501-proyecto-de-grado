@@ -191,7 +191,7 @@ struct ReservationHotelDTO: Decodable {
             contactoEmail: contactoEmail ?? "",
             images: imagenes,
             checkInHour: checkIn ?? .init(),
-            checkOutHour: .init(),
+            checkOutHour: checkOut ?? .init(),
             valorMinimoModificacion: 0,
             politicas: [],
             habitaciones: [],

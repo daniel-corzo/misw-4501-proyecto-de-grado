@@ -78,9 +78,9 @@ struct HotelDetailDTO: Decodable {
             departamento: departamento,
             ciudad: ciudad,
             descripcion: descripcion,
-            amenidades: amenidades.map({
-                HotelAmenity(rawValue: $0) ?? .airConditioning
-            }),
+            amenidades: amenidades.compactMap {
+                HotelAmenity(rawValue: $0)
+            },
             estrellas: estrellas,
             ranking: ranking,
             contactoCelular: contactoCelular,

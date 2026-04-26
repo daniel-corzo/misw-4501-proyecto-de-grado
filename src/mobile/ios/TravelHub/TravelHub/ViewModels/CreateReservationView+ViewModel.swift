@@ -22,7 +22,7 @@ extension CreateReservationView {
             fechaEntrada: Date,
             fechaSalida: Date,
             numHuespedes: Int
-        ) async {
+        ) async -> Bool {
             isLoading = true
             defer { isLoading = false }
 
@@ -46,15 +46,18 @@ extension CreateReservationView {
                         localized: .CreateReservation.reservationCreatedTitle
                     )
                 )
+                
+                return true
             } catch is CancellationError {
-                return
+                return false
             } catch {
                 toastManager.error(error.localizedDescription)
+                return false
             }
         }
         
         @MainActor
-        func modify(id: UUID, habitacionId: UUID, fechaEntrada: Date, fechaSalida: Date, numHuespedes: Int) async {
+        func modify(id: UUID, habitacionId: UUID, fechaEntrada: Date, fechaSalida: Date, numHuespedes: Int) async -> Bool {
             isLoading = true
             defer { isLoading = false }
             
@@ -78,10 +81,13 @@ extension CreateReservationView {
                         localized: .CreateReservation.reservationModifiedTitle
                     )
                 )
+                
+                return true
             } catch is CancellationError {
-                return
+                return false
             } catch {
                 toastManager.error(error.localizedDescription)
+                return false
             }
         }
     }

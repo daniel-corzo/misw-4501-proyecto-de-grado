@@ -49,6 +49,8 @@ extension ReservationDetailView {
             do {
                 let hotel = try await hotelService.getHotelDetail(id: id)
                 self.hotel = hotel.toHotel()
+            } catch is CancellationError {
+                 return
             } catch {
                 toastManager.error(String(localized: .ReservationDetail.errorRetrievingHotel))
             }
