@@ -4,17 +4,19 @@ import { CommonModule } from '@angular/common';
 import { HotelService, HotelDetalle, HabitacionDetalle } from '../../../core/services/hotel.service';
 import { PLACEHOLDER_IMAGE } from '../../../shared/constants/images';
 import { AmenitiesTagsComponent } from '../components/amenities-tags/amenities-tags.component';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-hotel-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, AmenitiesTagsComponent],
+  imports: [CommonModule, RouterLink, AmenitiesTagsComponent, TranslocoPipe],
   templateUrl: './hotel-detail.component.html',
   styleUrls: ['./hotel-detail.component.scss'],
 })
 export class HotelDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly hotelService = inject(HotelService);
+  private readonly t = inject(TranslocoService);
 
   hotel: HotelDetalle | null = null;
   loading = true;
@@ -27,7 +29,7 @@ export class HotelDetailComponent implements OnInit {
       const id = params.get('id');
       this.resetHotelState();
       if (!id) {
-        this.error = 'Hotel no encontrado.';
+        this.error = this.t.translate('hotelDetail.notFound');
         this.loading = false;
         return;
       }
@@ -54,9 +56,9 @@ export class HotelDetailComponent implements OnInit {
       },
       error: (err) => {
         if (err.status === 404) {
-          this.error = 'El hotel solicitado no existe.';
+          this.error = this.t.translate('hotelDetail.notFoundDetail');
         } else {
-          this.error = 'No se pudo cargar la información del hotel. Intente de nuevo más tarde.';
+          this.error = this.t.translate('hotelDetail.loadError');
         }
         this.loading = false;
       },

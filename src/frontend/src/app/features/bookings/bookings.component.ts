@@ -4,6 +4,7 @@ import { BookingService, BookingResponse, BookingFilter } from '../../core/servi
 import { AuthService } from '../../core/services/auth.service';
 import { RouterModule } from '@angular/router';
 import { PLACEHOLDER_IMAGE } from '../../shared/constants/images';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 interface BookingDisplay {
   id: string;
@@ -21,12 +22,13 @@ interface BookingDisplay {
 @Component({
   selector: 'app-bookings',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, TranslocoPipe],
   templateUrl: './bookings.component.html',
   styleUrl: './bookings.component.scss',
 })
 export class BookingsComponent implements OnInit {
   private readonly bookingService = inject(BookingService);
+  private readonly t = inject(TranslocoService);
   private readonly dateFormat: Intl.DateTimeFormatOptions = {
     month: 'short',
     day: 'numeric',
@@ -39,12 +41,14 @@ export class BookingsComponent implements OnInit {
 
   readonly placeholderImage = PLACEHOLDER_IMAGE;
 
-  private readonly statusLabels: Record<string, string> = {
-    confirmada: 'Confirmado',
-    pendiente: 'Pendiente',
-    cancelada: 'Cancelada',
-    completada: 'Completada',
-  };
+  private get statusLabels(): Record<string, string> {
+    return {
+      confirmada: this.t.translate('bookings.statusConfirmed'),
+      pendiente: this.t.translate('bookings.statusPending'),
+      cancelada: this.t.translate('bookings.statusCancelled'),
+      completada: this.t.translate('bookings.statusCompleted'),
+    };
+  }
 
   ngOnInit(): void {
     this.loadBookings();
@@ -88,11 +92,11 @@ export class BookingsComponent implements OnInit {
     const image = booking.imagenes_hotel?.[0] || this.placeholderImage;
     const city = booking.ciudad_hotel ?? '';
     const country = booking.pais_hotel ?? '';
-    const location = city && country ? `${city}, ${country}` : city || country || 'Ubicación Desconocida';
+    const location = city && country ? `${city}, ${country}` : city || country || this.t.translate('bookings.unknownLocation');
 
     return {
       id: booking.id,
-      hotelName: booking.nombre_hotel || 'Hotel Desconocido',
+      hotelName: booking.nombre_hotel || this.t.translate('bookings.unknownHotel'),
       location,
       image,
       checkIn: this.formatDisplayDate(start),
@@ -130,8 +134,8 @@ export class BookingsComponent implements OnInit {
     if (!win) return;
 
     const doc = win.document;
-    doc.title = 'Voucher';
-    doc.documentElement.lang = 'es';
+    doc.title = this.t.translate('bookings.voucherWindowTitle');
+    doc.documentElement.lang = this.t.getActiveLang();
 
     while (doc.body.firstChild) {
       doc.body.removeChild(doc.body.firstChild);
@@ -151,7 +155,7 @@ export class BookingsComponent implements OnInit {
     doc.head.appendChild(style);
 
     const title = doc.createElement('h1');
-    title.textContent = 'Voucher de Reserva';
+    title.textContent = this.t.translate('bookings.voucherTitle');
     doc.body.appendChild(title);
 
     const appendField = (label: string, value: string): void => {
@@ -163,13 +167,13 @@ export class BookingsComponent implements OnInit {
       doc.body.appendChild(row);
     };
 
-    appendField('ID Reserva', booking.id);
-    appendField('Hotel', booking.hotelName);
-    appendField('Lugar', booking.location);
-    appendField('Check-in', booking.checkIn);
-    appendField('Check-out', booking.checkOut);
-    appendField('Huéspedes', `${booking.guests} Adultos`);
-    appendField('Estado', booking.statusLabel);
+    appendField(this.t.translate('bookings.voucherIdField'), booking.id);
+    appendField(this.t.translate('bookings.voucherHotelField'), booking.hotelName);
+    appendField(this.t.translate('bookings.voucherLocationField'), booking.location);
+    appendField(this.t.translate('bookings.voucherCheckInField'), booking.checkIn);
+    appendField(this.t.translate('bookings.voucherCheckOutField'), booking.checkOut);
+    appendField(this.t.translate('bookings.voucherGuestsField'), `${booking.guests}`);
+    appendField(this.t.translate('bookings.voucherStatusField'), booking.statusLabel);
 
     win.print();
   }

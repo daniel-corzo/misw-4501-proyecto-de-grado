@@ -1,11 +1,12 @@
 import { Component, inject } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { ToastService, Toast } from '../../../core/services/toast.service';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-toast',
   standalone: true,
-  imports: [NgClass],
+  imports: [NgClass, TranslocoPipe],
   templateUrl: './toast.component.html',
   styleUrl: './toast.component.scss',
 })

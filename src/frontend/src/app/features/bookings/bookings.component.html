@@ -1,23 +1,23 @@
 <div class="bookings-page container">
   <div class="header">
-    <h1>Mis Reservas de Hotel</h1>
-    <p>Administra tus próximas reservas y revisa tus reservas pasadas en un solo lugar.</p>
+    <h1>{{ 'bookings.title' | transloco }}</h1>
+    <p>{{ 'bookings.subtitle' | transloco }}</p>
   </div>
 
   <div class="tabs">
-    <button class="tab" [class.active]="activeTab === 'upcoming'" (click)="setTab('upcoming')">Reservas Próximas</button>
-    <button class="tab" [class.active]="activeTab === 'past'" (click)="setTab('past')">Reservas Pasadas</button>
-    <button class="tab" [class.active]="activeTab === 'cancelled'" (click)="setTab('cancelled')">Reservas Canceladas</button>
+    <button class="tab" [class.active]="activeTab === 'upcoming'" (click)="setTab('upcoming')">{{ 'bookings.upcoming' | transloco }}</button>
+    <button class="tab" [class.active]="activeTab === 'past'" (click)="setTab('past')">{{ 'bookings.past' | transloco }}</button>
+    <button class="tab" [class.active]="activeTab === 'cancelled'" (click)="setTab('cancelled')">{{ 'bookings.cancelled' | transloco }}</button>
   </div>
 
   <div class="bookings-list" *ngIf="!loading">
     <div class="list-header">
       <h2>
-        <ng-container *ngIf="activeTab === 'upcoming'">Reservas Próximas</ng-container>
-        <ng-container *ngIf="activeTab === 'past'">Reservas Pasadas</ng-container>
-        <ng-container *ngIf="activeTab === 'cancelled'">Reservas Canceladas</ng-container>
+        <ng-container *ngIf="activeTab === 'upcoming'">{{ 'bookings.upcoming' | transloco }}</ng-container>
+        <ng-container *ngIf="activeTab === 'past'">{{ 'bookings.past' | transloco }}</ng-container>
+        <ng-container *ngIf="activeTab === 'cancelled'">{{ 'bookings.cancelled' | transloco }}</ng-container>
       </h2>
-      <span class="count-badge">{{ bookings.length }} RESERVAS ENCONTRADAS</span>
+      <span class="count-badge">{{ 'bookings.count' | transloco: { count: bookings.length } }}</span>
     </div>
 
     <div class="booking-card" *ngFor="let b of bookings">
@@ -25,7 +25,7 @@
         <img [src]="b.image" [alt]="b.hotelName" (error)="onImageError($event)">
       </div>
       <div class="details">
-        <div class="booking-id">ID RESERVA: {{ b.id }}</div>
+        <div class="booking-id">{{ 'bookings.reservationId' | transloco }} {{ b.id }}</div>
         <div class="status"
           [class.confirmed]="b.status === 'confirmada'"
           [class.pending]="b.status === 'pendiente'"
@@ -34,29 +34,29 @@
         </div>
         <h3>{{ b.hotelName }}</h3>
         <div class="info-row">
-          <span><i class="calendar-icon"></i> {{ b.checkIn }} - {{ b.checkOut }} ({{ b.nights }} noches)</span>
+          <span><i class="calendar-icon"></i> {{ b.checkIn }} - {{ b.checkOut }} ({{ 'bookings.nights' | transloco: { count: b.nights } }})</span>
           <span><i class="location-icon"></i> {{ b.location }}</span>
-          <span><i class="user-icon"></i> {{ b.guests }} Adultos</span>
+          <span><i class="user-icon"></i> {{ 'bookings.adults' | transloco: { count: b.guests } }}</span>
         </div>
         <div class="actions">
           <button class="btn btn-primary" [routerLink]="['/bookings', b.id]" *ngIf="b.status !== 'cancelada'">
-            <i class="settings-icon"></i> Manejar Estancia
+            <i class="settings-icon"></i> {{ 'bookings.manage' | transloco }}
           </button>
           <button class="btn btn-secondary" (click)="printVoucher(b)">
-            <i class="download-icon"></i> Voucher
+            <i class="download-icon"></i> {{ 'bookings.voucher' | transloco }}
           </button>
         </div>
       </div>
     </div>
 
     <div *ngIf="bookings.length === 0" class="no-bookings">
-      <p *ngIf="activeTab === 'upcoming'">No tienes reservas activas en este momento.</p>
-      <p *ngIf="activeTab === 'past'">No tienes reservas pasadas registradas.</p>
-      <p *ngIf="activeTab === 'cancelled'">No tienes reservas canceladas.</p>
+      <p *ngIf="activeTab === 'upcoming'">{{ 'bookings.noUpcoming' | transloco }}</p>
+      <p *ngIf="activeTab === 'past'">{{ 'bookings.noPast' | transloco }}</p>
+      <p *ngIf="activeTab === 'cancelled'">{{ 'bookings.noCancelled' | transloco }}</p>
     </div>
   </div>
 
   <div *ngIf="loading" class="loading-state">
-    <p>Cargando reservas...</p>
+    <p>{{ 'bookings.loading' | transloco }}</p>
   </div>
 </div>

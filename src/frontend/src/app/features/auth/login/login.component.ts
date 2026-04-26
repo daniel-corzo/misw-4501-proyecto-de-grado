@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -8,7 +9,7 @@ import { ToastService } from '../../../core/services/toast.service';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TranslocoPipe],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })
@@ -17,6 +18,7 @@ export class LoginComponent {
   private readonly toast = inject(ToastService);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly t = inject(TranslocoService);
 
   activeRole: 'traveler' | 'partner' = 'traveler';
   loading = false;
@@ -42,7 +44,7 @@ export class LoginComponent {
       },
       error: () => {
         this.loading = false;
-        this.toast.danger('Correo o contraseña incorrecta');
+        this.toast.danger(this.t.translate('auth.login.error'));
       },
     });
   }
