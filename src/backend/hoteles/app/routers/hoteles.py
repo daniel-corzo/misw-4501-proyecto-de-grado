@@ -4,6 +4,8 @@ from fastapi import APIRouter, status, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from fastapi import Request
+
 from app.schemas.hotel import (
     AmenidadHotel,
     CrearHotelRequest,
@@ -24,9 +26,11 @@ from app.services.hotel_service import (
     listar_paises_service,
     obtener_hotel_service,
 )
+from app.services.audit_logger import emit_habitacion_audit_log
 from app.services.habitacion_service import (
     actualizar_habitacion_service,
     crear_habitacion_service,
+    eliminar_habitacion_service,
     listar_habitaciones_service,
     obtener_habitacion_por_id_service,
 )
@@ -153,6 +157,40 @@ async def listar_habitaciones_resumen_por_ids(
     )
 
 
+@router.delete(
+    "/habitaciones/{habitacion_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(RoleChecker([RoleEnum.MANAGER, RoleEnum.USER, RoleEnum.ADMIN]))],
+)
+async def eliminar_habitacion(
+    habitacion_id: uuid.UUID,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        await eliminar_habitacion_service(db=db, habitacion_id=habitacion_id, current_user=current_user)
+        emit_habitacion_audit_log(
+            request=request,
+            event_type="audit.habitacion.delete.success",
+            success=True,
+            user_id=str(current_user.id),
+            email=current_user.email,
+            habitacion_id=str(habitacion_id),
+        )
+    except Exception as exc:
+        emit_habitacion_audit_log(
+            request=request,
+            event_type="audit.habitacion.delete.failure",
+            success=False,
+            user_id=str(current_user.id),
+            email=current_user.email,
+            habitacion_id=str(habitacion_id),
+            reason=str(exc),
+        )
+        raise
+
+
 @router.get(
     "/habitaciones/{habitacion_id}",
     response_model=HabitacionDetalleResponse,
@@ -164,6 +202,7 @@ async def obtener_habitacion(
     current_user: User = Depends(get_current_user),
 ):
     return await obtener_habitacion_por_id_service(db=db, habitacion_id=habitacion_id)
+
 
 @router.get(
     "/{hotel_id}", response_model=HotelDetalleResponse, status_code=status.HTTP_200_OK

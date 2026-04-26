@@ -1,9 +1,10 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, ViewEncapsulation, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RoomFormModalComponent } from '../room-form-modal/room-form-modal.component';
 import { ApiService } from '../../../../core/services/api.service';
 import { ToastService } from '../../../../core/services/toast.service';
-import { HabitacionDetalle } from '../../../../core/services/hotel.service';
+import { HabitacionDetalle, HotelService } from '../../../../core/services/hotel.service';
+import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 
 interface ListaHabitacionesResponse {
   total: number;
@@ -13,16 +14,19 @@ interface ListaHabitacionesResponse {
 @Component({
   selector: 'app-rooms-table',
   standalone: true,
-  imports: [CommonModule, RoomFormModalComponent],
+  imports: [CommonModule, RoomFormModalComponent, ModalComponent],
   templateUrl: './rooms-table.component.html',
-  styleUrl: './rooms-table.component.scss'
+  styleUrl: './rooms-table.component.scss',
+  encapsulation: ViewEncapsulation.None,
 })
 export class RoomsTableComponent implements OnInit {
   isFormModalOpen = false;
   selectedRoom: HabitacionDetalle | null = null;
   rooms: HabitacionDetalle[] = [];
   loading = false;
-  
+  deleting = false;
+  confirmTarget: HabitacionDetalle | null = null;
+
   // Pagination variables
   totalItems = 0;
   limit = 10;
@@ -30,6 +34,7 @@ export class RoomsTableComponent implements OnInit {
   currentPage = 1;
 
   private api = inject(ApiService);
+  private hotelService = inject(HotelService);
   private toast = inject(ToastService);
 
   ngOnInit() {
@@ -90,5 +95,39 @@ export class RoomsTableComponent implements OnInit {
     this.selectedRoom = null;
     this.loadRooms();
   }
-}
 
+  openConfirm(room: HabitacionDetalle) {
+    this.confirmTarget = room;
+  }
+
+  onDeleteRequestedFromModal(room: HabitacionDetalle) {
+    this.isFormModalOpen = false;
+    this.selectedRoom = null;
+    this.confirmTarget = room;
+  }
+
+  cancelConfirm() {
+    this.confirmTarget = null;
+  }
+
+  confirmDelete() {
+    const room = this.confirmTarget;
+    if (!room) return;
+
+    this.deleting = true;
+    this.hotelService.deleteRoom(room.id).subscribe({
+      next: () => {
+        this.toast.success(`Hospedaje "${room.numero}" eliminado exitosamente.`);
+        this.confirmTarget = null;
+        this.deleting = false;
+        this.loadRooms();
+      },
+      error: (err) => {
+        const detail = err?.error?.detail || 'No se pudo eliminar el hospedaje.';
+        this.toast.danger(detail);
+        this.confirmTarget = null;
+        this.deleting = false;
+      },
+    });
+  }
+}

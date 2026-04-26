@@ -63,7 +63,7 @@
 
         <div class="form-actions">
             @if (isEditMode) {
-            <button type="button" class="btn-delete" [disabled]="loading">Eliminar</button>
+            <button type="button" class="btn-delete" (click)="onDeleteClick()" [disabled]="loading">Eliminar</button>
             }
             <div class="form-actions__primary">
                 <button type="button" class="btn-cancel" (click)="closeModal.emit()" [disabled]="loading">Cancelar</button>

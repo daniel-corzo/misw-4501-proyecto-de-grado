@@ -17,6 +17,7 @@ import { HabitacionDetalle } from '../../../../core/services/hotel.service';
 export class RoomFormModalComponent {
   room = input<HabitacionDetalle | null>(null);
   closeModal = output();
+  deleteRequested = output<HabitacionDetalle>();
   roomForm: FormGroup;
   loading = false;
 
@@ -148,6 +149,11 @@ export class RoomFormModalComponent {
     if (index === controls.length - 1 && currentValue !== '') {
       (this.roomForm.get('imagenes') as FormArray).push(this.buildImageControl());
     }
+  }
+
+  onDeleteClick() {
+    const room = this.room();
+    if (room) this.deleteRequested.emit(room);
   }
 
   onSubmit() {

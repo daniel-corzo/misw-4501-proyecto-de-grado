@@ -5,11 +5,26 @@ Seed local de usuarios y hoteles demo para desarrollo.
 Uso:
     python seed_local.py
 
-Credenciales:
-    admin@travelhub.dev     / Admin123!      (ADMIN,   tipo: viajero)
-    manager@travelhub.dev   / Manager123!    (MANAGER, tipo: viajero)
-    hotel@travelhub.dev     / Hotel123!      (USER,    tipo: hotel)   -> Dueno de todos los hoteles demo
-    viajero@travelhub.dev   / Viajero123!    (USER,    tipo: viajero)
+Credenciales base:
+    admin@travelhub.dev         / Admin123!      (ADMIN,   tipo: viajero)
+    manager@travelhub.dev       / Manager123!    (MANAGER, tipo: viajero)
+    viajero@travelhub.dev       / Viajero123!    (USER,    tipo: viajero)
+
+Partners (1 por hotel, modelo 1-a-1):
+    hotel@travelhub.dev         / Hotel123!      -> Hotel Bogota Plaza
+    partner.medellin@travelhub.dev   / Hotel123! -> Andes Boutique Medellin
+    partner.cartagena@travelhub.dev  / Hotel123! -> Cartagena Beach Resort
+    partner.cali@travelhub.dev       / Hotel123! -> Cali Hostal del Valle
+    partner.cdmx@travelhub.dev       / Hotel123! -> CDMX Reforma Grand
+    partner.cancun@travelhub.dev     / Hotel123! -> Cancun Paradise Resort
+    partner.playadelcarmen@travelhub.dev / Hotel123! -> Playa del Carmen Eco Lodge
+    partner.bsas@travelhub.dev       / Hotel123! -> Buenos Aires Palermo Soho
+    partner.mendoza@travelhub.dev    / Hotel123! -> Mendoza Vineyard Inn
+    partner.lima@travelhub.dev       / Hotel123! -> Lima Miraflores Bay
+    partner.cusco@travelhub.dev      / Hotel123! -> Cusco Andean Heritage
+    partner.santiago@travelhub.dev   / Hotel123! -> Santiago Las Condes Tower
+    partner.rio@travelhub.dev        / Hotel123! -> Rio Copacabana Beachfront
+    partner.saopaulo@travelhub.dev   / Hotel123! -> Sao Paulo Paulista Business
 """
 
 import uuid
@@ -25,9 +40,9 @@ DB_NAME = "travelhub"
 DB_USER = "travelhub"
 DB_PASS = "travelhub"
 
-# ── Usuarios ─────────────────────────────────────────────────────────────────
+# ── Usuarios base (no partners) ───────────────────────────────────────────────
 
-USUARIOS = [
+USUARIOS_BASE = [
     {
         "email": "admin@travelhub.dev",
         "password": "Admin123!",
@@ -45,14 +60,6 @@ USUARIOS = [
         "contacto": "+57 300 000 0002",
     },
     {
-        "email": "hotel@travelhub.dev",
-        "password": "Hotel123!",
-        "role": "USER",
-        "tipo": "HOTEL",
-        "nombre": None,
-        "contacto": None,
-    },
-    {
         "email": "viajero@travelhub.dev",
         "password": "Viajero123!",
         "role": "USER",
@@ -62,10 +69,10 @@ USUARIOS = [
     },
 ]
 
-# ── Hoteles ──────────────────────────────────────────────────────────────────
+# ── Hoteles (con email del partner dueño) ─────────────────────────────────────
 #
 # Diversidad intencional para validar filtros del listado:
-# - 6 paises LATAM, ~12 hoteles.
+# - 6 paises LATAM, 14 hoteles.
 # - Estrellas: mezcla 3, 4, 5.
 # - Amenidades variadas del enum hotel_amenity_enum.
 # - Habitaciones: capacidades 1, 2, 3, 4, 6 y precios $80.000 - $2.500.000 COP.
@@ -75,6 +82,7 @@ USUARIOS = [
 HOTELES = [
     # ── Colombia ──────────────────────────────────────────────────────────
     {
+        "partner_email": "hotel@travelhub.dev",
         "nombre": "Hotel Bogota Plaza",
         "direccion": "Calle 100 #18-30",
         "pais": "Colombia", "estado": None, "departamento": "Cundinamarca", "ciudad": "Bogota",
@@ -89,6 +97,7 @@ HOTELES = [
         ],
     },
     {
+        "partner_email": "partner.medellin@travelhub.dev",
         "nombre": "Andes Boutique Medellin",
         "direccion": "Carrera 35 #8-10, El Poblado",
         "pais": "Colombia", "estado": None, "departamento": "Antioquia", "ciudad": "Medellin",
@@ -103,6 +112,7 @@ HOTELES = [
         ],
     },
     {
+        "partner_email": "partner.cartagena@travelhub.dev",
         "nombre": "Cartagena Beach Resort",
         "direccion": "Carrera 1 #12-05, Bocagrande",
         "pais": "Colombia", "estado": None, "departamento": "Bolivar", "ciudad": "Cartagena",
@@ -117,6 +127,7 @@ HOTELES = [
         ],
     },
     {
+        "partner_email": "partner.cali@travelhub.dev",
         "nombre": "Cali Hostal del Valle",
         "direccion": "Avenida 6 #23-15",
         "pais": "Colombia", "estado": None, "departamento": "Valle del Cauca", "ciudad": "Cali",
@@ -131,6 +142,7 @@ HOTELES = [
     },
     # ── Mexico ────────────────────────────────────────────────────────────
     {
+        "partner_email": "partner.cdmx@travelhub.dev",
         "nombre": "CDMX Reforma Grand",
         "direccion": "Paseo de la Reforma 250",
         "pais": "Mexico", "estado": "CDMX", "departamento": "CDMX", "ciudad": "Ciudad de Mexico",
@@ -144,6 +156,7 @@ HOTELES = [
         ],
     },
     {
+        "partner_email": "partner.cancun@travelhub.dev",
         "nombre": "Cancun Paradise Resort",
         "direccion": "Boulevard Kukulcan Km 14",
         "pais": "Mexico", "estado": "Quintana Roo", "departamento": "Quintana Roo", "ciudad": "Cancun",
@@ -158,6 +171,7 @@ HOTELES = [
         ],
     },
     {
+        "partner_email": "partner.playadelcarmen@travelhub.dev",
         "nombre": "Playa del Carmen Eco Lodge",
         "direccion": "Quinta Avenida Norte",
         "pais": "Mexico", "estado": "Quintana Roo", "departamento": "Quintana Roo", "ciudad": "Playa del Carmen",
@@ -172,6 +186,7 @@ HOTELES = [
     },
     # ── Argentina ─────────────────────────────────────────────────────────
     {
+        "partner_email": "partner.bsas@travelhub.dev",
         "nombre": "Buenos Aires Palermo Soho",
         "direccion": "Honduras 5700, Palermo",
         "pais": "Argentina", "estado": None, "departamento": "CABA", "ciudad": "Buenos Aires",
@@ -186,6 +201,7 @@ HOTELES = [
         ],
     },
     {
+        "partner_email": "partner.mendoza@travelhub.dev",
         "nombre": "Mendoza Vineyard Inn",
         "direccion": "Ruta 60, Lujan de Cuyo",
         "pais": "Argentina", "estado": None, "departamento": "Mendoza", "ciudad": "Mendoza",
@@ -200,6 +216,7 @@ HOTELES = [
     },
     # ── Peru ──────────────────────────────────────────────────────────────
     {
+        "partner_email": "partner.lima@travelhub.dev",
         "nombre": "Lima Miraflores Bay",
         "direccion": "Malecon Cisneros 1234",
         "pais": "Peru", "estado": None, "departamento": "Lima", "ciudad": "Lima",
@@ -213,6 +230,7 @@ HOTELES = [
         ],
     },
     {
+        "partner_email": "partner.cusco@travelhub.dev",
         "nombre": "Cusco Andean Heritage",
         "direccion": "Calle Suecia 320",
         "pais": "Peru", "estado": None, "departamento": "Cusco", "ciudad": "Cusco",
@@ -228,6 +246,7 @@ HOTELES = [
     },
     # ── Chile ─────────────────────────────────────────────────────────────
     {
+        "partner_email": "partner.santiago@travelhub.dev",
         "nombre": "Santiago Las Condes Tower",
         "direccion": "Avenida Apoquindo 4500",
         "pais": "Chile", "estado": None, "departamento": "Region Metropolitana", "ciudad": "Santiago",
@@ -242,6 +261,7 @@ HOTELES = [
     },
     # ── Brasil ────────────────────────────────────────────────────────────
     {
+        "partner_email": "partner.rio@travelhub.dev",
         "nombre": "Rio Copacabana Beachfront",
         "direccion": "Avenida Atlantica 2000",
         "pais": "Brasil", "estado": "Rio de Janeiro", "departamento": "Rio de Janeiro", "ciudad": "Rio de Janeiro",
@@ -256,6 +276,7 @@ HOTELES = [
         ],
     },
     {
+        "partner_email": "partner.saopaulo@travelhub.dev",
         "nombre": "Sao Paulo Paulista Business",
         "direccion": "Avenida Paulista 1500",
         "pais": "Brasil", "estado": "Sao Paulo", "departamento": "Sao Paulo", "ciudad": "Sao Paulo",
@@ -320,10 +341,10 @@ def main():
     cur.execute("DELETE FROM revoked_token")
     cur.execute("DELETE FROM usuario")
 
-    # -- Usuarios ----------------------------------------------------------
-    print("Insertando usuarios...")
+    # -- Usuarios base (admin, manager, viajero) ---------------------------
+    print("Insertando usuarios base...")
     user_ids = {}
-    for u in USUARIOS:
+    for u in USUARIOS_BASE:
         uid = uuid.uuid4()
         user_ids[u["email"]] = uid
         hashed = hash_password(u["password"])
@@ -349,13 +370,30 @@ def main():
         tag = f"[{u['role']}, {u['tipo']}]"
         print(f"  OK {u['email']}  /  {u['password']}  {tag}")
 
-    # -- Hoteles + habitaciones + politicas -------------------------------
-    print("Insertando hoteles...")
-    hotel_user_id = user_ids["hotel@travelhub.dev"]
+    # -- Partners (1 por hotel) -------------------------------------------
+    print("Insertando partners...")
+    partner_emails = list({h["partner_email"] for h in HOTELES})
+    for email in sorted(partner_emails):
+        uid = uuid.uuid4()
+        user_ids[email] = uid
+        hashed = hash_password("Hotel123!")
+        ts = now()
 
+        cur.execute(
+            """
+            INSERT INTO usuario (id, created_at, updated_at, email, hashed_contrasena, tipo, role)
+            VALUES (%s, %s, %s, %s, %s, %s::tipousuario, %s::roleenum)
+            """,
+            (str(uid), ts, ts, email, hashed, "HOTEL", "USER"),
+        )
+        print(f"  OK {email}  /  Hotel123!  [USER, HOTEL]")
+
+    # -- Hoteles + habitaciones + politicas --------------------------------
+    print("Insertando hoteles...")
     for h in HOTELES:
         hotel_id = uuid.uuid4()
         ts = now()
+        owner_id = user_ids[h["partner_email"]]
 
         cur.execute(
             """
@@ -379,12 +417,12 @@ def main():
                 str(hotel_id), ts, ts,
                 h["nombre"], h["direccion"], h["pais"], h["estado"], h["departamento"], h["ciudad"],
                 h["descripcion"], h["amenidades"], h["estrellas"], h["ranking"],
-                "+57 300 000 0003", "hotel@travelhub.dev", h["imagenes"],
+                "+57 300 000 0003", h["partner_email"], h["imagenes"],
                 CHECK_IN, CHECK_OUT, VALOR_MINIMO_MODIFICACION,
-                str(hotel_user_id),
+                str(owner_id),
             ),
         )
-        print(f"  OK {h['nombre']} ({h['ciudad']}, {h['pais']}, {h['estrellas']}*, rank {h['ranking']})")
+        print(f"  OK {h['nombre']} ({h['ciudad']}, {h['pais']}, {h['estrellas']}*, rank {h['ranking']}) -> {h['partner_email']}")
 
         for hab in h["habitaciones"]:
             cur.execute(
@@ -421,7 +459,10 @@ def main():
     conn.commit()
     cur.close()
     conn.close()
-    print(f"\nSeed completado: {len(USUARIOS)} usuarios, {len(HOTELES)} hoteles.")
+    total_users = len(USUARIOS_BASE) + len(partner_emails)
+    print(f"\nSeed completado: {total_users} usuarios ({len(partner_emails)} partners), {len(HOTELES)} hoteles.")
+    print("\nPartner principal para pruebas:")
+    print("  hotel@travelhub.dev  /  Hotel123!  -> Hotel Bogota Plaza (3 habitaciones)")
 
 if __name__ == "__main__":
     main()
