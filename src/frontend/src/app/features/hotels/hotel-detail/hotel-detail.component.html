@@ -213,11 +213,15 @@
             <div class="booking-card__field-row">
               <div class="booking-card__field">
                 <span class="booking-card__field-label">CHECK-IN</span>
-                <span class="booking-card__field-value">{{ hotel.check_in }}</span>
+                <span class="booking-card__field-value">
+                  {{ formatCheckInOut(fechaEntrada, hotel.check_in) }}
+                </span>
               </div>
               <div class="booking-card__field">
                 <span class="booking-card__field-label">CHECK-OUT</span>
-                <span class="booking-card__field-value">{{ hotel.check_out }}</span>
+                <span class="booking-card__field-value">
+                  {{ formatCheckInOut(fechaSalida, hotel.check_out) }}
+                </span>
               </div>
             </div>
             <div class="booking-card__field">
@@ -228,24 +232,30 @@
             </div>
           </div>
 
-          <button type="button" class="booking-card__cta" [disabled]="!selectedRoom?.disponible">
-            Reservar ahora
+          <button type="button" class="booking-card__cta" [disabled]="!puedeReservar" (click)="reservarAhora()">
+            {{ reservando ? 'Reservando…' : 'Reservar ahora' }}
           </button>
-          <p class="booking-card__notice">No se te cobrará aún</p>
+          <p class="booking-card__notice">
+            @if (fechaEntrada && fechaSalida) {
+              No se te cobrará aún
+            } @else {
+              Selecciona fechas desde la búsqueda para confirmar la reserva
+            }
+          </p>
 
           @if (selectedRoom) {
             <div class="booking-card__breakdown">
               <div class="booking-card__breakdown-row">
-                <span>1 noche × ${{ formatPrice(selectedRoom.monto) }}</span>
-                <span>${{ formatPrice(selectedRoom.monto) }}</span>
+                <span>{{ stayNights }} noche{{ stayNights === 1 ? '' : 's' }} × ${{ formatPrice(selectedRoom.monto) }}</span>
+                <span>${{ formatPrice(roomSubtotal) }}</span>
               </div>
               <div class="booking-card__breakdown-row">
                 <span>Impuestos</span>
-                <span>${{ formatPrice(selectedRoom.impuestos) }}</span>
+                <span>${{ formatPrice(roomTaxes) }}</span>
               </div>
               <div class="booking-card__breakdown-row booking-card__breakdown-row--total">
                 <span>Total</span>
-                <span>${{ formatPrice(selectedRoom.monto + selectedRoom.impuestos) }}</span>
+                <span>${{ formatPrice(totalPrice) }}</span>
               </div>
             </div>
           }

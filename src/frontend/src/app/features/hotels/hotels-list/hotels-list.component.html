@@ -316,7 +316,13 @@
                 ${{ hotel.precio_minimo.toLocaleString('es-CO') }}
               </p>
               <p class="hotel-card__price-label">Precio total (incl. imp.)</p>
-              <a class="hotel-card__btn" [routerLink]="['/hotels', hotel.id]">Ver detalle</a>
+              <a
+                class="hotel-card__btn"
+                [routerLink]="['/hotels', hotel.id]"
+                [queryParamsHandling]="'preserve'"
+              >
+                Ver detalle
+              </a>
             </div>
           </article>
         }

@@ -1,8 +1,11 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { HotelService, HotelDetalle, HabitacionDetalle } from '../../../core/services/hotel.service';
+import { BookingService } from '../../../core/services/booking.service';
 import { AmenitiesTagsComponent } from '../components/amenities-tags/amenities-tags.component';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-hotel-detail',
@@ -13,16 +16,33 @@ import { AmenitiesTagsComponent } from '../components/amenities-tags/amenities-t
 })
 export class HotelDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly hotelService = inject(HotelService);
+  private readonly bookingService = inject(BookingService);
+  private readonly toast = inject(ToastService);
 
   hotel: HotelDetalle | null = null;
   loading = true;
   error: string | null = null;
   selectedImageIndex = 0;
   selectedRoom: HabitacionDetalle | null = null;
+  reservando = false;
+  fechaEntrada: string | null = null;
+  fechaSalida: string | null = null;
+  numHuespedes = 1;
+  private readonly dateTimeFormatter = new Intl.DateTimeFormat('es-CO', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+  });
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe((params) => {
+    const queryParams = this.route.snapshot.queryParamMap;
+    this.fechaEntrada = queryParams.get('checkIn');
+    this.fechaSalida = queryParams.get('checkOut');
+    this.numHuespedes = Number(queryParams.get('huespedes') ?? '1') || 1;
+
+    this.route.paramMap.subscribe((params: ParamMap) => {
       const id = params.get('id');
       this.resetHotelState();
       if (!id) {
@@ -41,23 +61,62 @@ export class HotelDetailComponent implements OnInit {
     this.selectedImageIndex = 0;
     this.selectedRoom = null;
   }
+
   private loadHotel(id: string): void {
 
     this.hotelService.getHotelById(id).subscribe({
-      next: (hotel) => {
+      next: (hotel: HotelDetalle) => {
         this.hotel = hotel;
         if (hotel.habitaciones.length > 0) {
-          this.selectedRoom = hotel.habitaciones.find(h => h.disponible) ?? hotel.habitaciones[0];
+          this.selectedRoom = hotel.habitaciones.find((h: HabitacionDetalle) => h.disponible) ?? hotel.habitaciones[0];
         }
         this.loading = false;
       },
-      error: (err) => {
+      error: (err: HttpErrorResponse) => {
         if (err.status === 404) {
           this.error = 'El hotel solicitado no existe.';
         } else {
           this.error = 'No se pudo cargar la información del hotel. Intente de nuevo más tarde.';
         }
         this.loading = false;
+      },
+    });
+  }
+
+  get puedeReservar(): boolean {
+    return !!this.selectedRoom?.disponible && !!this.fechaEntrada && !!this.fechaSalida && !this.reservando;
+  }
+
+  reservarAhora(): void {
+    if (!this.selectedRoom?.disponible) {
+      this.toast.warning('Selecciona una habitación disponible');
+      return;
+    }
+
+    if (!this.fechaEntrada || !this.fechaSalida) {
+      this.toast.warning('Selecciona fechas de entrada y salida antes de reservar');
+      return;
+    }
+
+    this.reservando = true;
+    this.bookingService.createReservation({
+      habitacion_id: this.selectedRoom.id,
+      fecha_entrada: this.fechaEntrada,
+      fecha_salida: this.fechaSalida,
+      num_huespedes: this.numHuespedes,
+      pago_id: null,
+    }).subscribe({
+      next: () => {
+        this.toast.success('Reserva creada correctamente');
+        this.router.navigate(['/bookings']);
+      },
+      error: (err: HttpErrorResponse) => {
+        if (err.status === 409) {
+          this.toast.warning('La habitación ya no está disponible para esas fechas');
+        } else {
+          this.toast.danger('No se pudo crear la reserva');
+        }
+        this.reservando = false;
       },
     });
   }
@@ -83,5 +142,51 @@ export class HotelDetailComponent implements OnInit {
 
   formatPrice(amount: number): string {
     return amount.toLocaleString('es-CO');
+  }
+
+  get stayNights(): number {
+    if (!this.fechaEntrada || !this.fechaSalida) {
+      return 1;
+    }
+
+    const start = new Date(`${this.fechaEntrada}T00:00:00Z`);
+    const end = new Date(`${this.fechaSalida}T00:00:00Z`);
+    const diffInMs = end.getTime() - start.getTime();
+    const nights = Math.ceil(diffInMs / (1000 * 60 * 60 * 24));
+
+    return Number.isFinite(nights) && nights > 0 ? nights : 1;
+  }
+
+  get roomSubtotal(): number {
+    return (this.selectedRoom?.monto ?? this.minPrice) * this.stayNights;
+  }
+
+  get roomTaxes(): number {
+    return this.selectedRoom?.impuestos ?? 0;
+  }
+
+  get totalPrice(): number {
+    return this.roomSubtotal + this.roomTaxes;
+  }
+
+  formatCheckInOut(dateValue: string | null, timeValue: string | null): string {
+    if (!dateValue && !timeValue) {
+      return '--';
+    }
+
+    const parts: string[] = [];
+
+    if (dateValue) {
+      const date = new Date(dateValue);
+      if (!Number.isNaN(date.getTime())) {
+        parts.push(this.dateTimeFormatter.format(date));
+      }
+    }
+
+    if (timeValue) {
+      parts.push(timeValue);
+    }
+
+    return parts.join(' · ');
   }
 }
