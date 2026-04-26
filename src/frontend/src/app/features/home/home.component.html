@@ -17,7 +17,7 @@
       <div class="search-bar__divider"></div>
       <div class="search-bar__field">
         <label class="search-bar__label">{{ 'home.searchCheckOut' | transloco }}</label>
-        <input class="search-bar__input" type="date" [(ngModel)]="checkOut" [min]="checkIn || today" (change)="onDateChange()" />
+        <input class="search-bar__input" type="date" [(ngModel)]="checkOut" [min]="checkOutMin" (change)="onDateChange()" />
       </div>
       <div class="search-bar__divider"></div>
       <div class="search-bar__field">

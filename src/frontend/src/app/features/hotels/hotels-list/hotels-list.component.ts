@@ -129,6 +129,13 @@ export class HotelsListComponent implements OnInit, OnDestroy {
     return this.formatLocalDate(new Date());
   }
 
+  get checkOutMin(): string {
+    if (!this.checkIn) {
+      return this.today;
+    }
+    return this.formatLocalDate(this.addDays(this.parseDateOnlyLocal(this.checkIn), 1));
+  }
+
   get totalPages(): number {
     return Math.max(1, Math.ceil(this.total / this.limit));
   }
@@ -264,9 +271,7 @@ export class HotelsListComponent implements OnInit, OnDestroy {
   }
 
   onDateChange(): void {
-    const checkOutMin = this.checkIn
-      ? this.formatLocalDate(this.addDays(this.parseDateOnlyLocal(this.checkIn), 1))
-      : '';
+    const checkOutMin = this.checkOutMin;
     if (this.checkOut && this.checkOut <= this.checkIn) {
       this.checkOut = checkOutMin;
     }

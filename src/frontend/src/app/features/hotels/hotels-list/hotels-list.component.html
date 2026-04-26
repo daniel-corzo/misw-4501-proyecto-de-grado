@@ -193,7 +193,7 @@
           type="date"
           [(ngModel)]="checkOut"
           name="checkOut"
-          [min]="checkIn || today"
+          [min]="checkOutMin"
           (change)="onDateChange()"
           [attr.aria-label]="'hotels.checkOutAria' | transloco"
         />

@@ -22,10 +22,15 @@ export class HomeComponent {
     return this.formatLocalDate(new Date());
   }
 
+  get checkOutMin(): string {
+    if (!this.checkIn) {
+      return this.today;
+    }
+    return this.formatLocalDate(this.addDays(this.parseDateOnlyLocal(this.checkIn), 1));
+  }
+
   onDateChange(): void {
-    const checkOutMin = this.checkIn
-      ? this.formatLocalDate(this.addDays(this.parseDateOnlyLocal(this.checkIn), 1))
-      : '';
+    const checkOutMin = this.checkOutMin;
 
     if (this.checkOut && this.checkOut <= this.checkIn) {
       this.checkOut = checkOutMin;
