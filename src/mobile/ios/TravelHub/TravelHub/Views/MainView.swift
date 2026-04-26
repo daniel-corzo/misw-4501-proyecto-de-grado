@@ -8,14 +8,21 @@
 import SwiftUI
 
 struct MainView: View {
+    
+    @Environment(Router.self) private var router
 
     @Binding var isLoggedIn: Bool
 
     var body: some View {
         TabView {
             
-            NavigationStack {
+            NavigationStack(path: Bindable(router).path) {
                 ListHotelView()
+                    .navigationDestination(for: Destination.self) { destination in
+                        switch destination {
+                            case .myBookings: MyBookingsView()
+                        }
+                    }
             }
             .tabItem {
                 Label(LocalizedStringResource.TabBar.explore, systemImage: "safari")

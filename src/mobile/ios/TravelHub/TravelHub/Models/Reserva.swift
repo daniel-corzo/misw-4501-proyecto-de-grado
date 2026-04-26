@@ -23,3 +23,11 @@ struct NewReservation {
     var numHuespedes: Int
     var pagoID: UUID?
 }
+
+struct ModifyReservation {
+    var id: UUID
+    var habitacionID: UUID
+    var fechaEntrada: Date
+    var fechaSalida: Date
+    var numHuespedes: Int
+}

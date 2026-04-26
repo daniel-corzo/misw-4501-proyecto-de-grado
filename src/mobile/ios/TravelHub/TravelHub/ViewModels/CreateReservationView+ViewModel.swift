@@ -52,5 +52,37 @@ extension CreateReservationView {
                 toastManager.error(error.localizedDescription)
             }
         }
+        
+        @MainActor
+        func modify(id: UUID, habitacionId: UUID, fechaEntrada: Date, fechaSalida: Date, numHuespedes: Int) async {
+            isLoading = true
+            defer { isLoading = false }
+            
+            let reservation = ModifyReservation(
+                id: id,
+                habitacionID: habitacionId,
+                fechaEntrada: fechaEntrada,
+                fechaSalida: fechaSalida,
+                numHuespedes: numHuespedes,
+            )
+            
+            do {
+                let _ = try await reservationService.modifyReservation(reservation: reservation)
+                
+                toastManager.success(
+                    String(
+                        localized: .CreateReservation
+                            .reservationModifiedDescription
+                    ),
+                    title: String(
+                        localized: .CreateReservation.reservationModifiedTitle
+                    )
+                )
+            } catch is CancellationError {
+                return
+            } catch {
+                toastManager.error(error.localizedDescription)
+            }
+        }
     }
 }

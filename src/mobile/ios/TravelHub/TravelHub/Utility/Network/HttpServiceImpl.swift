@@ -19,6 +19,11 @@ final class HttpServiceImpl: HttpService {
             let (data, response) = try await URLSession.shared.data(
                 for: request
             )
+            if let json = try? JSONSerialization.jsonObject(with: data),
+               let pretty = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
+                print(String(data: pretty, encoding: .utf8) ?? "")
+            }
+            
             guard let http = response as? HTTPURLResponse else {
                 throw HttpError.unknown
             }
@@ -26,8 +31,10 @@ final class HttpServiceImpl: HttpService {
             switch http.statusCode {
             case 200...299:
                 do {
+                    
                     return try JSONDecoder().decode(V.self, from: data)
                 } catch {
+                    print(error)
                     throw HttpError.decoding
                 }
             case 401:
@@ -46,6 +53,7 @@ final class HttpServiceImpl: HttpService {
                 }
             }
         } catch let error as HttpError {
+            print(error)
             throw error
         } catch {
             print(error)
@@ -106,6 +114,18 @@ final class HttpServiceImpl: HttpService {
         request.httpMethod = "PATCH"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        return try await self.makeRequest(request)
+    }
+
+    func patch<T: Encodable, V: Decodable>(url: URL, token: String, body: T)
+        async throws -> V
+    {
+        var request = URLRequest(url: url)
+        request.httpMethod = "PATCH"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.httpBody = try JSONEncoder().encode(body)
 
         return try await self.makeRequest(request)
     }

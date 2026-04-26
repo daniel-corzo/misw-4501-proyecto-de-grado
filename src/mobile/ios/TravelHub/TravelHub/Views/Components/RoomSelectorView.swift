@@ -10,7 +10,7 @@ import SwiftUI
 struct RoomSelectorView: View {
 
     let habitaciones: [Habitacion]
-    @Binding var selectedHabitacion: Habitacion?
+    @Binding var selectedHabitacion: Habitacion
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -24,7 +24,7 @@ struct RoomSelectorView: View {
                     ForEach(habitaciones) { habitacion in
                         RoomCard(
                             habitacion: habitacion,
-                            isSelected: selectedHabitacion?.id == habitacion.id,
+                            isSelected: selectedHabitacion.id == habitacion.id,
                             onTap: {
                                 withAnimation(
                                     .spring(
@@ -122,7 +122,7 @@ private struct RoomCard: View {
 }
 
 #Preview {
-    @Previewable @State var selected: Habitacion? = Habitacion(
+    @Previewable @State var selected: Habitacion = Habitacion(
         id: UUID(),
         capacidad: 2,
         numero: "101",

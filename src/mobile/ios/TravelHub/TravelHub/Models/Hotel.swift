@@ -143,7 +143,7 @@ struct Politica: Identifiable {
     var diasAntelacion: Int
 }
 
-struct Habitacion: Identifiable {
+struct Habitacion: Identifiable, Equatable {
     var id: UUID
     var capacidad: Int
     var numero: String
@@ -152,6 +152,10 @@ struct Habitacion: Identifiable {
     var monto: Double
     var impuestos: Double
     var disponible: Bool
+    
+    static func == (lhs: Habitacion, rhs: Habitacion) -> Bool {
+        return lhs.id == rhs.id
+    }
 }
 
 struct Hotel: Identifiable {
