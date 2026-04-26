@@ -14,7 +14,7 @@ extension CreateReservationView {
             .defaultValue
         var toastManager: ToastManager = ToastManagerKey.defaultValue
 
-        var isLoading = true
+        var isLoading = false
 
         @MainActor
         func create(

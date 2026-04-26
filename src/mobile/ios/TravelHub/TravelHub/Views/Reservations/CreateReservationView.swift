@@ -25,6 +25,10 @@ struct CreateReservationView: View {
     @State private var selectedHabitacion: Habitacion
 
     private var isButtonDisabled: Bool {
+        print("Date Range: \(self.dateRange.start == self.dateRange.end)")
+        print("Reservation: \(self.reservation != nil) | Was Modified: \(self.wasModified)")
+        print("Is Loading: \(self.viewModel.isLoading)")
+        
         if self.dateRange.start == self.dateRange.end {
             return true
         }
