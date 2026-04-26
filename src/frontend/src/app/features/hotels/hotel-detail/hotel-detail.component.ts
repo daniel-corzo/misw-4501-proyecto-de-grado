@@ -177,7 +177,7 @@ export class HotelDetailComponent implements OnInit {
     const parts: string[] = [];
 
     if (dateValue) {
-      const date = new Date(dateValue);
+      const date = this.parseDateOnly(dateValue);
       if (!Number.isNaN(date.getTime())) {
         parts.push(this.dateTimeFormatter.format(date));
       }
@@ -188,5 +188,17 @@ export class HotelDetailComponent implements OnInit {
     }
 
     return parts.join(' · ');
+  }
+
+  private parseDateOnly(value: string): Date {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (!match) {
+      return new Date(value);
+    }
+
+    const year = Number(match[1]);
+    const monthIndex = Number(match[2]) - 1;
+    const day = Number(match[3]);
+    return new Date(year, monthIndex, day);
   }
 }
