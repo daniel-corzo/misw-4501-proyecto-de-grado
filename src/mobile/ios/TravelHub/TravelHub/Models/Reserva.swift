@@ -24,7 +24,7 @@ struct NewReservation {
     var pagoID: UUID?
 }
 
-struct ModifyReservation {
+struct ModifyReservation: Hashable {
     var id: UUID
     var habitacionID: UUID
     var fechaEntrada: Date

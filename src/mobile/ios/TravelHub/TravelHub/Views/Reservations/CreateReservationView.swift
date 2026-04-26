@@ -162,7 +162,7 @@ struct CreateReservationView: View {
                         )
                         
                         if didSave {
-                            router.navigateWithoutHistory(to: .myBookings)
+                            router.switchTab(to: .bookings)
                         }
                     }
                 }
