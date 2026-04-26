@@ -31,8 +31,10 @@
           <td class="col-taxes">{{ room.impuestos | currency:'COP':'$':'1.0-0' }}</td>
           <td class="col-right col-price">{{ room.monto | currency:'COP':'$':'1.0-0' }}</td>
           <td class="col-right col-actions-cell">
-            <button type="button" class="btn-edit" (click)="openEditModal(room)">Modificar</button>
-            <button type="button" class="btn-delete-row" (click)="openConfirm(room)" [disabled]="deleting">Eliminar</button>
+            <div class="actions-wrapper">
+              <button type="button" class="btn-edit" (click)="openEditModal(room)">Modificar</button>
+              <button type="button" class="btn-delete-row" (click)="openConfirm(room)" [disabled]="deleting">Eliminar</button>
+            </div>
           </td>
         </tr>
       }

@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, status, Depends, Query
+from fastapi import APIRouter, HTTPException, status, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -168,6 +168,7 @@ async def eliminar_habitacion(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    _reason_map = {403: "forbidden", 404: "not_found", 401: "unauthorized"}
     try:
         await eliminar_habitacion_service(db=db, habitacion_id=habitacion_id, current_user=current_user)
         emit_habitacion_audit_log(
@@ -178,7 +179,7 @@ async def eliminar_habitacion(
             email=current_user.email,
             habitacion_id=str(habitacion_id),
         )
-    except Exception as exc:
+    except HTTPException as exc:
         emit_habitacion_audit_log(
             request=request,
             event_type="audit.habitacion.delete.failure",
@@ -186,7 +187,20 @@ async def eliminar_habitacion(
             user_id=str(current_user.id),
             email=current_user.email,
             habitacion_id=str(habitacion_id),
-            reason=str(exc),
+            reason=_reason_map.get(exc.status_code, "http_error"),
+            status_code=exc.status_code,
+            detail=str(exc.detail),
+        )
+        raise
+    except Exception:
+        emit_habitacion_audit_log(
+            request=request,
+            event_type="audit.habitacion.delete.failure",
+            success=False,
+            user_id=str(current_user.id),
+            email=current_user.email,
+            habitacion_id=str(habitacion_id),
+            reason="internal_error",
         )
         raise
 

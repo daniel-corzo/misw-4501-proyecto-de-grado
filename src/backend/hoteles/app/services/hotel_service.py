@@ -7,7 +7,7 @@ from travelhub_common.security import RoleEnum, get_current_user, User
 from app.config import get_settings
 from app.database import get_db
 from fastapi import Depends, HTTPException, status
-from sqlalchemy import delete, func, or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 

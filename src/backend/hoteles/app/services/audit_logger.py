@@ -12,6 +12,8 @@ def emit_habitacion_audit_log(
     email: str | None = None,
     habitacion_id: str | None = None,
     reason: str | None = None,
+    status_code: int | None = None,
+    detail: str | None = None,
 ) -> None:
     audit_logger.info(
         "audit_event",
@@ -26,6 +28,8 @@ def emit_habitacion_audit_log(
                 "forwarded_for": request.headers.get("x-forwarded-for"),
                 "user_agent": request.headers.get("user-agent"),
                 "reason": reason,
+                "status_code": status_code,
+                "detail": detail,
             }
         },
     )

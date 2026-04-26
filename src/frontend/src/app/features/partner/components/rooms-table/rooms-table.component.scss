@@ -94,10 +94,13 @@
 
           &.col-actions-cell {
             white-space: nowrap;
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 8px;
+
+            .actions-wrapper {
+              display: flex;
+              justify-content: flex-end;
+              align-items: center;
+              gap: 8px;
+            }
           }
 
           .btn-edit {
@@ -116,9 +119,9 @@
           }
 
           .btn-delete-row {
-            background-color: #e53e3e;
+            background-color: var(--color-danger);
             border: none;
-            color: #fff;
+            color: var(--color-white);
             padding: 6px 12px;
             border-radius: var(--border-radius);
             font-size: 13px;
@@ -126,7 +129,7 @@
             transition: background-color 0.2s;
 
             &:hover:not([disabled]) {
-              background-color: #c53030;
+              background-color: var(--color-danger-dk);
             }
 
             &[disabled] {
@@ -253,15 +256,15 @@
   padding: 6px 14px;
   border: none;
   border-radius: 6px;
-  background: #e53e3e;
-  color: #fff;
+  background: var(--color-danger);
+  color: var(--color-white);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s;
 
   &:hover:not([disabled]) {
-    background: #c53030;
+    background: var(--color-danger-dk);
   }
 
   &[disabled] {

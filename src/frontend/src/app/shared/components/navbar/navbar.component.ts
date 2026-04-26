@@ -26,7 +26,7 @@ export class NavbarComponent {
 
   private readonly roleLabels: Record<string, string> = {
     viajero: 'Viajero',
-    hotel: 'Hotelero',
+    hotel: 'Partner',
   };
 
   get userRoleLabel(): string {

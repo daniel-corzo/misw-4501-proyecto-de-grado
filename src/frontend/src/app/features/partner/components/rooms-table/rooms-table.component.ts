@@ -1,4 +1,4 @@
-import { Component, ViewEncapsulation, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RoomFormModalComponent } from '../room-form-modal/room-form-modal.component';
 import { ApiService } from '../../../../core/services/api.service';
@@ -17,7 +17,6 @@ interface ListaHabitacionesResponse {
   imports: [CommonModule, RoomFormModalComponent, ModalComponent],
   templateUrl: './rooms-table.component.html',
   styleUrl: './rooms-table.component.scss',
-  encapsulation: ViewEncapsulation.None,
 })
 export class RoomsTableComponent implements OnInit {
   isFormModalOpen = false;
