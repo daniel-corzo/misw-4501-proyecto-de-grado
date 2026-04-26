@@ -42,6 +42,9 @@
           <button class="btn btn-primary" [routerLink]="['/bookings', b.id]" *ngIf="b.status !== 'cancelada'">
             <i class="settings-icon"></i> {{ 'bookings.manage' | transloco }}
           </button>
+          <button class="btn btn-primary" [routerLink]="['/bookings', b.id]" *ngIf="b.status === 'cancelada'">
+            <i class="info-icon"></i> {{ 'bookings.seeDetails' | transloco }}
+          </button>
           <button class="btn btn-secondary" (click)="printVoucher(b)">
             <i class="download-icon"></i> {{ 'bookings.voucher' | transloco }}
           </button>

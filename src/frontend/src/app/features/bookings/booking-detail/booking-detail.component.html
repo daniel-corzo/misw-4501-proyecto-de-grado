@@ -1,0 +1,187 @@
+@if (loading) {
+  <div class="booking-detail booking-detail--loading">
+    <div class="skeleton skeleton--title"></div>
+    <div class="skeleton skeleton--layout"></div>
+  </div>
+}
+
+@if (!loading && error) {
+  <section class="booking-detail__error">
+    <p class="booking-detail__error-text">{{ error }}</p>
+    <a routerLink="/bookings" class="booking-detail__error-link">{{ 'bookingDetail.backToBookings' | transloco }}</a>
+  </section>
+}
+
+@if (!loading && !error && booking) {
+  <section class="booking-detail">
+    <nav class="breadcrumb" aria-label="breadcrumb">
+      <a routerLink="/" class="breadcrumb__item">{{ 'bookingDetail.breadcrumbHome' | transloco }}</a>
+      <span class="breadcrumb__sep">›</span>
+      <a routerLink="/bookings" class="breadcrumb__item">{{ 'bookingDetail.breadcrumbBookings' | transloco }}</a>
+      <span class="breadcrumb__sep">›</span>
+      <span class="breadcrumb__item breadcrumb__item--active">{{ 'bookingDetail.breadcrumbReservation' | transloco: { code: booking.codigo_reserva } }}</span>
+    </nav>
+
+    <header class="booking-detail__header">
+      <div>
+        <div class="booking-status" [class]="'booking-status ' + statusClass">
+          <span class="booking-status__dot"></span>
+          {{ statusLabel }}
+        </div>
+        <h1>{{ booking.hotel.nombre || ('bookingDetail.unknownHotel' | transloco) }}</h1>
+        <p class="booking-detail__code">{{ 'bookingDetail.confirmationCode' | transloco }} {{ booking.codigo_reserva }}</p>
+      </div>
+
+      <div class="booking-detail__actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="!canModify"
+          (click)="onModifyReservation()"
+        >
+          {{ 'bookingDetail.modify' | transloco }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger"
+          [disabled]="!canCancel"
+          (click)="onCancelReservation()"
+        >
+          {{ cancelling ? ('bookingDetail.cancelling' | transloco) : ('bookingDetail.cancelReservation' | transloco) }}
+        </button>
+      </div>
+    </header>
+
+    <div class="booking-detail__layout">
+      <div class="booking-detail__main">
+        <article class="card stay-card">
+          <img
+            class="stay-card__image"
+            [src]="coverImage"
+            [alt]="booking.hotel.nombre"
+            loading="eager"
+            (error)="onImageError($event)"
+          />
+          <div class="stay-card__summary">
+            <div>
+              <p class="label">{{ 'bookingDetail.checkIn' | transloco }}</p>
+              <p class="value">{{ formatDisplayDate(booking.fecha_entrada) }}</p>
+              <p class="hint">{{ formatHotelTime(booking.hotel.check_in, defaultCheckInHint) }}</p>
+            </div>
+            <div>
+              <p class="label">{{ 'bookingDetail.checkOut' | transloco }}</p>
+              <p class="value">{{ formatDisplayDate(booking.fecha_salida) }}</p>
+              <p class="hint">{{ formatHotelTime(booking.hotel.check_out, defaultCheckOutHint) }}</p>
+            </div>
+            <div>
+              <p class="label">{{ 'bookingDetail.totalStay' | transloco }}</p>
+              <p class="value">{{ nights }} {{ (nights === 1 ? ('bookingDetail.night' | transloco) : ('bookingDetail.nights' | transloco)) }}</p>
+              <p class="hint">{{ booking.num_huespedes }} {{ (booking.num_huespedes === 1 ? ('bookingDetail.guest' | transloco) : ('bookingDetail.guests' | transloco)) }}</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="card policy-card">
+          <h2>{{ 'bookingDetail.hotelPolicies' | transloco }}</h2>
+          <div class="policy-grid">
+            <div class="policy-item">
+              <h3>{{ 'bookingDetail.policyCancellationTitle' | transloco }}</h3>
+              <p>{{ 'bookingDetail.policyCancellationDescription' | transloco }}</p>
+            </div>
+            <div class="policy-item">
+              <h3>{{ 'bookingDetail.policySmokingTitle' | transloco }}</h3>
+              <p>{{ 'bookingDetail.policySmokingDescription' | transloco }}</p>
+            </div>
+            <div class="policy-item">
+              <h3>{{ 'bookingDetail.policyPetsTitle' | transloco }}</h3>
+              <p>{{ 'bookingDetail.policyPetsDescription' | transloco }}</p>
+            </div>
+            <div class="policy-item">
+              <h3>{{ 'bookingDetail.policyChildrenTitle' | transloco }}</h3>
+              <p>{{ 'bookingDetail.policyChildrenDescription' | transloco }}</p>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <aside class="booking-detail__side">
+        <article class="card checkin-card">
+          <h2>{{ 'bookingDetail.digitalCheckinTitle' | transloco }}</h2>
+          <p>{{ 'bookingDetail.digitalCheckinDescription' | transloco }}</p>
+          <div class="pseudo-qr" aria-hidden="true">
+            @for (item of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]; track $index) {
+              <span [class.pseudo-qr__cell--filled]="($index % 2 === 0) || $index === 5 || $index === 10 || $index === 15" class="pseudo-qr__cell"></span>
+            }
+          </div>
+          <p class="checkin-card__code">{{ booking.codigo_reserva }}</p>
+          <button type="button" class="link-btn">{{ 'bookingDetail.saveToWallet' | transloco }}</button>
+        </article>
+
+        <article class="card pricing-card">
+          <h2>{{ 'bookingDetail.priceSummary' | transloco }}</h2>
+          <div class="pricing-row">
+            <span>{{ nights }} {{ nights === 1 ? ('bookingDetail.night' | transloco) : ('bookingDetail.nights' | transloco) }}</span>
+            <span>${{ formatCurrency(subtotal) }}</span>
+          </div>
+          <div class="pricing-row">
+            <span>{{ 'bookingDetail.taxes' | transloco }}</span>
+            <span>${{ formatCurrency(taxes) }}</span>
+          </div>
+          <div class="pricing-row pricing-row--total">
+            <span>{{ 'bookingDetail.total' | transloco }}</span>
+            <span>${{ formatCurrency(total) }}</span>
+          </div>
+        </article>
+
+        <article class="card help-card">
+          <h2>{{ 'bookingDetail.needHelp' | transloco }}</h2>
+          <p>{{ booking.hotel.contacto_celular || ('bookingDetail.noPhone' | transloco) }}</p>
+          <p>{{ booking.hotel.contacto_email || ('bookingDetail.noEmail' | transloco) }}</p>
+          <p>{{ bookingLocation }}</p>
+          <button type="button" class="btn btn-secondary btn-full">{{ 'bookingDetail.messageFrontDesk' | transloco }}</button>
+        </article>
+      </aside>
+    </div>
+
+    <!-- Cancel Confirmation Modal -->
+    @if (showCancelModal) {
+      <div class="modal-backdrop">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">{{ 'bookingDetail.cancelConfirmTitle' | transloco }}</h5>
+              <button
+                type="button"
+                class="modal-close-btn"
+                (click)="closeCancelModal()"
+                aria-label="Close modal"
+              >
+                ✕
+              </button>
+            </div>
+            <div class="modal-body">
+              <p>{{ 'bookingDetail.confirmCancelPrompt' | transloco }}</p>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                (click)="closeCancelModal()"
+              >
+                {{ 'bookingDetail.keepReservation' | transloco }}
+              </button>
+              <button
+                type="button"
+                class="btn btn-danger"
+                (click)="confirmCancel()"
+                [disabled]="cancelling"
+              >
+                {{ cancelling ? ('bookingDetail.cancelling' | transloco) : ('bookingDetail.confirmCancel' | transloco) }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </section>
+}

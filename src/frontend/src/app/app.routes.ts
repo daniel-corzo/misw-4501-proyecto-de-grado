@@ -33,6 +33,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'bookings/:id',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/bookings/booking-detail/booking-detail.component').then(
+            (m) => m.BookingDetailComponent
+          ),
+      },
+      {
         path: 'bookings',
         canActivate: [authGuard],
         loadComponent: () =>
