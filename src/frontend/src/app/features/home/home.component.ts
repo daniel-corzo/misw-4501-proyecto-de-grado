@@ -18,6 +18,20 @@ export class HomeComponent {
   checkOut = '';
   huespedes = 2;
 
+  get today(): string {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  onDateChange(): void {
+    const checkOutMin = this.checkIn
+      ? new Date(new Date(this.checkIn).getTime() + 86400000).toISOString().split('T')[0]
+      : '';
+
+    if (this.checkOut && this.checkOut <= this.checkIn) {
+      this.checkOut = checkOutMin;
+    }
+  }
+
   buscar(): void {
     const queryParams: Record<string, string | number> = {};
     if (this.ciudad) queryParams['ciudad'] = this.ciudad;
