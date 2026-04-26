@@ -126,7 +126,7 @@ export class HotelsListComponent implements OnInit, OnDestroy {
   private cityDebounce: ReturnType<typeof setTimeout> | null = null;
 
   get today(): string {
-    return new Date().toISOString().split('T')[0];
+    return this.formatLocalDate(new Date());
   }
 
   get totalPages(): number {
@@ -265,7 +265,7 @@ export class HotelsListComponent implements OnInit, OnDestroy {
 
   onDateChange(): void {
     const checkOutMin = this.checkIn
-      ? new Date(new Date(this.checkIn).getTime() + 86400000).toISOString().split('T')[0]
+      ? this.formatLocalDate(this.addDays(this.parseDateOnlyLocal(this.checkIn), 1))
       : '';
     if (this.checkOut && this.checkOut <= this.checkIn) {
       this.checkOut = checkOutMin;
@@ -279,6 +279,22 @@ export class HotelsListComponent implements OnInit, OnDestroy {
       queryParamsHandling: 'merge',
     });
     // Las fechas aún no se envían al backend (disponibilidad por fechas pendiente con equipo)
+  }
+
+  private parseDateOnlyLocal(value: string): Date {
+    const [year, month, day] = value.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  private addDays(date: Date, days: number): Date {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+  }
+
+  private formatLocalDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   toggleStar(star: number): void {

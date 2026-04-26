@@ -151,10 +151,17 @@ export class HotelDetailComponent implements OnInit {
       return 1;
     }
 
-    const start = this.parseDateOnly(this.fechaEntrada);
-    const end = this.parseDateOnly(this.fechaSalida);
-    const diffInMs = end.getTime() - start.getTime();
-    const nights = Math.ceil(diffInMs / (1000 * 60 * 60 * 24));
+    const startParts = this.parseDateParts(this.fechaEntrada);
+    const endParts = this.parseDateParts(this.fechaSalida);
+
+    if (!startParts || !endParts) {
+      return 1;
+    }
+
+    const MS_PER_DAY = 1000 * 60 * 60 * 24;
+    const startUtc = Date.UTC(startParts.year, startParts.monthIndex, startParts.day);
+    const endUtc = Date.UTC(endParts.year, endParts.monthIndex, endParts.day);
+    const nights = Math.round((endUtc - startUtc) / MS_PER_DAY);
 
     return Number.isFinite(nights) && nights > 0 ? nights : 1;
   }
@@ -200,14 +207,24 @@ export class HotelDetailComponent implements OnInit {
   }
 
   private parseDateOnly(value: string): Date {
-    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-    if (!match) {
+    const parts = this.parseDateParts(value);
+    if (!parts) {
       return new Date(value);
     }
 
-    const year = Number(match[1]);
-    const monthIndex = Number(match[2]) - 1;
-    const day = Number(match[3]);
-    return new Date(year, monthIndex, day);
+    return new Date(parts.year, parts.monthIndex, parts.day);
+  }
+
+  private parseDateParts(value: string): { year: number; monthIndex: number; day: number } | null {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (!match) {
+      return null;
+    }
+
+    return {
+      year: Number(match[1]),
+      monthIndex: Number(match[2]) - 1,
+      day: Number(match[3]),
+    };
   }
 }
