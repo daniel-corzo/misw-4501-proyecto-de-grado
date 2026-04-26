@@ -208,18 +208,22 @@
         <aside class="booking-card">
           <div class="booking-card__price-row">
             <span class="booking-card__price">${{ formatPrice(selectedRoom?.monto ?? minPrice) }}</span>
-            <span class="booking-card__per-night">/night</span>
+            <span class="booking-card__per-night">{{ 'hotelDetail.perNight' | transloco }}</span>
           </div>
 
           <div class="booking-card__fields">
             <div class="booking-card__field-row">
               <div class="booking-card__field">
                 <span class="booking-card__field-label">{{ 'hotelDetail.checkIn' | transloco }}</span>
-                <span class="booking-card__field-value">{{ hotel.check_in }}</span>
+                <span class="booking-card__field-value">
+                  {{ formatCheckInOut(fechaEntrada, hotel.check_in) }}
+                </span>
               </div>
               <div class="booking-card__field">
                 <span class="booking-card__field-label">{{ 'hotelDetail.checkOut' | transloco }}</span>
-                <span class="booking-card__field-value">{{ hotel.check_out }}</span>
+                <span class="booking-card__field-value">
+                  {{ formatCheckInOut(fechaSalida, hotel.check_out) }}
+                </span>
               </div>
             </div>
             <div class="booking-card__field">
@@ -230,24 +234,30 @@
             </div>
           </div>
 
-          <button type="button" class="booking-card__cta" [disabled]="!selectedRoom?.disponible">
-            {{ 'hotelDetail.bookNow' | transloco }}
+          <button type="button" class="booking-card__cta" [disabled]="!puedeReservar" (click)="reservarAhora()">
+            {{ reservando ? ('hotelDetail.bookingInProgress' | transloco) : ('hotelDetail.bookNow' | transloco) }}
           </button>
-          <p class="booking-card__notice">{{ 'hotelDetail.noCharge' | transloco }}</p>
+          <p class="booking-card__notice">
+            @if (fechaEntrada && fechaSalida) {
+              {{ 'hotelDetail.noCharge' | transloco }}
+            } @else {
+              {{ 'hotelDetail.selectDatesFromSearch' | transloco }}
+            }
+          </p>
 
           @if (selectedRoom) {
             <div class="booking-card__breakdown">
               <div class="booking-card__breakdown-row">
-                <span>1 {{ 'hotelDetail.perNight' | transloco }} × ${{ formatPrice(selectedRoom.monto) }}</span>
-                <span>${{ formatPrice(selectedRoom.monto) }}</span>
+                <span>{{ stayNights }} {{ stayNights === 1 ? ('hotelDetail.night' | transloco) : ('hotelDetail.nights' | transloco) }} × ${{ formatPrice(selectedRoom.monto) }}</span>
+                <span>${{ formatPrice(roomSubtotal) }}</span>
               </div>
               <div class="booking-card__breakdown-row">
                 <span>{{ 'hotelDetail.taxes' | transloco }}</span>
-                <span>${{ formatPrice(selectedRoom.impuestos) }}</span>
+                <span>${{ formatPrice(roomTaxes) }}</span>
               </div>
               <div class="booking-card__breakdown-row booking-card__breakdown-row--total">
                 <span>{{ 'hotelDetail.total' | transloco }}</span>
-                <span>${{ formatPrice(selectedRoom.monto + selectedRoom.impuestos) }}</span>
+                <span>${{ formatPrice(totalPrice) }}</span>
               </div>
             </div>
           }

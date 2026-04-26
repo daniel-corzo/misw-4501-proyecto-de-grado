@@ -193,7 +193,7 @@
           type="date"
           [(ngModel)]="checkOut"
           name="checkOut"
-          [min]="checkIn || today"
+          [min]="checkOutMin"
           (change)="onDateChange()"
           [attr.aria-label]="'hotels.checkOutAria' | transloco"
         />
@@ -316,7 +316,13 @@
                 ${{ hotel.precio_minimo.toLocaleString('es-CO') }}
               </p>
               <p class="hotel-card__price-label">{{ 'hotels.totalPrice' | transloco }}</p>
-              <a class="hotel-card__btn" [routerLink]="['/hotels', hotel.id]">{{ 'hotels.viewDetail' | transloco }}</a>
+              <a
+                class="hotel-card__btn"
+                [routerLink]="['/hotels', hotel.id]"
+                [queryParamsHandling]="'preserve'"
+              >
+                {{ 'hotels.viewDetail' | transloco }}
+              </a>
             </div>
           </article>
         }
