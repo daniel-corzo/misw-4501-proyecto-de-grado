@@ -30,8 +30,11 @@
           <td class="col-center">{{ room.capacidad }}</td>
           <td class="col-taxes">{{ room.impuestos | currency:'COP':'$':'1.0-0' }}</td>
           <td class="col-right col-price">{{ room.monto | currency:'COP':'$':'1.0-0' }}</td>
-          <td class="col-right">
-            <button type="button" class="btn-edit" (click)="openEditModal(room)">{{ 'partner.rooms.edit' | transloco }}</button>
+          <td class="col-right col-actions-cell">
+            <div class="actions-wrapper">
+              <button type="button" class="btn-edit" (click)="openEditModal(room)">Modificar</button>
+              <button type="button" class="btn-delete-row" (click)="openConfirm(room)" [disabled]="deleting">Eliminar</button>
+            </div>
           </td>
         </tr>
       }
@@ -62,5 +65,25 @@
 </div>
 
 @if (isFormModalOpen) {
-  <app-room-form-modal [room]="selectedRoom" (closeModal)="closeFormModal()"></app-room-form-modal>
+  <app-room-form-modal [room]="selectedRoom" (closeModal)="closeFormModal()" (deleteRequested)="onDeleteRequestedFromModal($event)"></app-room-form-modal>
+}
+
+@if (confirmTarget) {
+  <app-modal title="Confirmar eliminación" (closed)="cancelConfirm()">
+    <div class="confirm-body">
+      <p>
+        ¿Está seguro que desea eliminar el hospedaje
+        <strong>«{{ confirmTarget.numero }}»</strong>?
+        Esta acción no se puede deshacer.
+      </p>
+      <div class="confirm-actions">
+        <button type="button" class="btn-cancel" (click)="cancelConfirm()" [disabled]="deleting">
+          Cancelar
+        </button>
+        <button type="button" class="btn-delete-confirm" (click)="confirmDelete()" [disabled]="deleting">
+          {{ deleting ? 'Eliminando...' : 'Eliminar' }}
+        </button>
+      </div>
+    </div>
+  </app-modal>
 }

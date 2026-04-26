@@ -11,6 +11,7 @@ from app.schemas.hotel import (
     HabitacionDetalleResponse,
     ListaHabitacionesResponse,
 )
+from travelhub_common.security import RoleEnum, User
 
 _HABITACION_NUMERO_UQ = "uq_habitacion_hotel_numero"
 
@@ -157,6 +158,35 @@ async def obtener_habitacion_por_id_service(db: AsyncSession, habitacion_id: uui
 
     return _build_habitacion_response(habitacion)
 
+
+
+async def eliminar_habitacion_service(
+    db: AsyncSession,
+    habitacion_id: uuid.UUID,
+    current_user: User,
+) -> None:
+    result = await db.execute(select(Habitacion).where(Habitacion.id == habitacion_id))
+    habitacion = result.scalar_one_or_none()
+
+    if habitacion is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Habitación no encontrada.",
+        )
+
+    if current_user.role != RoleEnum.ADMIN:
+        hotel_result = await db.execute(
+            select(Hotel).where(Hotel.usuario_id == current_user.id)
+        )
+        hotel = hotel_result.scalar_one_or_none()
+        if hotel is None or habitacion.hotel_id != hotel.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No tienes permiso para eliminar esta habitación.",
+            )
+
+    await db.delete(habitacion)
+    await db.commit()
 
 
 async def listar_habitaciones_service(

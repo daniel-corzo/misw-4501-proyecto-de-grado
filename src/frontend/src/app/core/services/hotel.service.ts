@@ -102,8 +102,12 @@ export class HotelService {
   listCountries(): Observable<{ paises: string[] }> {
     return this.api.get<{ paises: string[] }>('/hoteles/paises');
   }
-  
+
   getRoomById(id: string): Observable<HabitacionDetalle> {
     return this.api.get<HabitacionDetalle>(`/hoteles/habitaciones/${id}`);
+  }
+
+  deleteRoom(id: string): Observable<void> {
+    return this.api.delete<void>(`/hoteles/habitaciones/${id}`);
   }
 }

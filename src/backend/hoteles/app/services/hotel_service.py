@@ -383,11 +383,13 @@ async def listar_habitaciones_resumen_por_ids_service(
 async def get_hotel_by_user(db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)) -> Hotel:
     result = await db.execute(select(Hotel).where(Hotel.usuario_id == user.id))
     hotel = result.scalar_one_or_none()
-    
+
     if hotel is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="El usuario no tiene un hotel asociado. Por favor contacte a soporte.",
         )
-    
+
     return hotel
+
+
