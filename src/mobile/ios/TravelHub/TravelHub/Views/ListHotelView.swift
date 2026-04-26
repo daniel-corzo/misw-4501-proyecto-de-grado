@@ -14,6 +14,7 @@ struct ListHotelView: View {
     @State private var showFilterSheet = false
     
     @Environment(\.toastManager) private var toastManager: ToastManager
+    @Environment(Router.self) private var router
     
     var filteredHotels: [Hotel] {
         if searchText.isEmpty {
@@ -89,15 +90,17 @@ struct ListHotelView: View {
                 LazyVStack(spacing: 24) {
                     ForEach(filteredHotels) { hotel in
                         
-                        NavigationLink {
-                            HotelDetailView(hotelId: hotel.id)
+                        Button {
+                            router.navigate(to: .hotelDetail(hotel.id))
                         } label: {
                             ListElementView(
+                                id: hotel.id,
                                 imageURL: hotel.images.first ?? "",
                                 title: hotel.nombre,
                                 location: hotel.ciudad,
                                 price: (hotel.precioMinimo).formatted(.currency(code: "COP")),
-                                rating: hotel.estrellas
+                                rating: hotel.estrellas,
+                                fetchHotelDetail: { return await self.viewModel.fetchHotelDetail(hotelId: hotel.id, toastManager: self.toastManager) }
                             )
                         }
                         .buttonStyle(.plain)

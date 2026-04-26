@@ -17,6 +17,7 @@ struct HotelDetailView: View {
     @State private var descriptionIsTruncated = false
 
     @Environment(\.toastManager) private var toastManager: ToastManager
+    @Environment(Router.self) private var router
 
     var featuredAmenities: [HotelAmenity] {
         guard let hotel = viewModel.hotel else { return [] }
@@ -289,8 +290,8 @@ struct HotelDetailView: View {
                 Spacer()
 
                 if let hotel = self.viewModel.hotel {
-                    NavigationLink {
-                        CreateReservationView(hotel: hotel)
+                    Button {
+                        router.navigate(to: .createReservation(hotel, nil))
                     } label: {
                         Text(LocalizedStringResource.HotelDetail.bookNow)
                             .bold()

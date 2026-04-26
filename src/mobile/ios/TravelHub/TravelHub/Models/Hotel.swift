@@ -134,7 +134,7 @@ enum HotelAmenity: String, Codable {
     }
 }
 
-struct Politica: Identifiable {
+struct Politica: Identifiable, Hashable {
     var id: UUID
     var nombre: String
     var descripcion: String?
@@ -143,7 +143,7 @@ struct Politica: Identifiable {
     var diasAntelacion: Int
 }
 
-struct Habitacion: Identifiable {
+struct Habitacion: Identifiable, Equatable, Hashable {
     var id: UUID
     var capacidad: Int
     var numero: String
@@ -152,9 +152,13 @@ struct Habitacion: Identifiable {
     var monto: Double
     var impuestos: Double
     var disponible: Bool
+    
+    static func == (lhs: Habitacion, rhs: Habitacion) -> Bool {
+        return lhs.id == rhs.id
+    }
 }
 
-struct Hotel: Identifiable {
+struct Hotel: Identifiable, Hashable {
     var id: UUID
     var nombre: String
     var direccion: String
@@ -175,4 +179,8 @@ struct Hotel: Identifiable {
     var politicas: [Politica]
     var habitaciones: [Habitacion]
     var precioMinimo: Int
+    
+    static func ==(lhs: Hotel, rhs: Hotel) -> Bool {
+        return lhs.id == rhs.id
+    }
 }

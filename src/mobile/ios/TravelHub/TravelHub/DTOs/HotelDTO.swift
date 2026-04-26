@@ -67,6 +67,33 @@ struct HotelDetailDTO: Decodable {
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
+
+    func toHotel() -> Hotel {
+        Hotel(
+            id: id,
+            nombre: nombre,
+            direccion: direccion,
+            pais: pais,
+            estado: estado,
+            departamento: departamento,
+            ciudad: ciudad,
+            descripcion: descripcion,
+            amenidades: amenidades.compactMap {
+                HotelAmenity(rawValue: $0)
+            },
+            estrellas: estrellas,
+            ranking: ranking,
+            contactoCelular: contactoCelular,
+            contactoEmail: contactoEmail,
+            images: imagenes,
+            checkInHour: checkIn,
+            checkOutHour: checkOut,
+            valorMinimoModificacion: valorMinimoModificacion,
+            politicas: politicas.map({ $0.toPolitica() }),
+            habitaciones: habitaciones.map({ $0.toHabitacion() }),
+            precioMinimo: 0
+        )
+    }
 }
 
 /// DTO para una política del hotel
@@ -82,6 +109,17 @@ struct PoliticaDTO: Decodable {
         case id, nombre, descripcion, tipo, penalizacion
         case diasAntelacion = "dias_antelacion"
     }
+
+    func toPolitica() -> Politica {
+        return Politica(
+            id: id,
+            nombre: nombre,
+            descripcion: descripcion,
+            tipo: tipo,
+            penalizacion: penalizacion,
+            diasAntelacion: diasAntelacion
+        )
+    }
 }
 
 /// DTO para una habitación del hotel
@@ -94,4 +132,17 @@ struct HabitacionDTO: Decodable {
     let monto: Double
     let impuestos: Double
     let disponible: Bool
+
+    func toHabitacion() -> Habitacion {
+        return Habitacion(
+            id: id,
+            capacidad: capacidad,
+            numero: numero,
+            descripcion: descripcion,
+            imagenes: imagenes,
+            monto: monto,
+            impuestos: impuestos,
+            disponible: disponible
+        )
+    }
 }

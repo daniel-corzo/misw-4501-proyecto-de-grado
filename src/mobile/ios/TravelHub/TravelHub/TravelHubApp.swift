@@ -10,6 +10,7 @@ import SwiftUI
 @main
 struct TravelHubApp: App {
     @State private var toastManager = ToastManager()
+    @State private var router = Router()
     
     var body: some Scene {
         WindowGroup {
@@ -20,6 +21,7 @@ struct TravelHubApp: App {
                 .environment(\.reservationService, ReservationServiceImpl(httpService: HttpServiceImpl.shared))
                 .environment(\.toastManager, toastManager)
                 .toastOverlay(toastManager: toastManager)
+                .environment(router)
         }
     }
 }

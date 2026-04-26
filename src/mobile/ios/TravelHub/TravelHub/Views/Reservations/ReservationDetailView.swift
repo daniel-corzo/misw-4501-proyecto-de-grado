@@ -9,6 +9,7 @@ struct ReservationDetailView: View {
     let reservationId: UUID
 
     @Environment(\.reservationService) private var reservationService
+    @Environment(\.hotelService) private var hotelService
     @Environment(\.toastManager) private var toastManager
     @Environment(\.dismiss) private var dismiss
 
@@ -32,7 +33,12 @@ struct ReservationDetailView: View {
         .task {
             viewModel.reservationService = reservationService
             viewModel.toastManager = toastManager
+            viewModel.hotelService = hotelService
             await viewModel.fetchDetail(reservationId: reservationId)
+            
+            if let reservation = self.viewModel.reservation, let hotelId = reservation.hotel.id {
+                await viewModel.fetchHotelDetail(id: hotelId)
+            }
         }
         .refreshable {
             await viewModel.fetchDetail(reservationId: reservationId)
@@ -374,22 +380,38 @@ struct ReservationDetailView: View {
     // MARK: - Footer Buttons
 
     private var footerButtons: some View {
-        HStack(spacing: 16) {
-            Button {
-                // Modify placeholder
-            } label: {
-                Text(LocalizedStringResource.ReservationDetail.modify)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.accent)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(
-                        Capsule()
-                            .stroke(Color.accentColor, lineWidth: 2)
-                    )
-            }
-            .disabled(viewModel.isCancelling)
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withFullDate]
+        formatter.timeZone = .current
+        
+        return HStack(spacing: 16) {
+                NavigationLink {
+                    if let hotel = self.viewModel.hotel,
+                       let reservation = self.viewModel.reservation {
+                        CreateReservationView(
+                            hotel: hotel,
+                            reservation: ModifyReservation(
+                                id: reservation.id,
+                                habitacionID: reservation.habitacion.id,
+                                fechaEntrada: formatter.date(from: reservation.fechaEntrada) ?? .init(),
+                                fechaSalida: formatter.date(from: reservation.fechaSalida) ?? .init(),
+                                numHuespedes: reservation.numHuespedes
+                            )
+                        )
+                    }
+                } label: {
+                    Text(LocalizedStringResource.ReservationDetail.modify)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.accent)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(
+                            Capsule()
+                                .stroke(Color.accentColor, lineWidth: 2)
+                        )
+                }
+                .disabled(viewModel.isCancelling || self.viewModel.reservation == nil || self.viewModel.hotel == nil)
 
             Button(role: .destructive) {
                 showCancelConfirmation = true

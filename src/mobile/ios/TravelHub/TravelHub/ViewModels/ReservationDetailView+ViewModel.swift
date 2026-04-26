@@ -9,6 +9,7 @@ extension ReservationDetailView {
     @Observable
     class ViewModel {
         var reservationService: ReservationService = ReservationServiceKey.defaultValue
+        var hotelService: HotelService = HotelServiceKey.defaultValue
         var toastManager: ToastManager = ToastManagerKey.defaultValue
 
         var reservation: ReservationDetailDTO?
@@ -17,6 +18,7 @@ extension ReservationDetailView {
         var errorMessage: String?
         var isCancelling = false
         var didCancel = false
+        var hotel: Hotel?
 
         @MainActor
         func fetchDetail(reservationId: UUID) async {
@@ -39,6 +41,18 @@ extension ReservationDetailView {
                 hasError = true
                 errorMessage = error.localizedDescription
                 toastManager.error(error.localizedDescription)
+            }
+        }
+        
+        @MainActor
+        func fetchHotelDetail(id: UUID) async {
+            do {
+                let hotel = try await hotelService.getHotelDetail(id: id)
+                self.hotel = hotel.toHotel()
+            } catch is CancellationError {
+                 return
+            } catch {
+                toastManager.error(String(localized: .ReservationDetail.errorRetrievingHotel))
             }
         }
 

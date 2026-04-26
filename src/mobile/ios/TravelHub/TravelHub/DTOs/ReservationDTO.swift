@@ -13,7 +13,7 @@ struct CreateReservationRequest: Encodable {
     var fechaSalida: String
     var numHuespedes: Int
     var pagoID: UUID?
-    
+
     enum CodingKeys: String, CodingKey {
         case habitacionID = "habitacion_id"
         case fechaEntrada = "fecha_entrada"
@@ -32,13 +32,60 @@ struct CreateReservationResponse: Decodable {
     var estado: EstadoReserva
     var pagoId: UUID?
     var createdAt: String
-    
+
     enum CodingKeys: String, CodingKey {
         case id, estado
         case habitacionId = "habitacion_id"
         case fechaEntrada = "fecha_entrada"
         case fechaSalida = "fecha_salida"
         case numHuespedes = "num_huespedes"
+        case pagoId = "pago_id"
+        case createdAt = "created_at"
+    }
+}
+
+// MARK: - Modify Reservation
+struct ModifyReservationRequest: Encodable {
+    var fechaEntrada: String?
+    var fechaSalida: String?
+    var numHuespedes: Int?
+    var habitacionId: UUID?
+
+    enum CodingKeys: String, CodingKey {
+        case fechaEntrada = "fecha_entrada"
+        case fechaSalida = "fecha_salida"
+        case numHuespedes = "num_huespedes"
+        case habitacionId = "habitacion_id"
+    }
+}
+
+struct ModifyReservationResponse: Decodable {
+    var id: UUID
+    var habitacionId: UUID
+    var nombreHabitacion: String?
+    var nombreHotel: String?
+    var imagenesHotel: [String]
+    var ciudadHotel: String?
+    var paisHotel: String?
+    var fechaEntrada: String
+    var fechaSalida: String
+    var numHuespedes: Int
+    var estado: EstadoReserva
+    var pagoId: UUID?
+    var createdAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case habitacionId = "habitacion_id"
+        case nombreHabitacion = "nombre_habitacion"
+        case nombreHotel = "nombre_hotel"
+        case imagenesHotel = "imagenes_hotel"
+        case ciudadHotel = "ciudad_hotel"
+        case paisHotel = "pais_hotel"
+        case fechaEntrada = "fecha_entrada"
+        case fechaSalida = "fecha_salida"
+        case numHuespedes = "num_huespedes"
+        case estado
         case pagoId = "pago_id"
         case createdAt = "created_at"
     }
@@ -125,6 +172,31 @@ struct ReservationHotelDTO: Decodable {
         case contactoEmail = "contacto_email"
         case checkIn = "check_in"
         case checkOut = "check_out"
+    }
+
+    func toHotel() -> Hotel {
+        return Hotel(
+            id: id ?? UUID(),
+            nombre: nombre,
+            direccion: direccion ?? "",
+            pais: pais ?? "",
+            estado: nil,
+            departamento: "",
+            ciudad: ciudad ?? "",
+            descripcion: "",
+            amenidades: [],
+            estrellas: estrellas ?? 1,
+            ranking: ranking ?? 0,
+            contactoCelular: contactoCelular ?? "",
+            contactoEmail: contactoEmail ?? "",
+            images: imagenes,
+            checkInHour: checkIn ?? .init(),
+            checkOutHour: checkOut ?? .init(),
+            valorMinimoModificacion: 0,
+            politicas: [],
+            habitaciones: [],
+            precioMinimo: 0
+        )
     }
 }
 

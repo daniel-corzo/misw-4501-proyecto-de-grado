@@ -258,12 +258,19 @@ private struct DayCell: View {
     }
 }
 
+private func makeDate(_ string: String) -> Date {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withFullDate]
+    formatter.timeZone = .current
+    return formatter.date(from: string)!
+}
+
 #Preview {
     @Previewable @State var dateRange = DateRange(
-        start: Calendar.current.date(byAdding: .day, value: 0, to: .now)!,
-        end: Calendar.current.date(byAdding: .day, value: 5, to: .now)!
+        start: makeDate("2026-04-26"),
+        end: makeDate("2026-04-30")
     )
-
+    
     DateRangePickerView(dateRange: $dateRange)
         .padding()
 }
