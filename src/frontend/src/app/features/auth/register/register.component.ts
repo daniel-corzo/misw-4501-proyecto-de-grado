@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators, FormArray } from '@angular/forms';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -9,7 +10,7 @@ import { AmenitiesTagsComponent } from '../../hotels/components/amenities-tags/a
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [ReactiveFormsModule, AmenitiesTagsComponent],
+  imports: [ReactiveFormsModule, AmenitiesTagsComponent, TranslocoPipe],
   templateUrl: './register.component.html',
   styleUrl: './register.component.scss',
 })
@@ -17,6 +18,7 @@ export class RegisterComponent {
   readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
   private readonly fb = inject(FormBuilder);
+  private readonly t = inject(TranslocoService);
 
   activeRole: 'traveler' | 'partner' = 'traveler';
   loading = false;
@@ -61,8 +63,8 @@ export class RegisterComponent {
       ? this.travelerForm.controls.email
       : this.partnerForm.controls.email;
     if (!ctrl?.invalid || !ctrl.touched) return null;
-    if (ctrl.errors?.['required']) return 'El correo es requerido';
-    if (ctrl.errors?.['email']) return 'Ingresa un correo válido';
+    if (ctrl.errors?.['required']) return this.t.translate('auth.register.errors.emailRequired');
+    if (ctrl.errors?.['email']) return this.t.translate('auth.register.errors.emailInvalid');
     return null;
   }
 
@@ -71,98 +73,102 @@ export class RegisterComponent {
       ? this.travelerForm.controls.password
       : this.partnerForm.controls.password;
     if (!ctrl?.invalid || !ctrl.touched) return null;
-    if (ctrl.errors?.['required']) return 'La contraseña es requerida';
-    if (ctrl.errors?.['passwordStrength']) return ctrl.errors['passwordStrength'].message;
+    if (ctrl.errors?.['required']) return this.t.translate('auth.register.errors.passwordRequired');
+    if (ctrl.errors?.['passwordStrength']) {
+      const keys: string[] = ctrl.errors['passwordStrength'].keys;
+      const translated = keys.map((k: string) => this.t.translate(k));
+      return this.t.translate('auth.register.errors.passwordStrengthPrefix') + ' ' + translated.join(', ');
+    }
     return null;
   }
 
   get nombreError(): string | null {
     const ctrl = this.travelerForm.get('nombre');
     if (!ctrl?.invalid || !ctrl.touched) return null;
-    return 'El nombre es requerido';
+    return this.t.translate('auth.register.errors.nameRequired');
   }
 
   get telefonoError(): string | null {
     const ctrl = this.travelerForm.get('telefono');
     if (!ctrl?.invalid || !ctrl.touched) return null;
-    return 'El teléfono es requerido';
+    return this.t.translate('auth.register.errors.phoneRequired');
   }
 
   get hotelNameError(): string | null {
     const ctrl = this.partnerForm.get('nombre');
     if (!ctrl?.invalid || !ctrl.touched) return null;
-    return 'El nombre del hotel es requerido';
+    return this.t.translate('auth.register.errors.hotelNameRequired');
   }
 
   get rankingError(): string | null {
     const ctrl = this.partnerForm.get('estrellas');
     if (!ctrl?.invalid || !ctrl.touched) return null;
-    if (ctrl.errors?.['required']) return 'El ranking es requerido';
-    if (ctrl.errors?.['min'] || ctrl.errors?.['max']) return 'El ranking debe ser entre 1 y 5';
+    if (ctrl.errors?.['required']) return this.t.translate('auth.register.errors.rankingRequired');
+    if (ctrl.errors?.['min'] || ctrl.errors?.['max']) return this.t.translate('auth.register.errors.rankingInvalid');
     return null;
   }
 
   get contactPhoneError(): string | null {
     const ctrl = this.partnerForm.get('contacto_celular');
     if (!ctrl?.invalid || !ctrl.touched) return null;
-    return 'El teléfono de contacto es requerido';
+    return this.t.translate('auth.register.errors.contactPhoneRequired');
   }
 
   get contactEmailError(): string | null {
     const ctrl = this.partnerForm.get('contacto_email');
     if (!ctrl?.invalid || !ctrl.touched) return null;
-    if (ctrl.errors?.['required']) return 'El correo de contacto es requerido';
-    if (ctrl.errors?.['email']) return 'Ingresa un correo de contacto válido';
+    if (ctrl.errors?.['required']) return this.t.translate('auth.register.errors.contactEmailRequired');
+    if (ctrl.errors?.['email']) return this.t.translate('auth.register.errors.contactEmailInvalid');
     return null;
   }
 
   get descripcionError(): string | null {
     const ctrl = this.partnerForm.get('descripcion');
     if (!ctrl?.invalid || !ctrl.touched) return null;
-    return 'La descripción es requerida';
+    return this.t.translate('auth.register.errors.descriptionRequired');
   }
 
   get paisError(): string | null {
     const ctrl = this.partnerForm.get('pais');
     if (!ctrl?.invalid || !ctrl.touched) return null;
-    return 'El país es requerido';
+    return this.t.translate('auth.register.errors.countryRequired');
   }
 
   get departamentoError(): string | null {
     const ctrl = this.partnerForm.get('departamento');
     if (!ctrl?.invalid || !ctrl.touched) return null;
-    return 'El departamento es requerido';
+    return this.t.translate('auth.register.errors.stateRequired');
   }
 
   get ciudadError(): string | null {
     const ctrl = this.partnerForm.get('ciudad');
     if (!ctrl?.invalid || !ctrl.touched) return null;
-    return 'La ciudad es requerida';
+    return this.t.translate('auth.register.errors.cityRequired');
   }
 
   get direccionError(): string | null {
     const ctrl = this.partnerForm.get('direccion');
     if (!ctrl?.invalid || !ctrl.touched) return null;
-    return 'La dirección es requerida';
+    return this.t.translate('auth.register.errors.addressRequired');
   }
 
   get checkInError(): string | null {
     const ctrl = this.partnerForm.get('check_in');
     if (!ctrl?.invalid || !ctrl.touched) return null;
-    return 'La hora de check-in es requerida';
+    return this.t.translate('auth.register.errors.checkInRequired');
   }
 
   get checkOutError(): string | null {
     const ctrl = this.partnerForm.get('check_out');
     if (!ctrl?.invalid || !ctrl.touched) return null;
-    return 'La hora de check-out es requerida';
+    return this.t.translate('auth.register.errors.checkOutRequired');
   }
 
   get modificationValueError(): string | null {
     const ctrl = this.partnerForm.get('valor_minimo_modificacion');
     if (!ctrl?.invalid || !ctrl.touched) return null;
-    if (ctrl.errors?.['required']) return 'El valor mínimo de modificación es requerido';
-    if (ctrl.errors?.['min']) return 'El valor mínimo de modificación no puede ser negativo';
+    if (ctrl.errors?.['required']) return this.t.translate('auth.register.errors.modificationValueRequired');
+    if (ctrl.errors?.['min']) return this.t.translate('auth.register.errors.modificationValueNegative');
     return null; 
   }
 
@@ -174,8 +180,8 @@ export class RegisterComponent {
     const array = this.partnerForm.get('imagenes') as FormArray;
     if (array.invalid && array.touched) {
       for (const ctrl of array.controls) {
-        if (ctrl.errors?.['required'] && ctrl.touched) return 'Al menos una imagen es requerida';
-        if (ctrl.errors?.['pattern'] && ctrl.touched) return 'Ingresa URLs válidas para las imágenes';
+        if (ctrl.errors?.['required'] && ctrl.touched) return this.t.translate('auth.register.errors.imageRequired');
+        if (ctrl.errors?.['pattern'] && ctrl.touched) return this.t.translate('auth.register.errors.imageInvalid');
       }
     }
     return null;
@@ -184,7 +190,7 @@ export class RegisterComponent {
   get amenitiesError(): string | null {
     const ctrl = this.partnerForm.get('amenidades');
     if (!ctrl?.invalid || !ctrl.touched) return null;
-    return 'Selecciona al menos una amenidad';
+    return this.t.translate('auth.register.errors.amenityRequired');
   }
 
   onImageInput(index: number) {
@@ -204,7 +210,7 @@ export class RegisterComponent {
 
     this.auth.register(this.buildRegisterPayload()).subscribe({
       next: () => {
-        this.toast.success('Cuenta creada exitosamente. ¡Bienvenido a TravelHub!');
+        this.toast.success(this.t.translate('auth.register.success'));
         this.auth.closeRegisterModal();
         this.auth.openLoginModal();
       },
@@ -212,9 +218,9 @@ export class RegisterComponent {
         this.loading = false;
         const detail = err?.error?.detail;
         if (detail === 'Usuario ya existe con este email') {
-          this.toast.danger('Ya existe una cuenta con ese correo');
+          this.toast.danger(this.t.translate('auth.register.emailExists'));
         } else {
-          this.toast.danger('No se pudo crear la cuenta, intenta más tarde');
+          this.toast.danger(this.t.translate('auth.register.createError'));
         }
       },
     });

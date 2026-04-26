@@ -1,6 +1,7 @@
 import { Component, Input, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 export const AMENITIES_LIST = [
   { value: 'POOL', label: 'Pool' },
@@ -29,7 +30,7 @@ export const AMENITIES_LIST = [
 @Component({
   selector: 'app-amenities-tags',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslocoPipe],
   templateUrl: './amenities-tags.component.html',
   styleUrl: './amenities-tags.component.scss',
   providers: [

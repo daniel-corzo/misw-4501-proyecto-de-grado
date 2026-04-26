@@ -10,7 +10,7 @@
         }
       </span>
       <span class="toast__message">{{ toast.message }}</span>
-      <button class="toast__close" (click)="toastService.dismiss(toast.id)" aria-label="Cerrar">✕</button>
+      <button class="toast__close" (click)="toastService.dismiss(toast.id)" [attr.aria-label]="'shared.close' | transloco">✕</button>
     </div>
   }
 </div>

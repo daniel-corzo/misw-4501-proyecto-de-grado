@@ -19,14 +19,14 @@
     </div>
 
     <h1 class="not-found__title">
-      Parece que esta página se fue de viaje
+      {{ 'notFound.title' | transloco }}
     </h1>
     <p class="not-found__subtitle">
-      No pudimos encontrar lo que buscas, pero tu próximo destino te está esperando.
+      {{ 'notFound.subtitle' | transloco }}
     </p>
 
     <a class="not-found__btn" routerLink="/">
-      Volver al inicio
+      {{ 'notFound.back' | transloco }}
     </a>
   </div>
 </div>

@@ -1,32 +1,32 @@
 <div class="rooms-table-container">
   <div class="rooms-header">
-    <h2>Mis hospedajes</h2>
-    <button class="btn-primary" (click)="openFormModal()">Crear hospedaje</button>
+    <h2>{{ 'partner.rooms.title' | transloco }}</h2>
+    <button class="btn-primary" (click)="openFormModal()">{{ 'partner.rooms.create' | transloco }}</button>
   </div>
 
 
   <table class="rooms-table">
     <thead>
       <tr>
-        <th class="col-center">Número</th>
-        <th>Descripción</th>
-        <th class="col-center">Capacidad</th>
+        <th class="col-center">{{ 'partner.rooms.number' | transloco }}</th>
+        <th>{{ 'partner.rooms.description' | transloco }}</th>
+        <th class="col-center">{{ 'partner.rooms.capacity' | transloco }}</th>
         <!-- <th>Precio inicio /<br>fin de fecha</th> -->
-        <th>Impuestos</th>
-        <th class="col-right">Precio</th>
-        <th class="col-right">Acciones</th>
+        <th>{{ 'partner.rooms.taxes' | transloco }}</th>
+        <th class="col-right">{{ 'partner.rooms.price' | transloco }}</th>
+        <th class="col-right">{{ 'partner.rooms.actions' | transloco }}</th>
       </tr>
     </thead>
     <tbody>
       @if (loading) {
         <tr>
-          <td colspan="6" class="col-center">Cargando hospedajes...</td>
+          <td colspan="6" class="col-center">{{ 'partner.rooms.loading' | transloco }}</td>
         </tr>
       }
       @for (room of rooms; track room.id) {
         <tr>
           <td class="col-center col-number">{{ room.numero }}</td>
-          <td class="col-desc">{{ room.descripcion || 'Sin descripción' }}</td>
+          <td class="col-desc">{{ room.descripcion || ('partner.rooms.noDescription' | transloco) }}</td>
           <td class="col-center">{{ room.capacidad }}</td>
           <td class="col-taxes">{{ room.impuestos | currency:'COP':'$':'1.0-0' }}</td>
           <td class="col-right col-price">{{ room.monto | currency:'COP':'$':'1.0-0' }}</td>
@@ -40,7 +40,7 @@
       }
       @if (!loading && rooms.length === 0) {
         <tr>
-          <td colspan="6" class="col-center">No hay hospedajes registrados.</td>
+          <td colspan="6" class="col-center">{{ 'partner.rooms.empty' | transloco }}</td>
         </tr>
       }
     </tbody>
@@ -49,7 +49,7 @@
   @if (totalPages > 1 || totalItems > 0) {
     <div class="pagination">
       <div class="limit-selector">
-        <label for="limit-select">Mostrar:</label>
+        <label for="limit-select">{{ 'partner.rooms.show' | transloco }}</label>
         <select id="limit-select" (change)="changeLimit($event)" [value]="limit">
           <option value="5">5</option>
           <option value="10">10</option>
@@ -57,9 +57,9 @@
           <option value="50">50</option>
         </select>
       </div>
-      <button class="btn-pagination" (click)="changePage(currentPage - 1)" [disabled]="currentPage === 1">Anterior</button>
-      <span class="pagination-info">Página {{ currentPage }} de {{ totalPages }}</span>
-      <button class="btn-pagination" (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages">Siguiente</button>
+      <button class="btn-pagination" (click)="changePage(currentPage - 1)" [disabled]="currentPage === 1">{{ 'partner.rooms.previous' | transloco }}</button>
+      <span class="pagination-info">{{ 'partner.rooms.page' | transloco: { current: currentPage, total: totalPages } }}</span>
+      <button class="btn-pagination" (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages">{{ 'partner.rooms.next' | transloco }}</button>
     </div>
   }
 </div>

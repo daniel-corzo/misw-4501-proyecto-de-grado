@@ -6,11 +6,12 @@ import { ApiService } from '../../../../core/services/api.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { HabitacionDetalle } from '../../../../core/services/hotel.service';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-room-form-modal',
   standalone: true,
-  imports: [CommonModule, ModalComponent, ReactiveFormsModule],
+  imports: [CommonModule, ModalComponent, ReactiveFormsModule, TranslocoPipe],
   templateUrl: './room-form-modal.component.html',
   styleUrl: './room-form-modal.component.scss'
 })
@@ -24,6 +25,7 @@ export class RoomFormModalComponent {
   private fb = inject(FormBuilder);
   private api = inject(ApiService);
   private toast = inject(ToastService);
+  private t = inject(TranslocoService);
   private readonly imageUrlPattern = /^(https?:\/\/.*\.(?:png|jpg|jpeg|gif|svg))$/i;
 
   constructor() {
@@ -39,15 +41,15 @@ export class RoomFormModalComponent {
   }
 
   get modalTitle(): string {
-    return this.isEditMode ? 'Modifica un hospedaje' : 'Agrega un hospedaje';
+    return this.isEditMode ? this.t.translate('partner.roomForm.editTitle') : this.t.translate('partner.roomForm.createTitle');
   }
 
   get submitLabel(): string {
     if (this.loading) {
-      return this.isEditMode ? 'Guardando cambios...' : 'Guardando...';
+      return this.isEditMode ? this.t.translate('partner.roomForm.savingEdit') : this.t.translate('partner.roomForm.saving');
     }
 
-    return this.isEditMode ? 'Guardar cambios' : 'Guardar hospedaje';
+    return this.isEditMode ? this.t.translate('partner.roomForm.saveEdit') : this.t.translate('partner.roomForm.save');
   }
 
   private buildForm(): FormGroup {
@@ -105,30 +107,30 @@ export class RoomFormModalComponent {
   get numeroError(): string | null {
     const ctrl = this.roomForm.get('numero');
     if (!ctrl?.invalid || !ctrl.touched) return null;
-    return 'El número es requerido';
+    return this.t.translate('partner.roomForm.errors.numberRequired');
   }
 
   get capacidadError(): string | null {
     const ctrl = this.roomForm.get('capacidad');
     if (!ctrl?.invalid || !ctrl.touched) return null;
-    if (ctrl.errors?.['required']) return 'La capacidad es requerida';
-    if (ctrl.errors?.['min']) return 'La capacidad debe ser mayor a 0';
+    if (ctrl.errors?.['required']) return this.t.translate('partner.roomForm.errors.capacityRequired');
+    if (ctrl.errors?.['min']) return this.t.translate('partner.roomForm.errors.capacityMin');
     return null;
   }
 
   get impuestosError(): string | null {
     const ctrl = this.roomForm.get('impuestos');
     if (!ctrl?.invalid || !ctrl.touched) return null;
-    if (ctrl.errors?.['required']) return 'Los impuestos son requeridos';
-    if (ctrl.errors?.['min']) return 'Los impuestos no pueden ser negativos';
+    if (ctrl.errors?.['required']) return this.t.translate('partner.roomForm.errors.taxesRequired');
+    if (ctrl.errors?.['min']) return this.t.translate('partner.roomForm.errors.taxesNegative');
     return null;
   }
 
   get precioError(): string | null {
     const ctrl = this.roomForm.get('precio');
     if (!ctrl?.invalid || !ctrl.touched) return null;
-    if (ctrl.errors?.['required']) return 'El precio es requerido';
-    if (ctrl.errors?.['min']) return 'El precio no puede ser negativo';
+    if (ctrl.errors?.['required']) return this.t.translate('partner.roomForm.errors.priceRequired');
+    if (ctrl.errors?.['min']) return this.t.translate('partner.roomForm.errors.priceNegative');
     return null;
   }
 
@@ -136,8 +138,8 @@ export class RoomFormModalComponent {
     const array = this.roomForm.get('imagenes') as FormArray;
     if (array.invalid && array.touched) {
       for (const ctrl of array.controls) {
-        if (ctrl.errors?.['required'] && ctrl.touched) return 'Al menos una imagen es requerida';
-        if (ctrl.errors?.['pattern'] && ctrl.touched) return 'Ingresa URLs válidas para las imágenes';
+        if (ctrl.errors?.['required'] && ctrl.touched) return this.t.translate('partner.roomForm.errors.imageRequired');
+        if (ctrl.errors?.['pattern'] && ctrl.touched) return this.t.translate('partner.roomForm.errors.imageInvalid');
       }
     }
     return null;
@@ -185,8 +187,8 @@ export class RoomFormModalComponent {
       next: () => {
         this.toast.success(
           this.isEditMode
-            ? 'Hospedaje actualizado exitosamente'
-            : 'Hospedaje guardado exitosamente',
+            ? this.t.translate('partner.roomForm.successEdit')
+            : this.t.translate('partner.roomForm.successCreate'),
         );
         this.loading = false;
         this.closeModal.emit();
@@ -198,8 +200,8 @@ export class RoomFormModalComponent {
         } else {
           this.toast.danger(
             this.isEditMode
-              ? 'Error al actualizar el hospedaje. Por favor, intenta de nuevo.'
-              : 'Error al guardar el hospedaje. Por favor, intenta de nuevo.',
+              ? this.t.translate('partner.roomForm.errorEdit')
+              : this.t.translate('partner.roomForm.errorCreate'),
           );
         }
         this.loading = false;

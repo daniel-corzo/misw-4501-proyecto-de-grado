@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HotelService, HotelListItem, HotelListParams } from '../../../core/services/hotel.service';
 import { PLACEHOLDER_IMAGE } from '../../../shared/constants/images';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 const LIMIT = 10;
 
@@ -42,7 +43,7 @@ const AMENIDAD_LABELS: Record<string, string> = Object.fromEntries(
 @Component({
   selector: 'app-hotels-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, TranslocoPipe],
   templateUrl: './hotels-list.component.html',
   styleUrl: './hotels-list.component.scss',
 })
@@ -51,6 +52,7 @@ export class HotelsListComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly t = inject(TranslocoService);
 
   readonly limit = LIMIT;
   readonly popularAmenities = POPULAR_AMENITIES;
@@ -199,7 +201,7 @@ export class HotelsListComponent implements OnInit, OnDestroy {
         this.loading = false;
       },
       error: () => {
-        this.error = 'No se pudo cargar la lista de hoteles. Intente de nuevo más tarde.';
+        this.error = this.t.translate('hotels.loadError');
         this.loading = false;
       },
     });
