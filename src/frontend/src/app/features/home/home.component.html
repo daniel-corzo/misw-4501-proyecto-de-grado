@@ -12,12 +12,12 @@
       <div class="search-bar__divider"></div>
       <div class="search-bar__field">
         <label class="search-bar__label">Check-in</label>
-        <input class="search-bar__input" type="date" [(ngModel)]="checkIn" />
+        <input class="search-bar__input" type="date" [(ngModel)]="checkIn" [min]="today" (change)="onDateChange()" />
       </div>
       <div class="search-bar__divider"></div>
       <div class="search-bar__field">
         <label class="search-bar__label">Check-out</label>
-        <input class="search-bar__input" type="date" [(ngModel)]="checkOut" />
+        <input class="search-bar__input" type="date" [(ngModel)]="checkOut" [min]="checkIn || today" (change)="onDateChange()" />
       </div>
       <div class="search-bar__divider"></div>
       <div class="search-bar__field">
