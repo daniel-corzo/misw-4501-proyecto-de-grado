@@ -15,7 +15,7 @@ struct MainView: View {
 
     var body: some View {
         NavigationStack(path: Bindable(router).path.animation()) {
-            TabView {
+            TabView(selection: Bindable(router).selectedTab) {
                 ListHotelView()
                     .tabItem {
                         Label(
