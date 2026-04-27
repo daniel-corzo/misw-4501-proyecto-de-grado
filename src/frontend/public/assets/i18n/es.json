@@ -311,7 +311,6 @@
     "statusCompleted": "Completada",
     "notFound": "No encontramos la reserva solicitada.",
     "loadError": "No se pudo cargar el detalle de la reserva. Intenta de nuevo.",
-    "confirmCancelPrompt": "¿Seguro que deseas cancelar esta reserva?",
     "cancelSuccess": "Reserva cancelada correctamente",
     "cancelError": "No se pudo cancelar la reserva"
   },
