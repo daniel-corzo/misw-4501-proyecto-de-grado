@@ -33,6 +33,15 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'bookings/:id/edit',
+        canActivate: [authGuard],
+        data: { reservationFormMode: 'edit' },
+        loadComponent: () =>
+          import('./features/bookings/create-reservation/create-reservation.component').then(
+            (m) => m.CreateReservationComponent
+          ),
+      },
+      {
         path: 'bookings/:id',
         canActivate: [authGuard],
         loadComponent: () =>
@@ -70,6 +79,15 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/hotels/hotels-list/hotels-list.component').then(
             (m) => m.HotelsListComponent
+          ),
+      },
+      {
+        path: 'hotels/:id/reserve',
+        canActivate: [authGuard],
+        data: { reservationFormMode: 'create' },
+        loadComponent: () =>
+          import('./features/bookings/create-reservation/create-reservation.component').then(
+            (m) => m.CreateReservationComponent
           ),
       },
       {
