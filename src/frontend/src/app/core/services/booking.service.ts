@@ -26,6 +26,46 @@ export interface BookingListResponse {
   reservas: BookingResponse[];
 }
 
+export interface BookingDetailHotel {
+  id: string | null;
+  nombre: string;
+  direccion: string | null;
+  ciudad: string | null;
+  pais: string | null;
+  estrellas: number | null;
+  ranking: number | null;
+  imagenes: string[];
+  contacto_celular: string | null;
+  contacto_email: string | null;
+  check_in: string | null;
+  check_out: string | null;
+}
+
+export interface BookingDetailRoom {
+  id: string;
+  nombre: string;
+  descripcion: string | null;
+  numero: string | null;
+  capacidad: number | null;
+  imagenes: string[];
+  monto: number | null;
+  impuestos: number | null;
+}
+
+export interface BookingDetailResponse {
+  id: string;
+  codigo_reserva: string;
+  estado: BookingStatus;
+  fecha_entrada: string;
+  fecha_salida: string;
+  num_huespedes: number;
+  pago_id: string | null;
+  created_at: string;
+  hotel: BookingDetailHotel;
+  habitacion: BookingDetailRoom;
+  amenidades_hotel: string[];
+}
+
 export interface CreateBookingRequest {
   habitacion_id: string;
   fecha_entrada: string;
@@ -50,5 +90,13 @@ export class BookingService {
 
   getBookingsByStatus(status: BookingFilter): Observable<BookingListResponse> {
     return this.api.get<BookingListResponse>('/reservas', { estado: status });
+  }
+
+  getBookingById(bookingId: string): Observable<BookingDetailResponse> {
+    return this.api.get<BookingDetailResponse>(`/reservas/${bookingId}`);
+  }
+
+  cancelReservation(bookingId: string): Observable<BookingResponse> {
+    return this.api.patch<BookingResponse>(`/reservas/${bookingId}/cancelar`, {});
   }
 }
