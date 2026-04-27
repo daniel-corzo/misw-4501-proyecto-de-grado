@@ -151,7 +151,7 @@
             <h2 class="summary-card__title">{{ 'createReservation.summary' | transloco }}</h2>
             <p class="summary-card__row">
               <span>{{ stayNights }} {{ (stayNights === 1 ? 'createReservation.night' : 'createReservation.nights') | transloco }}</span>
-              <span>${{ formatPrice(stayNights * selectedRoom.monto) }}</span>
+              <span>${{ formatPrice(roomSubtotal) }}</span>
             </p>
             <p class="summary-card__row">
               <span>{{ 'createReservation.taxes' | transloco }}</span>

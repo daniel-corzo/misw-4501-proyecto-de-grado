@@ -161,12 +161,11 @@ export class CreateReservationComponent implements OnInit {
   private applyCreateLoad(hotel: HotelDetalle): void {
     this.hotel = hotel;
     const q = this.route.snapshot.queryParamMap;
-    const inFromQuery = q.get('checkIn');
-    const outFromQuery = q.get('checkOut');
+    const { entrada, salida } = this.stayDatesFromCreateQuery(q);
     const guests = Number(q.get('huespedes') ?? '1') || 1;
 
-    this.fechaEntrada = inFromQuery ?? this.defaultDatePlusDays(1);
-    this.fechaSalida = outFromQuery ?? this.defaultDatePlusDays(2);
+    this.fechaEntrada = entrada;
+    this.fechaSalida = salida;
     this.clampNumHuespedesForRoom(null);
     this.numHuespedes = Math.min(Math.max(1, guests), this.maxGuestLimit(null));
 
@@ -215,6 +214,43 @@ export class CreateReservationComponent implements OnInit {
     return `${y}-${m}-${day}`;
   }
 
+  private readonly ymdPattern = /^\d{4}-\d{2}-\d{2}$/;
+
+  /** Validates `YYYY-MM-DD` shape and that the triplet is a real calendar date (UTC). */
+  private isValidYmd(s: string | null | undefined): boolean {
+    if (s == null || !this.ymdPattern.test(s)) {
+      return false;
+    }
+    const [y, mo, d] = s.split('-').map(Number);
+    if (![y, mo, d].every((n) => Number.isInteger(n))) {
+      return false;
+    }
+    const dt = new Date(Date.UTC(y, mo - 1, d));
+    return (
+      dt.getUTCFullYear() === y &&
+      dt.getUTCMonth() === mo - 1 &&
+      dt.getUTCDate() === d
+    );
+  }
+
+  /**
+   * Uses query `checkIn` / `checkOut` only when both match `YYYY-MM-DD`, represent real dates,
+   * and check-out is strictly after check-in. Otherwise uses default stay (tomorrow → day after).
+   */
+  private stayDatesFromCreateQuery(q: ParamMap): { entrada: string; salida: string } {
+    const defIn = this.defaultDatePlusDays(1);
+    const defOut = this.defaultDatePlusDays(2);
+    const inQ = q.get('checkIn');
+    const outQ = q.get('checkOut');
+    if (!this.isValidYmd(inQ) || !this.isValidYmd(outQ)) {
+      return { entrada: defIn, salida: defOut };
+    }
+    if (outQ! <= inQ!) {
+      return { entrada: defIn, salida: defOut };
+    }
+    return { entrada: inQ!, salida: outQ! };
+  }
+
   private clampNumHuespedesForRoom(room: HabitacionDetalle | null): void {
     const cap = this.maxGuestLimit(room);
     if (this.numHuespedes > cap) {
@@ -226,7 +262,7 @@ export class CreateReservationComponent implements OnInit {
   }
 
   private maxGuestLimit(room: HabitacionDetalle | null): number {
-    const c = room?.capacidad ?? 99;
+    const c = room?.capacidad ?? 1;
     return Math.max(1, c);
   }
 
@@ -240,8 +276,10 @@ export class CreateReservationComponent implements OnInit {
   }
 
   get minCheckOutYmd(): string {
-    if (!this.fechaEntrada) {
-      return this.toYmd(new Date());
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    if (!this.fechaEntrada || !this.isValidYmd(this.fechaEntrada)) {
+      return this.toYmd(tomorrow);
     }
     const [y, m, d] = this.fechaEntrada.split('-').map(Number);
     const t = new Date(y, m - 1, d);
