@@ -311,7 +311,6 @@
     "statusCompleted": "Completed",
     "notFound": "We could not find the requested reservation.",
     "loadError": "Could not load booking details. Please try again.",
-    "confirmCancelPrompt": "Are you sure you want to cancel this reservation?",
     "cancelSuccess": "Reservation cancelled successfully",
     "cancelError": "Could not cancel reservation"
   },
