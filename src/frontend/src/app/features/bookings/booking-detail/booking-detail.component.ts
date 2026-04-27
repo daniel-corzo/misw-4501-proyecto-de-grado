@@ -55,12 +55,26 @@ export class BookingDetailComponent implements OnInit {
       || this.placeholderImage;
   }
 
+  private getUtcDateOnlyTime(value: string): number {
+    const [year, month, day] = value.split('-').map(Number);
+
+    if (
+      !Number.isInteger(year)
+      || !Number.isInteger(month)
+      || !Number.isInteger(day)
+    ) {
+      return Number.NaN;
+    }
+
+    return Date.UTC(year, month - 1, day);
+  }
+
   get nights(): number {
     if (!this.booking) return 1;
-    const start = this.parseDateOnly(this.booking.fecha_entrada);
-    const end = this.parseDateOnly(this.booking.fecha_salida);
-    const diffMs = end.getTime() - start.getTime();
-    const days = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+    const startUtc = this.getUtcDateOnlyTime(this.booking.fecha_entrada);
+    const endUtc = this.getUtcDateOnlyTime(this.booking.fecha_salida);
+    const days = (endUtc - startUtc) / (1000 * 60 * 60 * 24);
     return Number.isFinite(days) && days > 0 ? days : 1;
   }
 
