@@ -20,7 +20,12 @@ locals {
     }
     reservas = {
       exclude_secrets   = ["jwt_private_key"]
-      extra_environment = []
+      extra_environment = [
+        {
+          name  = "BACKEND_API_URL"
+          value = "http://${data.terraform_remote_state.alb.outputs.load_balancer_dns}"
+        }
+      ]
     }
     notificaciones = {
       exclude_secrets   = ["jwt_private_key", "db_url"]
