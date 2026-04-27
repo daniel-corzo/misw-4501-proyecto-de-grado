@@ -1,16 +1,16 @@
-<app-modal title="Agrega un hospedaje" [wide]="true" (closed)="closeModal.emit()">
+<app-modal [title]="modalTitle" [wide]="true" (closed)="closeModal.emit()">
     <form class="room-form" [formGroup]="roomForm" (ngSubmit)="onSubmit()">
         <div class="form-row">
             <div class="form-group">
-                <label>Número</label>
-                <input type="text" formControlName="numero" placeholder="e.g. 1027" [class.input--error]="numeroError">
+                <label>{{ 'partner.roomForm.number' | transloco }}</label>
+                <input type="text" formControlName="numero" [placeholder]="'partner.roomForm.numberPlaceholder' | transloco" [class.input--error]="numeroError">
                 @if (numeroError) {
                 <span class="field-error">{{ numeroError }}</span>
                 }
             </div>
             <div class="form-group">
-                <label>Capacidad</label>
-                <input type="number" formControlName="capacidad" placeholder="e.g. 2" [class.input--error]="capacidadError">
+                <label>{{ 'partner.roomForm.capacity' | transloco }}</label>
+                <input type="number" formControlName="capacidad" [placeholder]="'partner.roomForm.capacityPlaceholder' | transloco" [class.input--error]="capacidadError">
                 @if (capacidadError) {
                 <span class="field-error">{{ capacidadError }}</span>
                 }
@@ -18,23 +18,23 @@
         </div>
 
         <div class="form-group">
-            <label>Descripción</label>
+            <label>{{ 'partner.roomForm.description' | transloco }}</label>
             <textarea
                 formControlName="descripcion"
-                placeholder="Escribe una descripción detallada de las comodidades y características de la habitación..."></textarea>
+                [placeholder]="'partner.roomForm.descriptionPlaceholder' | transloco"></textarea>
         </div>
 
         <div class="form-row">
             <div class="form-group">
-                <label>Impuestos</label>
-                <input type="number" formControlName="impuestos" placeholder="e.g. 10000" [class.input--error]="impuestosError">
+                <label>{{ 'partner.roomForm.taxes' | transloco }}</label>
+                <input type="number" formControlName="impuestos" [placeholder]="'partner.roomForm.taxesPlaceholder' | transloco" [class.input--error]="impuestosError">
                 @if (impuestosError) {
                 <span class="field-error">{{ impuestosError }}</span>
                 }
             </div>
             <div class="form-group">
-                <label>Precio</label>
-                <input type="number" formControlName="precio" placeholder="e.g. 1150000" [class.input--error]="precioError">
+                <label>{{ 'partner.roomForm.price' | transloco }}</label>
+                <input type="number" formControlName="precio" [placeholder]="'partner.roomForm.pricePlaceholder' | transloco" [class.input--error]="precioError">
                 @if (precioError) {
                 <span class="field-error">{{ precioError }}</span>
                 }
@@ -42,7 +42,7 @@
         </div>
 
         <div class="form-group" formArrayName="imagenes">
-            <label>Imágenes (URLs)</label>
+            <label>{{ 'partner.roomForm.images' | transloco }}</label>
             <div class="image-urls-container">
                 @for (imgCtrl of imagenesControls; track $index) {
                 <div class="input-wrapper">
@@ -51,7 +51,7 @@
                         <circle cx="8.5" cy="8.5" r="1.5"/>
                         <polyline points="21 15 16 10 5 21"/>
                     </svg>
-                    <input type="url" [formControlName]="$index" placeholder="ej. https://ejemplo.com/imagen.jpg" autocomplete="off"
+                    <input type="url" [formControlName]="$index" [placeholder]="'partner.roomForm.imagePlaceholder' | transloco" autocomplete="off"
                         (input)="onImageInput($index)" [class.input--error]="imgCtrl.invalid && imgCtrl.touched" />
                 </div>
                 }
@@ -62,10 +62,15 @@
         </div>
 
         <div class="form-actions">
-            <button type="button" class="btn-cancel" (click)="closeModal.emit()" [disabled]="loading">Cancelar</button>
-            <button type="submit" class="btn-save" [disabled]="loading">
-               {{ loading ? 'Guardando...' : 'Guardar hospedaje' }}
-            </button>
+            @if (isEditMode) {
+            <button type="button" class="btn-delete" (click)="onDeleteClick()" [disabled]="loading">{{ 'partner.roomForm.delete' | transloco }}</button>
+            }
+            <div class="form-actions__primary">
+                <button type="button" class="btn-cancel" (click)="closeModal.emit()" [disabled]="loading">{{ 'partner.roomForm.cancel' | transloco }}</button>
+                <button type="submit" class="btn-save" [disabled]="loading">
+                   {{ submitLabel }}
+                </button>
+            </div>
         </div>
     </form>
 </app-modal>

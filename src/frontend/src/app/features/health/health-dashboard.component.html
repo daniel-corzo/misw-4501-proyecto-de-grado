@@ -1,17 +1,17 @@
 <div class="dashboard">
   <header class="dashboard__header">
-    <h1>Estado de Microservicios</h1>
+    <h1>{{ 'health.title' | transloco }}</h1>
     <p class="dashboard__subtitle" *ngIf="lastChecked()">
-      Última verificación: {{ lastChecked() | date:'HH:mm:ss' }}
+      {{ 'health.lastCheck' | transloco: { time: (lastChecked() | date:'HH:mm:ss') } }}
     </p>
   </header>
 
   <div class="dashboard__summary">
     <span [class.all-healthy]="healthyCount === totalCount">
-      {{ healthyCount }} / {{ totalCount }} servicios operativos
+      {{ healthyCount }} / {{ totalCount }} {{ 'health.operational' | transloco }}
     </span>
     <button class="btn-refresh" (click)="verificar()" [disabled]="loading()">
-      {{ loading() ? 'Verificando...' : 'Verificar' }}
+      {{ loading() ? ('health.verifying' | transloco) : ('health.verify' | transloco) }}
     </button>
   </div>
 

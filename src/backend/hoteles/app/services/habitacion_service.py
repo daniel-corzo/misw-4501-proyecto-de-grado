@@ -11,6 +11,7 @@ from app.schemas.hotel import (
     HabitacionDetalleResponse,
     ListaHabitacionesResponse,
 )
+from travelhub_common.security import RoleEnum, User
 
 _HABITACION_NUMERO_UQ = "uq_habitacion_hotel_numero"
 
@@ -23,6 +24,37 @@ def _is_duplicate_habitacion_numero_error(exc: IntegrityError) -> bool:
         if _HABITACION_NUMERO_UQ in str(orig):
             return True
     return _HABITACION_NUMERO_UQ in str(exc)
+
+
+def _build_habitacion_response(habitacion: Habitacion) -> HabitacionDetalleResponse:
+    return HabitacionDetalleResponse(
+        id=habitacion.id,
+        hotel_id=habitacion.hotel_id,
+        capacidad=habitacion.capacidad,
+        numero=habitacion.numero,
+        descripcion=habitacion.descripcion,
+        imagenes=habitacion.imagenes or [],
+        monto=habitacion.monto,
+        impuestos=habitacion.impuestos,
+        disponible=habitacion.disponible,
+    )
+
+
+async def _check_duplicate_habitacion(
+    db: AsyncSession, hotel_id: uuid.UUID, numero: str, habitacion_id: uuid.UUID
+) -> None:
+    duplicate_result = await db.execute(
+        select(Habitacion.id).where(
+            Habitacion.hotel_id == hotel_id,
+            Habitacion.numero == numero,
+            Habitacion.id != habitacion_id,
+        )
+    )
+    if duplicate_result.scalar_one_or_none() is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Ya existe una habitación con ese número en este hotel",
+        )
 
 
 async def crear_habitacion_service(
@@ -59,16 +91,102 @@ async def crear_habitacion_service(
             ) from None
         raise
 
-    return HabitacionDetalleResponse(
-        id=habitacion.id,
-        capacidad=habitacion.capacidad,
-        numero=habitacion.numero,
-        descripcion=habitacion.descripcion,
-        imagenes=habitacion.imagenes or [],
-        monto=habitacion.monto,
-        impuestos=habitacion.impuestos,
-        disponible=habitacion.disponible,
+    return _build_habitacion_response(habitacion)
+
+
+async def actualizar_habitacion_service(
+    db: AsyncSession,
+    hotel: Hotel,
+    habitacion_id: uuid.UUID,
+    body: CrearHabitacionRequest,
+) -> HabitacionDetalleResponse:
+    if not hotel:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Hotel no encontrado"
+        )
+
+    result = await db.execute(
+        select(Habitacion).where(
+            Habitacion.id == habitacion_id,
+            Habitacion.hotel_id == hotel.id,
+        )
     )
+
+    habitacion = result.scalar_one_or_none()
+
+    if habitacion is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Habitación no encontrada",
+        )
+
+    await _check_duplicate_habitacion(db, hotel.id, body.numero, habitacion_id)
+
+    habitacion.capacidad = body.capacidad
+    habitacion.numero = body.numero
+    habitacion.descripcion = body.descripcion
+    habitacion.imagenes = body.imagenes
+    habitacion.monto = body.monto
+    habitacion.impuestos = body.impuestos
+    habitacion.disponible = body.disponible
+
+    try:
+        await db.commit()
+        await db.refresh(habitacion)
+    except IntegrityError as exc:
+        await db.rollback()
+        if _is_duplicate_habitacion_numero_error(exc):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Ya existe una habitación con ese número en este hotel",
+            ) from None
+        raise
+
+    return _build_habitacion_response(habitacion)
+
+
+async def obtener_habitacion_por_id_service(db: AsyncSession, habitacion_id: uuid.UUID) -> HabitacionDetalleResponse:
+    stmt = select(Habitacion).where(Habitacion.id == habitacion_id)
+    result = await db.execute(stmt)
+    habitacion = result.scalar_one_or_none()
+
+    if not habitacion:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Habitación no encontrada",
+        )
+
+    return _build_habitacion_response(habitacion)
+
+
+
+async def eliminar_habitacion_service(
+    db: AsyncSession,
+    habitacion_id: uuid.UUID,
+    current_user: User,
+) -> None:
+    result = await db.execute(select(Habitacion).where(Habitacion.id == habitacion_id))
+    habitacion = result.scalar_one_or_none()
+
+    if habitacion is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Habitación no encontrada.",
+        )
+
+    if current_user.role != RoleEnum.ADMIN:
+        hotel_result = await db.execute(
+            select(Hotel).where(Hotel.usuario_id == current_user.id)
+        )
+        hotel = hotel_result.scalar_one_or_none()
+        if hotel is None or habitacion.hotel_id != hotel.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No tienes permiso para eliminar esta habitación.",
+            )
+
+    await db.delete(habitacion)
+    await db.commit()
 
 
 async def listar_habitaciones_service(
@@ -97,16 +215,7 @@ async def listar_habitaciones_service(
     return ListaHabitacionesResponse(
         total=total,
         habitaciones=[
-            HabitacionDetalleResponse(
-                id=h.id,
-                capacidad=h.capacidad,
-                numero=h.numero,
-                descripcion=h.descripcion,
-                imagenes=h.imagenes or [],
-                monto=h.monto,
-                impuestos=h.impuestos,
-                disponible=h.disponible,
-            )
+            _build_habitacion_response(h)
             for h in habitaciones
         ]
     )

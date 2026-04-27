@@ -62,6 +62,7 @@ class HotelListItemResponse(BaseModel):
     ciudad: str
     pais: str
     estrellas: int
+    amenidades: List[str] = Field(default_factory=list)
     imagenes: List[str] = Field(default_factory=list)
     precio_minimo: int
     created_at: datetime
@@ -83,6 +84,7 @@ class PoliticaDetalleResponse(BaseModel):
 
 class HabitacionDetalleResponse(BaseModel):
     id: UUID
+    hotel_id: UUID
     capacidad: int
     numero: str
     descripcion: Optional[str] = None
@@ -95,6 +97,39 @@ class HabitacionDetalleResponse(BaseModel):
 class ListaHabitacionesResponse(BaseModel):
     total: int
     habitaciones: List[HabitacionDetalleResponse]
+
+
+class ListaPaisesResponse(BaseModel):
+    paises: List[str]
+
+
+class HabitacionResumenResponse(BaseModel):
+    id: UUID
+    nombre_habitacion: str
+    nombre_hotel: str
+    imagenes_hotel: List[str] = Field(default_factory=list)
+    hotel_id: Optional[UUID] = None
+    direccion_hotel: Optional[str] = None
+    ciudad_hotel: Optional[str] = None
+    pais_hotel: Optional[str] = None
+    estrellas_hotel: Optional[int] = None
+    ranking_hotel: Optional[float] = None
+    contacto_celular_hotel: Optional[str] = None
+    contacto_email_hotel: Optional[str] = None
+    check_in_hotel: Optional[time] = None
+    check_out_hotel: Optional[time] = None
+    amenidades_hotel: List[str] = Field(default_factory=list)
+    capacidad_habitacion: Optional[int] = None
+    numero_habitacion: Optional[str] = None
+    descripcion_habitacion: Optional[str] = None
+    imagenes_habitacion: List[str] = Field(default_factory=list)
+    monto_habitacion: Optional[int] = None
+    impuestos_habitacion: Optional[int] = None
+
+
+class ListaHabitacionesResumenResponse(BaseModel):
+    total: int
+    habitaciones: List[HabitacionResumenResponse]
 
 
 class HotelDetalleResponse(BaseModel):

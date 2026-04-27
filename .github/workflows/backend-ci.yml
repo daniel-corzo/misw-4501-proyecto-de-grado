@@ -90,7 +90,7 @@ jobs:
             --cov=$COV_SRC \
             --cov-report=xml:coverage.xml \
             --cov-report=term-missing \
-            --cov-fail-under=50 \
+            --cov-fail-under=80 \
             -v
 
       - name: Upload coverage report

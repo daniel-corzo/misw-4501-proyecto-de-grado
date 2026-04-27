@@ -9,5 +9,4 @@
 // https://developer.apple.com/documentation/xcode/adding-a-build-configuration-file-to-your-project
 
 // $() se resuelve a /
-//BASE_URL = http:$()/localhost:8080/api
-BASE_URL = https://da8n5gsw578s6.cloudfront.net/api
+BASE_URL = http:$()/localhost:8080/api

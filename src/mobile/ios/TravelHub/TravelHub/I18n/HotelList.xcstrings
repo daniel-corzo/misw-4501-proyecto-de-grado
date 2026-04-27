@@ -1,6 +1,23 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "bookNow" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Book Now"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reservar"
+          }
+        }
+      }
+    },
     "filter" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -8,6 +25,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Filter"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtrar"
+          }
+        }
+      }
+    },
+    "perNight" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/ night"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/ noche"
           }
         }
       }
@@ -20,6 +60,12 @@
             "state" : "translated",
             "value" : "Price ▼"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Precio ▼"
+          }
         }
       }
     },
@@ -30,6 +76,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rating ▼"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calificación ▼"
           }
         }
       }
@@ -42,6 +94,12 @@
             "state" : "translated",
             "value" : "Hotels"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoteles"
+          }
         }
       }
     },
@@ -53,6 +111,12 @@
             "state" : "translated",
             "value" : "Search by city or hotel"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar por ciudad u hotel"
+          }
         }
       }
     },
@@ -63,6 +127,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sort ▼"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ordenar ▼"
           }
         }
       }

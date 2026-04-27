@@ -26,6 +26,19 @@ extension ListHotelView {
                 toastManager.error(error.localizedDescription)
             }
         }
+        
+        @MainActor
+        func fetchHotelDetail(hotelId: UUID, toastManager: ToastManager) async -> Hotel? {
+            do {
+                return try await hotelService.getHotelDetail(id: hotelId).toHotel()
+            } catch is CancellationError {
+                return nil
+            } catch {
+                toastManager.error(error.localizedDescription)
+            }
+            
+            return nil
+        }
     }
 }
 private extension HotelListDTO {

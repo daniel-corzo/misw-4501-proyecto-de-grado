@@ -7,6 +7,7 @@ from app.main import app
 from app.database import get_db
 from unittest.mock import AsyncMock, patch
 from travelhub_common.security import RoleEnum, User, get_current_user
+from app.models.habitacion import Habitacion
 from app.models.hotel import Hotel
 
 class _ScalarResult:
@@ -16,16 +17,6 @@ class _ScalarResult:
     def scalar_one_or_none(self):
         return self._value
 
-
-class _DuplicateCheckResult:
-    def __init__(self, first_value):
-        self._first_value = first_value
-
-    def scalars(self):
-        return self
-
-    def first(self):
-        return self._first_value
 
 @pytest.fixture
 async def mock_db_session():
@@ -94,7 +85,7 @@ async def test_crear_habitacion_endpoint_authenticated(override_client, mock_db_
     mock_db_session.execute = AsyncMock(
         side_effect=[
             _ScalarResult(mock_hotel),
-            _DuplicateCheckResult(None),
+            _ScalarResult(None),
         ]
     )
 
@@ -103,6 +94,81 @@ async def test_crear_habitacion_endpoint_authenticated(override_client, mock_db_
     assert response.status_code == 201
     data = response.json()
     assert data["capacidad"] == 2
+
+
+@pytest.mark.asyncio
+async def test_actualizar_habitacion_endpoint(client: AsyncClient):
+    room_id = uuid.uuid4()
+    body = {
+        "capacidad": 3,
+        "numero": "202",
+        "descripcion": "Suite remodelada",
+        "monto": 200,
+        "impuestos": 20,
+    }
+
+    response = await client.put(f"/hoteles/habitaciones/{room_id}", json=body)
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_actualizar_habitacion_endpoint_authenticated(override_client, mock_db_session):
+    hotel_id = uuid.uuid4()
+    room_id = uuid.uuid4()
+    body = {
+        "capacidad": 3,
+        "numero": "202",
+        "descripcion": "Suite remodelada",
+        "monto": 200,
+        "impuestos": 20,
+        "imagenes": ["https://example.com/habitacion.jpg"],
+    }
+
+    mock_hotel = Hotel(
+        id=hotel_id,
+        nombre="Hotel Test",
+        direccion="Calle 1",
+        pais="CO",
+        departamento="Cundinamarca",
+        ciudad="Bogotá",
+        check_in=time(14, 0),
+        check_out=time(11, 0),
+        usuario_id=uuid.uuid4(),
+    )
+    existing_room = Habitacion(
+        id=room_id,
+        capacidad=2,
+        numero="101",
+        descripcion="Vista al mar",
+        monto=100,
+        impuestos=10,
+        disponible=False,
+        imagenes=[],
+        hotel_id=hotel_id,
+    )
+    mock_db_session.execute = AsyncMock(
+        side_effect=[
+            _ScalarResult(mock_hotel),
+            _ScalarResult(existing_room),
+            _ScalarResult(None),
+        ]
+    )
+
+    response = await override_client.put(
+        f"/hoteles/habitaciones/{room_id}",
+        json=body,
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == str(room_id)
+    assert data["capacidad"] == 3
+    assert data["numero"] == "202"
+    assert data["descripcion"] == "Suite remodelada"
+    assert data["monto"] == 200
+    assert data["impuestos"] == 20
+    assert data["imagenes"] == ["https://example.com/habitacion.jpg"]
+    assert data["disponible"] is True
 
 @pytest.mark.asyncio
 async def test_listar_habitaciones_endpoint_authenticated(override_client, mock_db_session):
@@ -116,6 +182,7 @@ async def test_listar_habitaciones_endpoint_authenticated(override_client, mock_
             habitaciones=[
                 HabitacionDetalleResponse(
                     id=uuid.uuid4(),
+                    hotel_id=hotel_id,
                     capacidad=2,
                     numero="101",
                     descripcion="Vista al mar",
@@ -135,3 +202,32 @@ async def test_listar_habitaciones_endpoint_authenticated(override_client, mock_
     assert data["total"] == 1
     assert len(data["habitaciones"]) == 1
     assert data["habitaciones"][0]["numero"] == "101"
+
+
+@pytest.mark.asyncio
+async def test_listar_habitaciones_resumen_endpoint_authenticated(override_client, mock_db_session):
+    from app.schemas.hotel import ListaHabitacionesResumenResponse, HabitacionResumenResponse
+
+    with patch("app.routers.hoteles.listar_habitaciones_resumen_por_ids_service", autospec=True) as mock_service:
+        mock_service.return_value = ListaHabitacionesResumenResponse(
+            total=1,
+            habitaciones=[
+                HabitacionResumenResponse(
+                    id=uuid.uuid4(),
+                    nombre_habitacion="Suite ejecutiva",
+                    nombre_hotel="Hotel Test",
+                    imagenes_hotel=["https://cdn.example.com/hotel-test-1.jpg"],
+                )
+            ],
+        )
+
+        response = await override_client.get(
+            "/hoteles/habitaciones/resumen?habitacion_ids=00000000-0000-4000-8000-000000000010"
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 1
+    assert data["habitaciones"][0]["nombre_habitacion"] == "Suite ejecutiva"
+    assert data["habitaciones"][0]["nombre_hotel"] == "Hotel Test"
+    assert data["habitaciones"][0]["imagenes_hotel"] == ["https://cdn.example.com/hotel-test-1.jpg"]

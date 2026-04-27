@@ -7,7 +7,7 @@ from travelhub_common.security import RoleEnum, get_current_user, User
 from app.config import get_settings
 from app.database import get_db
 from fastapi import Depends, HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,22 +18,17 @@ from app.schemas.hotel import (
     AmenidadHotel,
     CrearHotelRequest,
     HabitacionDetalleResponse,
+    HabitacionResumenResponse,
     HotelDetalleResponse,
     HotelListItemResponse,
+    ListaHabitacionesResumenResponse,
     ListaHotelesResponse,
+    ListaPaisesResponse,
     PoliticaDetalleResponse,
 )
 
 
-OrdenHoteles = Literal["precio_asc", "precio_desc", "rating_desc"]
-
-AMENIDADES_POPULARES_PERMITIDAS = {
-    AmenidadHotel.WIFI,
-    AmenidadHotel.POOL,
-    AmenidadHotel.PET_FRIENDLY,
-    AmenidadHotel.BREAKFAST_INCLUDED,
-    AmenidadHotel.PARKING,
-}
+OrdenHoteles = Literal["precio_asc", "precio_desc", "rating_desc", "nombre_asc", "nombre_desc"]
 
 
 async def listar_hoteles_service(
@@ -46,6 +41,8 @@ async def listar_hoteles_service(
     rango_50_1000: bool,
     estrellas: list[int] | None,
     amenidades_populares: list[AmenidadHotel] | None,
+    ciudad: str | None = None,
+    capacidad_min: int | None = None,
 ) -> ListaHotelesResponse:
     precio_por_hotel_subquery = (
         select(
@@ -84,17 +81,26 @@ async def listar_hoteles_service(
             base_query = base_query.where(Hotel.estrellas.in_(estrellas_limpias))
 
     if amenidades_populares:
-        amenidades_no_permitidas = [a.value for a in amenidades_populares if a not in AMENIDADES_POPULARES_PERMITIDAS]
-        if amenidades_no_permitidas:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=(
-                    "Solo se permiten amenidades populares en el filtro: "
-                    "WIFI, POOL, PET_FRIENDLY, BREAKFAST_INCLUDED, PARKING"
-                ),
-            )
         valores_amenidades = [amenidad.value for amenidad in amenidades_populares]
         base_query = base_query.where(Hotel.amenidades.contains(valores_amenidades))
+
+    if ciudad:
+        pattern = func.unaccent(f"%{ciudad}%")
+        base_query = base_query.where(
+            or_(
+                func.unaccent(Hotel.ciudad).ilike(pattern),
+                func.unaccent(Hotel.pais).ilike(pattern),
+            )
+        )
+
+    if capacidad_min is not None:
+        hoteles_con_capacidad = (
+            select(Habitacion.hotel_id)
+            .where(Habitacion.capacidad >= capacidad_min, Habitacion.disponible.is_(True))
+            .distinct()
+            .subquery()
+        )
+        base_query = base_query.where(Hotel.id.in_(select(hoteles_con_capacidad.c.hotel_id)))
 
     if effective_precio_min is not None:
         base_query = base_query.where(precio_por_hotel_subquery.c.precio_minimo >= effective_precio_min)
@@ -106,6 +112,10 @@ async def listar_hoteles_service(
         base_query = base_query.order_by(precio_por_hotel_subquery.c.precio_minimo.asc().nullslast())
     elif orden == "precio_desc":
         base_query = base_query.order_by(precio_por_hotel_subquery.c.precio_minimo.desc().nullslast())
+    elif orden == "nombre_asc":
+        base_query = base_query.order_by(Hotel.nombre.asc())
+    elif orden == "nombre_desc":
+        base_query = base_query.order_by(Hotel.nombre.desc())
     else:
         base_query = base_query.order_by(Hotel.ranking.desc(), Hotel.created_at.desc())
 
@@ -124,6 +134,7 @@ async def listar_hoteles_service(
                 ciudad=hotel.ciudad,
                 pais=hotel.pais,
                 estrellas=hotel.estrellas,
+                amenidades=hotel.amenidades or [],
                 imagenes=hotel.imagenes or [],
                 precio_minimo=int(precio_minimo),
                 created_at=hotel.created_at,
@@ -131,6 +142,13 @@ async def listar_hoteles_service(
             for hotel, precio_minimo in hoteles
         ],
     )
+
+
+async def listar_paises_service(db: AsyncSession) -> ListaPaisesResponse:
+    result = await db.execute(
+        select(Hotel.pais).distinct().order_by(Hotel.pais.asc())
+    )
+    return ListaPaisesResponse(paises=[row[0] for row in result.all()])
 
 
 async def obtener_hotel_service(db: AsyncSession, hotel_id):
@@ -185,6 +203,7 @@ async def obtener_hotel_service(db: AsyncSession, hotel_id):
         habitaciones=[
             HabitacionDetalleResponse(
                 id=habitacion.id,
+                hotel_id=hotel.id,
                 capacidad=habitacion.capacidad,
                 numero=habitacion.numero,
                 descripcion=habitacion.descripcion,
@@ -291,14 +310,86 @@ async def crear_hotel_service(db: AsyncSession, body: CrearHotelRequest):
     await db.commit()
     return await obtener_hotel_service(db=db, hotel_id=hotel.id)
 
+
+async def listar_habitaciones_resumen_por_ids_service(
+    db: AsyncSession,
+    habitacion_ids: list[uuid.UUID],
+) -> ListaHabitacionesResumenResponse:
+    if not habitacion_ids:
+        return ListaHabitacionesResumenResponse(total=0, habitaciones=[])
+
+    result = await db.execute(
+        select(
+            Habitacion.id,
+            Habitacion.numero,
+            Habitacion.descripcion,
+            Habitacion.capacidad,
+            Habitacion.imagenes.label("imagenes_habitacion"),
+            Habitacion.monto,
+            Habitacion.impuestos,
+            Habitacion.hotel_id,
+            Hotel.nombre.label("nombre_hotel"),
+            Hotel.imagenes.label("imagenes_hotel"),
+            Hotel.direccion.label("direccion_hotel"),
+            Hotel.ciudad.label("ciudad_hotel"),
+            Hotel.pais.label("pais_hotel"),
+            Hotel.estrellas.label("estrellas_hotel"),
+            Hotel.ranking.label("ranking_hotel"),
+            Hotel.contacto_celular.label("contacto_celular_hotel"),
+            Hotel.contacto_email.label("contacto_email_hotel"),
+            Hotel.check_in.label("check_in_hotel"),
+            Hotel.check_out.label("check_out_hotel"),
+            Hotel.amenidades.label("amenidades_hotel"),
+        )
+        .join(Hotel, Habitacion.hotel_id == Hotel.id)
+        .where(Habitacion.id.in_(habitacion_ids))
+    )
+
+    habitaciones = []
+    for row in result.all():
+        nombre_habitacion = row.descripcion or f"Habitacion {row.numero}"
+        amenidades_hotel = []
+        for amenidad in getattr(row, "amenidades_hotel", []) or []:
+            amenidades_hotel.append(amenidad.value if hasattr(amenidad, "value") else str(amenidad))
+
+        habitaciones.append(
+            HabitacionResumenResponse(
+                id=row.id,
+                nombre_habitacion=nombre_habitacion,
+                nombre_hotel=row.nombre_hotel,
+                imagenes_hotel=row.imagenes_hotel or [],
+                hotel_id=getattr(row, "hotel_id", None),
+                direccion_hotel=getattr(row, "direccion_hotel", None),
+                ciudad_hotel=getattr(row, "ciudad_hotel", None),
+                pais_hotel=getattr(row, "pais_hotel", None),
+                estrellas_hotel=getattr(row, "estrellas_hotel", None),
+                ranking_hotel=getattr(row, "ranking_hotel", None),
+                contacto_celular_hotel=getattr(row, "contacto_celular_hotel", None),
+                contacto_email_hotel=getattr(row, "contacto_email_hotel", None),
+                check_in_hotel=getattr(row, "check_in_hotel", None),
+                check_out_hotel=getattr(row, "check_out_hotel", None),
+                amenidades_hotel=amenidades_hotel,
+                capacidad_habitacion=getattr(row, "capacidad", None),
+                numero_habitacion=row.numero,
+                descripcion_habitacion=row.descripcion,
+                imagenes_habitacion=getattr(row, "imagenes_habitacion", []) or [],
+                monto_habitacion=getattr(row, "monto", None),
+                impuestos_habitacion=getattr(row, "impuestos", None),
+            )
+        )
+
+    return ListaHabitacionesResumenResponse(total=len(habitaciones), habitaciones=habitaciones)
+
 async def get_hotel_by_user(db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)) -> Hotel:
     result = await db.execute(select(Hotel).where(Hotel.usuario_id == user.id))
     hotel = result.scalar_one_or_none()
-    
+
     if hotel is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="El usuario no tiene un hotel asociado. Por favor contacte a soporte.",
         )
-    
+
     return hotel
+
+

@@ -1,4 +1,65 @@
-<div class="bookings-page">
-  <h1>Mis Reservas</h1>
-  <p>Aquí podrás ver y gestionar tus reservas de alojamiento.</p>
+<div class="bookings-page container">
+  <div class="header">
+    <h1>{{ 'bookings.title' | transloco }}</h1>
+    <p>{{ 'bookings.subtitle' | transloco }}</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab" [class.active]="activeTab === 'upcoming'" (click)="setTab('upcoming')">{{ 'bookings.upcoming' | transloco }}</button>
+    <button class="tab" [class.active]="activeTab === 'past'" (click)="setTab('past')">{{ 'bookings.past' | transloco }}</button>
+    <button class="tab" [class.active]="activeTab === 'cancelled'" (click)="setTab('cancelled')">{{ 'bookings.cancelled' | transloco }}</button>
+  </div>
+
+  <div class="bookings-list" *ngIf="!loading">
+    <div class="list-header">
+      <h2>
+        <ng-container *ngIf="activeTab === 'upcoming'">{{ 'bookings.upcoming' | transloco }}</ng-container>
+        <ng-container *ngIf="activeTab === 'past'">{{ 'bookings.past' | transloco }}</ng-container>
+        <ng-container *ngIf="activeTab === 'cancelled'">{{ 'bookings.cancelled' | transloco }}</ng-container>
+      </h2>
+      <span class="count-badge">{{ 'bookings.count' | transloco: { count: bookings.length } }}</span>
+    </div>
+
+    <div class="booking-card" *ngFor="let b of bookings">
+      <div class="image-wrapper">
+        <img [src]="b.image" [alt]="b.hotelName" (error)="onImageError($event)">
+      </div>
+      <div class="details">
+        <div class="booking-id">{{ 'bookings.reservationId' | transloco }} {{ b.id }}</div>
+        <div class="status"
+          [class.confirmed]="b.status === 'confirmada'"
+          [class.pending]="b.status === 'pendiente'"
+          [class.cancelled]="b.status === 'cancelada'">
+          <span class="dot"></span> {{ b.statusLabel }}
+        </div>
+        <h3>{{ b.hotelName }}</h3>
+        <div class="info-row">
+          <span><i class="calendar-icon"></i> {{ b.checkIn }} - {{ b.checkOut }} ({{ 'bookings.nights' | transloco: { count: b.nights } }})</span>
+          <span><i class="location-icon"></i> {{ b.location }}</span>
+          <span><i class="user-icon"></i> {{ 'bookings.adults' | transloco: { count: b.guests } }}</span>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" [routerLink]="['/bookings', b.id]" *ngIf="b.status !== 'cancelada'">
+            <i class="settings-icon"></i> {{ 'bookings.manage' | transloco }}
+          </button>
+          <button class="btn btn-primary" [routerLink]="['/bookings', b.id]" *ngIf="b.status === 'cancelada'">
+            <i class="info-icon"></i> {{ 'bookings.seeDetails' | transloco }}
+          </button>
+          <button class="btn btn-secondary" (click)="printVoucher(b)">
+            <i class="download-icon"></i> {{ 'bookings.voucher' | transloco }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="bookings.length === 0" class="no-bookings">
+      <p *ngIf="activeTab === 'upcoming'">{{ 'bookings.noUpcoming' | transloco }}</p>
+      <p *ngIf="activeTab === 'past'">{{ 'bookings.noPast' | transloco }}</p>
+      <p *ngIf="activeTab === 'cancelled'">{{ 'bookings.noCancelled' | transloco }}</p>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading-state">
+    <p>{{ 'bookings.loading' | transloco }}</p>
+  </div>
 </div>

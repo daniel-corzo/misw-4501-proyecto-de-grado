@@ -3,20 +3,30 @@ import { CommonModule } from '@angular/common';
 import { RoomFormModalComponent } from '../room-form-modal/room-form-modal.component';
 import { ApiService } from '../../../../core/services/api.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { HabitacionDetalle, HotelService } from '../../../../core/services/hotel.service';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+
+interface ListaHabitacionesResponse {
+  total: number;
+  habitaciones: HabitacionDetalle[];
+}
 
 @Component({
   selector: 'app-rooms-table',
   standalone: true,
-  imports: [CommonModule, RoomFormModalComponent],
+  imports: [CommonModule, RoomFormModalComponent, TranslocoPipe, ModalComponent],
   templateUrl: './rooms-table.component.html',
-  styleUrl: './rooms-table.component.scss'
+  styleUrl: './rooms-table.component.scss',
 })
 export class RoomsTableComponent implements OnInit {
   isFormModalOpen = false;
-  allRooms: any[] = [];
-  rooms: any[] = [];
+  selectedRoom: HabitacionDetalle | null = null;
+  rooms: HabitacionDetalle[] = [];
   loading = false;
-  
+  deleting = false;
+  confirmTarget: HabitacionDetalle | null = null;
+
   // Pagination variables
   totalItems = 0;
   limit = 10;
@@ -24,7 +34,9 @@ export class RoomsTableComponent implements OnInit {
   currentPage = 1;
 
   private api = inject(ApiService);
+  private hotelService = inject(HotelService);
   private toast = inject(ToastService);
+  private t = inject(TranslocoService);
 
   ngOnInit() {
     this.loadRooms();
@@ -32,7 +44,7 @@ export class RoomsTableComponent implements OnInit {
 
   loadRooms() {
     this.loading = true;
-    this.api.get<any>('/hoteles/habitaciones', { "limit": this.limit, "offset": this.offset }).subscribe({
+    this.api.get<ListaHabitacionesResponse | HabitacionDetalle[]>('/hoteles/habitaciones', { limit: this.limit, offset: this.offset }).subscribe({
       next: (data) => {
         if (Array.isArray(data)) {
           this.rooms = data;
@@ -44,8 +56,8 @@ export class RoomsTableComponent implements OnInit {
         this.loading = false;
       },
       error: (body) => {
-        const errorMsg = body?.error?.detail || 'Error desconocido';
-        this.toast.danger('Error al cargar los hospedajes. ' + errorMsg);
+        const errorMsg = body?.error?.detail || '';
+        this.toast.danger(this.t.translate('partner.rooms.loadError') + (errorMsg ? ' ' + errorMsg : ''));
         this.loading = false;
       }
     });
@@ -70,12 +82,53 @@ export class RoomsTableComponent implements OnInit {
   }
 
   openFormModal() {
+    this.selectedRoom = null;
+    this.isFormModalOpen = true;
+  }
+
+  openEditModal(room: HabitacionDetalle) {
+    this.selectedRoom = room;
     this.isFormModalOpen = true;
   }
 
   closeFormModal() {
     this.isFormModalOpen = false;
+    this.selectedRoom = null;
     this.loadRooms();
   }
-}
 
+  openConfirm(room: HabitacionDetalle) {
+    this.confirmTarget = room;
+  }
+
+  onDeleteRequestedFromModal(room: HabitacionDetalle) {
+    this.isFormModalOpen = false;
+    this.selectedRoom = null;
+    this.confirmTarget = room;
+  }
+
+  cancelConfirm() {
+    this.confirmTarget = null;
+  }
+
+  confirmDelete() {
+    const room = this.confirmTarget;
+    if (!room) return;
+
+    this.deleting = true;
+    this.hotelService.deleteRoom(room.id).subscribe({
+      next: () => {
+        this.toast.success(`Hospedaje "${room.numero}" eliminado exitosamente.`);
+        this.confirmTarget = null;
+        this.deleting = false;
+        this.loadRooms();
+      },
+      error: (err) => {
+        const detail = err?.error?.detail || 'No se pudo eliminar el hospedaje.';
+        this.toast.danger(detail);
+        this.confirmTarget = null;
+        this.deleting = false;
+      },
+    });
+  }
+}

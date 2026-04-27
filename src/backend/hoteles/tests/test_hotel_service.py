@@ -9,7 +9,9 @@ from fastapi import HTTPException
 from app.schemas.hotel import AmenidadHotel, CrearHotelRequest
 from app.services.hotel_service import (
     crear_hotel_service,
+    listar_habitaciones_resumen_por_ids_service,
     listar_hoteles_service,
+    listar_paises_service,
     obtener_hotel_service,
 )
 
@@ -34,6 +36,53 @@ class _RowsResult:
 
 
 @pytest.mark.anyio
+async def test_listar_habitaciones_resumen_por_ids_service_returns_mapped_values():
+    habitacion_id = uuid.uuid4()
+    db = AsyncMock()
+    db.execute = AsyncMock(
+        return_value=_RowsResult(
+            [
+                SimpleNamespace(
+                    id=habitacion_id,
+                    numero="301",
+                    descripcion="Suite ejecutiva",
+                    nombre_hotel="Hotel Prueba",
+                    imagenes_hotel=["https://cdn.example.com/hotel-prueba-1.jpg"],
+                )
+            ]
+        )
+    )
+
+    response = await listar_habitaciones_resumen_por_ids_service(
+        db=db,
+        habitacion_ids=[habitacion_id],
+    )
+
+    assert response.total == 1
+    assert len(response.habitaciones) == 1
+    assert response.habitaciones[0].id == habitacion_id
+    assert response.habitaciones[0].nombre_habitacion == "Suite ejecutiva"
+    assert response.habitaciones[0].nombre_hotel == "Hotel Prueba"
+    assert response.habitaciones[0].imagenes_hotel == ["https://cdn.example.com/hotel-prueba-1.jpg"]
+    db.execute.assert_awaited_once()
+
+
+@pytest.mark.anyio
+async def test_listar_habitaciones_resumen_por_ids_service_empty_ids_returns_empty_without_query():
+    db = AsyncMock()
+    db.execute = AsyncMock()
+
+    response = await listar_habitaciones_resumen_por_ids_service(
+        db=db,
+        habitacion_ids=[],
+    )
+
+    assert response.total == 0
+    assert response.habitaciones == []
+    db.execute.assert_not_awaited()
+
+
+@pytest.mark.anyio
 async def test_listar_hoteles_service_returns_filtered_result():
     hotel_id = uuid.uuid4()
     created_at = datetime.now(UTC)
@@ -43,6 +92,7 @@ async def test_listar_hoteles_service_returns_filtered_result():
         ciudad="Bogota",
         pais="Colombia",
         estrellas=4,
+        amenidades=[],
         imagenes=["img1.jpg", "img2.jpg"],
         created_at=created_at,
     )
@@ -101,26 +151,25 @@ async def test_listar_hoteles_service_raises_on_invalid_price_range():
 
 
 @pytest.mark.anyio
-async def test_listar_hoteles_service_raises_when_amenidad_no_es_popular():
+async def test_listar_hoteles_service_accepts_gym_and_returns_empty():
     db = AsyncMock()
-    db.execute = AsyncMock()
+    db.execute = AsyncMock(side_effect=[_ScalarResult(0), _RowsResult([])])
 
-    with pytest.raises(HTTPException) as exc:
-        await listar_hoteles_service(
-            db=db,
-            limit=10,
-            offset=0,
-            orden="rating_desc",
-            precio_min=None,
-            precio_max=None,
-            rango_50_1000=False,
-            estrellas=None,
-            amenidades_populares=[AmenidadHotel.GYM],
-        )
+    result = await listar_hoteles_service(
+        db=db,
+        limit=10,
+        offset=0,
+        orden="rating_desc",
+        precio_min=None,
+        precio_max=None,
+        rango_50_1000=False,
+        estrellas=None,
+        amenidades_populares=[AmenidadHotel.GYM],
+    )
 
-    assert exc.value.status_code == 400
-    assert "amenidades populares" in exc.value.detail
-    db.execute.assert_not_awaited()
+    assert result.total == 0
+    assert result.hoteles == []
+    assert db.execute.await_count == 2
 
 
 @pytest.mark.anyio
@@ -312,6 +361,168 @@ async def test_obtener_hotel_service_maps_all_fields():
 
 
 @pytest.mark.anyio
+async def test_listar_hoteles_service_filters_by_ciudad():
+    hotel_id = uuid.uuid4()
+    created_at = datetime.now(UTC)
+    hotel = SimpleNamespace(
+        id=hotel_id,
+        nombre="Hotel Bogota",
+        ciudad="Bogota",
+        pais="Colombia",
+        estrellas=4,
+        amenidades=[],
+        imagenes=[],
+        created_at=created_at,
+    )
+
+    db = AsyncMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _ScalarResult(1),
+            _RowsResult([(hotel, 200)]),
+        ]
+    )
+
+    response = await listar_hoteles_service(
+        db=db,
+        limit=20,
+        offset=0,
+        orden="rating_desc",
+        precio_min=None,
+        precio_max=None,
+        rango_50_1000=False,
+        estrellas=None,
+        amenidades_populares=None,
+        ciudad="bogo",
+    )
+
+    assert response.total == 1
+    assert response.hoteles[0].ciudad == "Bogota"
+    assert db.execute.await_count == 2
+
+
+@pytest.mark.anyio
+async def test_listar_hoteles_service_filters_by_capacidad_min():
+    hotel_id = uuid.uuid4()
+    created_at = datetime.now(UTC)
+    hotel = SimpleNamespace(
+        id=hotel_id,
+        nombre="Hotel Familiar",
+        ciudad="Medellin",
+        pais="Colombia",
+        estrellas=3,
+        amenidades=[],
+        imagenes=[],
+        created_at=created_at,
+    )
+
+    db = AsyncMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _ScalarResult(1),
+            _RowsResult([(hotel, 450)]),
+        ]
+    )
+
+    response = await listar_hoteles_service(
+        db=db,
+        limit=20,
+        offset=0,
+        orden="precio_asc",
+        precio_min=None,
+        precio_max=None,
+        rango_50_1000=False,
+        estrellas=None,
+        amenidades_populares=None,
+        capacidad_min=4,
+    )
+
+    assert response.total == 1
+    assert response.hoteles[0].nombre == "Hotel Familiar"
+    assert db.execute.await_count == 2
+
+
+@pytest.mark.anyio
+async def test_listar_hoteles_service_nombre_asc():
+    hotel_id = uuid.uuid4()
+    created_at = datetime.now(UTC)
+    hotel = SimpleNamespace(
+        id=hotel_id,
+        nombre="Andino Royal",
+        ciudad="Bogota",
+        pais="Colombia",
+        estrellas=5,
+        amenidades=[],
+        imagenes=[],
+        created_at=created_at,
+    )
+
+    db = AsyncMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _ScalarResult(1),
+            _RowsResult([(hotel, 300)]),
+        ]
+    )
+
+    response = await listar_hoteles_service(
+        db=db,
+        limit=20,
+        offset=0,
+        orden="nombre_asc",
+        precio_min=None,
+        precio_max=None,
+        rango_50_1000=False,
+        estrellas=None,
+        amenidades_populares=None,
+    )
+
+    assert response.total == 1
+    assert response.hoteles[0].nombre == "Andino Royal"
+    assert db.execute.await_count == 2
+
+
+@pytest.mark.anyio
+async def test_listar_hoteles_service_nombre_desc():
+    hotel_id = uuid.uuid4()
+    created_at = datetime.now(UTC)
+    hotel = SimpleNamespace(
+        id=hotel_id,
+        nombre="Zona Rosa Hotel",
+        ciudad="Bogota",
+        pais="Colombia",
+        estrellas=4,
+        amenidades=[],
+        imagenes=[],
+        created_at=created_at,
+    )
+
+    db = AsyncMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _ScalarResult(1),
+            _RowsResult([(hotel, 250)]),
+        ]
+    )
+
+    response = await listar_hoteles_service(
+        db=db,
+        limit=20,
+        offset=0,
+        orden="nombre_desc",
+        precio_min=None,
+        precio_max=None,
+        rango_50_1000=False,
+        estrellas=None,
+        amenidades_populares=None,
+    )
+
+    assert response.total == 1
+    assert response.hoteles[0].nombre == "Zona Rosa Hotel"
+    assert db.execute.await_count == 2
+
+
+@pytest.mark.anyio
 @patch("app.services.hotel_service.httpx.AsyncClient")
 async def test_crear_hotel_service_returns_created_hotel_response(mock_async_client):
     mock_response = MagicMock()
@@ -498,3 +709,16 @@ async def test_crear_hotel_service_raises_500_on_unknown_user_creation_error(moc
 
     assert exc.value.status_code == 500
     assert "Error al crear el usuario para el hotel" in exc.value.detail
+
+
+@pytest.mark.anyio
+async def test_listar_paises_service():
+    db = AsyncMock()
+    db.execute = AsyncMock(
+        return_value=_RowsResult([("Argentina",), ("Brasil",), ("Colombia",)])
+    )
+
+    response = await listar_paises_service(db=db)
+
+    assert response.paises == ["Argentina", "Brasil", "Colombia"]
+    assert db.execute.await_count == 1

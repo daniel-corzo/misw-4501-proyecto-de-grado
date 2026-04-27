@@ -9,6 +9,12 @@
             "state" : "translated",
             "value" : "Log in to your TravelHub account to continue booking your next stay"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inicia sesión en tu cuenta de TravelHub para continuar reservando tu próxima estancia."
+          }
         }
       }
     },
@@ -19,6 +25,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Don't have an account?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿No tienes cuenta?"
           }
         }
       }
@@ -31,6 +43,12 @@
             "state" : "translated",
             "value" : "Please enter your email and password"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingresa tu correo y contraseña"
+          }
         }
       }
     },
@@ -41,6 +59,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enter your email"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingresa tu correo"
           }
         }
       }
@@ -53,6 +77,12 @@
             "state" : "translated",
             "value" : "Forgot password?"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Olvidaste tu contraseña?"
+          }
         }
       }
     },
@@ -63,6 +93,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Log in"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar sesión"
           }
         }
       }
@@ -75,6 +111,12 @@
             "state" : "translated",
             "value" : "Enter your password"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingresa tu contraseña"
+          }
         }
       }
     },
@@ -86,6 +128,12 @@
             "state" : "translated",
             "value" : "Sign up"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registrarse"
+          }
         }
       }
     },
@@ -96,6 +144,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Welcome Back"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bienvenido de vuelta"
           }
         }
       }

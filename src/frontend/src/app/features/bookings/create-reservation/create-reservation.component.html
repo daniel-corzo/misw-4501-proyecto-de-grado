@@ -1,0 +1,177 @@
+@if (loading) {
+  <div class="create-res create-res--loading">
+    <div class="skeleton skeleton--title"></div>
+    <div class="skeleton skeleton--body"></div>
+  </div>
+}
+
+@if (!loading && error) {
+  <div class="create-res__error">
+    <p class="create-res__error-msg">{{ error }}</p>
+    <a class="create-res__error-link" routerLink="/bookings">{{ 'createReservation.backToBookings' | transloco }}</a>
+  </div>
+}
+
+@if (!loading && !error && hotel) {
+  <div class="create-res">
+    <nav class="breadcrumb" aria-label="breadcrumb">
+      <a class="breadcrumb__item" routerLink="/">{{ 'createReservation.breadcrumbHome' | transloco }}</a>
+      <span class="breadcrumb__sep">/</span>
+      @if (mode === 'create') {
+        <a class="breadcrumb__item" [routerLink]="['/hotels', hotel.id]">{{ hotel.nombre }}</a>
+        <span class="breadcrumb__sep">/</span>
+        <span class="breadcrumb__item breadcrumb__item--active">{{ 'createReservation.breadcrumbCreate' | transloco }}</span>
+      } @else {
+        <a class="breadcrumb__item" routerLink="/bookings">{{ 'createReservation.breadcrumbBookings' | transloco }}</a>
+        <span class="breadcrumb__sep">/</span>
+        <a class="breadcrumb__item" [routerLink]="['/bookings', reservaId!]">{{ 'createReservation.breadcrumbEdit' | transloco }}</a>
+        <span class="breadcrumb__sep">/</span>
+        <span class="breadcrumb__item breadcrumb__item--active">{{ 'createReservation.breadcrumbEditAction' | transloco }}</span>
+      }
+    </nav>
+
+    <header class="create-res__header">
+      <h1 class="create-res__title">
+        {{ (mode === 'create' ? 'createReservation.titleCreate' : 'createReservation.titleEdit') | transloco }}
+      </h1>
+      <p class="create-res__subtitle">{{ hotel.nombre }} · {{ hotel.ciudad }}</p>
+    </header>
+
+    <div class="create-res__layout">
+      <div class="create-res__main">
+        <section class="create-res__section">
+          <h2 class="create-res__h2">{{ 'createReservation.dates' | transloco }}</h2>
+          <div class="create-res__dates">
+            <label class="create-res__field">
+              <span class="create-res__label">{{ 'createReservation.checkIn' | transloco }}</span>
+              <input
+                class="create-res__input"
+                type="date"
+                name="checkIn"
+                [(ngModel)]="fechaEntrada"
+                [min]="minCheckInYmd"
+                (ngModelChange)="onCheckInChange()"
+              />
+            </label>
+            <label class="create-res__field">
+              <span class="create-res__label">{{ 'createReservation.checkOut' | transloco }}</span>
+              <input
+                class="create-res__input"
+                type="date"
+                name="checkOut"
+                [(ngModel)]="fechaSalida"
+                [min]="minCheckOutYmd"
+              />
+            </label>
+            <label class="create-res__field">
+              <span class="create-res__label">{{ 'createReservation.guests' | transloco }}</span>
+              <select
+                class="create-res__input"
+                name="huespedes"
+                [ngModel]="numHuespedes"
+                (ngModelChange)="onNumHuespedesSelect($any($event))"
+              >
+                @for (g of guestOptions; track g) {
+                  <option [ngValue]="g">{{ g }}</option>
+                }
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section class="create-res__section">
+          <h2 class="create-res__h2">{{ 'createReservation.selectRoom' | transloco }}</h2>
+          @if (hotel.habitaciones.length === 0) {
+            <p class="create-res__empty">{{ 'createReservation.noRooms' | transloco }}</p>
+          }
+          @for (room of hotel.habitaciones; track room.id) {
+            <div
+              class="room-row"
+              [class.room-row--selected]="selectedRoom?.id === room.id"
+              [class.room-row--unavailable]="!room.disponible"
+              [class.room-row--disabled]="!isRoomSelectable(room)"
+            >
+              <div class="room-row__img-wrap">
+                @if (room.imagenes.length > 0) {
+                  <img
+                    class="room-row__img"
+                    [src]="room.imagenes[0]"
+                    [alt]="room.descripcion || room.numero"
+                    loading="lazy"
+                    (error)="onImageError($event)"
+                  />
+                } @else {
+                  <div class="room-row__img room-row__img--ph"></div>
+                }
+              </div>
+              <div class="room-row__text">
+                <h3 class="room-row__name">
+                  @if (room.descripcion) {
+                    {{ room.descripcion }}
+                  } @else {
+                    {{ 'createReservation.roomNumber' | transloco: { number: room.numero } }}
+                  }
+                </h3>
+                <p class="room-row__cap">
+                  {{ room.capacidad }}
+                  {{ room.capacidad === 1 ? ('createReservation.guest' | transloco) : ('createReservation.guestsPlural' | transloco) }}
+                </p>
+                @if (!room.disponible) {
+                  <p class="room-row__unavailable">
+                    @if (mode === 'edit' && room.id === initial?.habitacionId) {
+                      {{ 'createReservation.currentRoom' | transloco }}
+                    } @else {
+                      {{ 'createReservation.unavailable' | transloco }}
+                    }
+                  </p>
+                }
+              </div>
+              <p class="room-row__price">
+                <span>${{ formatPrice(room.monto) }}</span>
+                <span class="room-row__per-night">{{ 'createReservation.perNight' | transloco }}</span>
+              </p>
+              @if (isRoomSelectable(room)) {
+                <button
+                  type="button"
+                  class="room-row__btn"
+                  [class.room-row__btn--on]="selectedRoom?.id === room.id"
+                  (click)="selectRoom(room)"
+                >
+                  {{ selectedRoom?.id === room.id ? ('createReservation.selected' | transloco) : ('createReservation.select' | transloco) }}
+                </button>
+              }
+            </div>
+          }
+        </section>
+      </div>
+
+      @if (selectedRoom) {
+        <aside class="create-res__aside">
+          <div class="summary-card">
+            <h2 class="summary-card__title">{{ 'createReservation.summary' | transloco }}</h2>
+            <p class="summary-card__row">
+              <span>{{ stayNights }} {{ (stayNights === 1 ? 'createReservation.night' : 'createReservation.nights') | transloco }}</span>
+              <span>${{ formatPrice(roomSubtotal) }}</span>
+            </p>
+            <p class="summary-card__row">
+              <span>{{ 'createReservation.taxes' | transloco }}</span>
+              <span>${{ formatPrice(roomTaxes) }}</span>
+            </p>
+            <p class="summary-card__row summary-card__row--total">
+              <span>{{ 'createReservation.total' | transloco }}</span>
+              <span>${{ formatPrice(totalPrice) }}</span>
+            </p>
+            <button
+              type="button"
+              class="summary-card__cta"
+              [disabled]="!puedeEnviar"
+              (click)="onSubmit()"
+            >
+              {{ ctaKey | transloco }}
+            </button>
+          </div>
+        </aside>
+      }
+    </div>
+  </div>
+}

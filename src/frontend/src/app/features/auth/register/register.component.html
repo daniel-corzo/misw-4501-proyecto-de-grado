@@ -6,7 +6,7 @@
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
       <circle cx="12" cy="7" r="4" />
     </svg>
-    Viajero
+    {{ 'auth.roleTraveler' | transloco }}
   </button>
   <button type="button" class="role-tab" [class.role-tab--active]="activeRole === 'partner'"
     (click)="activeRole = 'partner'">
@@ -15,13 +15,12 @@
       <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
       <polyline points="9 22 9 12 15 12 15 22" />
     </svg>
-    Socio
+    {{ 'auth.rolePartner' | transloco }}
   </button>
 </div>
 <div class="reg-header">
-  <h1 class="reg-title">{{ activeRole === 'traveler' ? 'Crear cuenta de Viajero' : 'Crear cuenta de Socio' }}</h1>
-  <p class="reg-subtitle">{{ activeRole === 'traveler' ? 'Únete a nuestra red de hospedajes' : 'Únete a nuestra red de
-    hospedajes. Completa el perfil de tu hotel para comenzar!' }}</p>
+  <h1 class="reg-title">{{ activeRole === 'traveler' ? ('auth.register.titleTraveler' | transloco) : ('auth.register.titlePartner' | transloco) }}</h1>
+  <p class="reg-subtitle">{{ activeRole === 'traveler' ? ('auth.register.subtitleTraveler' | transloco) : ('auth.register.subtitlePartner' | transloco) }}</p>
 </div>
 
 <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
@@ -34,19 +33,19 @@
         <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
         <path d="M7 11V7a5 5 0 0 1 10 0v4" />
       </svg>
-      <span>1. Credenciales de acceso</span>
+      <span>{{ 'auth.register.section1' | transloco }}</span>
     </div>
 
     <div class="reg-row">
       <div class="reg-field">
-        <label for="email">Correo electrónico <span class="req">*</span></label>
+        <label for="email">{{ 'auth.register.email' | transloco }} <span class="req">*</span></label>
         <div class="input-wrapper">
           <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect width="20" height="16" x="2" y="4" rx="2" />
             <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
           </svg>
-          <input id="email" type="email" formControlName="email" placeholder="admin&#64;hotelname.com"
+          <input id="email" type="email" formControlName="email" [placeholder]="'auth.register.emailPlaceholder' | transloco"
             autocomplete="email" [class.input--error]="emailError" />
         </div>
         @if (emailError) {
@@ -55,7 +54,7 @@
       </div>
 
       <div class="reg-field">
-        <label for="password">Contraseña <span class="req">*</span></label>
+        <label for="password">{{ 'auth.register.password' | transloco }} <span class="req">*</span></label>
         <div class="input-wrapper">
           <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -65,7 +64,7 @@
           <input id="password" [type]="showPassword ? 'text' : 'password'" formControlName="password"
             placeholder="••••••••" autocomplete="new-password" [class.input--error]="passwordError" />
           <button type="button" class="input-toggle" (click)="showPassword = !showPassword"
-            [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+            [attr.aria-label]="showPassword ? ('auth.register.showPassword' | transloco) : ('auth.register.hidePassword' | transloco)"
             [attr.aria-pressed]="showPassword">
             @if (showPassword) {
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
@@ -99,14 +98,14 @@
         <path d="M12 16v-4" />
         <path d="M12 8h.01" />
       </svg>
-      <span>2. Información básica</span>
+      <span>{{ 'auth.register.section2' | transloco }}</span>
     </div>
 
     @if (activeRole === 'traveler') {
     <div class="reg-row">
       <div class="reg-field">
-        <label for="nombre">Nombre completo</label>
-        <input id="nombre" type="text" formControlName="nombre" placeholder="ej. Pedrito Pérez" autocomplete="name"
+        <label for="nombre">{{ 'auth.register.fullName' | transloco }}</label>
+        <input id="nombre" type="text" formControlName="nombre" [placeholder]="'auth.register.fullNamePlaceholder' | transloco" autocomplete="name"
           [class.input--error]="nombreError" />
         @if (nombreError) {
         <span class="field-error">{{ nombreError }}</span>
@@ -114,8 +113,8 @@
       </div>
 
       <div class="reg-field">
-        <label for="telefono">Teléfono <span class="req">*</span></label>
-        <input id="telefono" type="tel" formControlName="telefono" placeholder="ej. 3012354341" autocomplete="tel"
+        <label for="telefono">{{ 'auth.register.phone' | transloco }} <span class="req">*</span></label>
+        <input id="telefono" type="tel" formControlName="telefono" [placeholder]="'auth.register.phonePlaceholder' | transloco" autocomplete="tel"
           [class.input--error]="telefonoError" />
         @if (telefonoError) {
         <span class="field-error">{{ telefonoError }}</span>
@@ -125,8 +124,8 @@
     } @else {
     <div class="reg-row">
       <div class="reg-field">
-        <label for="hotelName">Nombre del hotel <span class="req">*</span></label>
-        <input id="hotelName" type="text" formControlName="nombre" placeholder="ej. Hotel Paraíso"
+        <label for="hotelName">{{ 'auth.register.hotelName' | transloco }} <span class="req">*</span></label>
+        <input id="hotelName" type="text" formControlName="nombre" [placeholder]="'auth.register.hotelNamePlaceholder' | transloco"
           autocomplete="organization" [class.input--error]="hotelNameError" />
         @if (hotelNameError) {
         <span class="field-error">{{ hotelNameError }}</span>
@@ -134,7 +133,7 @@
       </div>
 
       <div class="reg-field">
-        <label for="ranking">Estrellas <span class="req">*</span></label>
+        <label for="ranking">{{ 'auth.register.stars' | transloco }} <span class="req">*</span></label>
         <input id="ranking" type="number" formControlName="estrellas" placeholder="ej. 5" min="1" max="5"
           [class.input--error]="rankingError" />
         @if (rankingError) {
@@ -144,9 +143,9 @@
     </div>
     <div class="reg-row">
       <div class="reg-field full-width">
-        <label for="description">Descripción <span class="req">*</span></label>
+        <label for="description">{{ 'auth.register.description' | transloco }} <span class="req">*</span></label>
         <textarea id="description" formControlName="descripcion"
-          placeholder="Describe tu hotel, sus servicios y lo que lo hace especial..." rows="4" autocomplete="off"
+          [placeholder]="'auth.register.descriptionPlaceholder' | transloco" rows="4" autocomplete="off"
           [class.input--error]="descripcionError"></textarea>
         @if (descripcionError) {
         <span class="field-error">{{ descripcionError }}</span>
@@ -165,14 +164,14 @@
         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
         <circle cx="12" cy="10" r="3" />
       </svg>
-      <span>3. Ubicación</span>
+      <span>{{ 'auth.register.section3' | transloco }}</span>
     </div>
 
     <div class="reg-row">
       <!-- Country -->
       <div class="reg-field">
-        <label for="pais">País <span class="req">*</span></label>
-        <input id="pais" type="text" formControlName="pais" placeholder="ej. Colombia" autocomplete="country"
+        <label for="pais">{{ 'auth.register.country' | transloco }} <span class="req">*</span></label>
+        <input id="pais" type="text" formControlName="pais" [placeholder]="'auth.register.countryPlaceholder' | transloco" autocomplete="country"
           [class.input--error]="paisError" />
         @if (paisError) {
         <span class="field-error">{{ paisError }}</span>
@@ -180,8 +179,8 @@
       </div>
       <!-- State / Province / Department -->
       <div class="reg-field">
-        <label for="estado">Estado / Provincia / Departamento <span class="req">*</span></label>
-        <input id="estado" type="text" formControlName="departamento" placeholder="ej. Cundinamarca"
+        <label for="estado">{{ 'auth.register.state' | transloco }} <span class="req">*</span></label>
+        <input id="estado" type="text" formControlName="departamento" [placeholder]="'auth.register.statePlaceholder' | transloco"
           autocomplete="address-level1" [class.input--error]="departamentoError" />
         @if (departamentoError) {
         <span class="field-error">{{ departamentoError }}</span>
@@ -189,8 +188,8 @@
       </div>
       <!-- City -->
       <div class="reg-field">
-        <label for="ciudad">Ciudad <span class="req">*</span></label>
-        <input id="ciudad" type="text" formControlName="ciudad" placeholder="ej. Bogotá" autocomplete="address-level2"
+        <label for="ciudad">{{ 'auth.register.city' | transloco }} <span class="req">*</span></label>
+        <input id="ciudad" type="text" formControlName="ciudad" [placeholder]="'auth.register.cityPlaceholder' | transloco" autocomplete="address-level2"
           [class.input--error]="ciudadError" />
         @if (ciudadError) {
         <span class="field-error">{{ ciudadError }}</span>
@@ -200,8 +199,8 @@
 
     <div class="reg-row">
       <div class="reg-field full-width">
-        <label for="address">Dirección completa <span class="req">*</span></label>
-        <input id="address" type="text" formControlName="direccion" placeholder="ej. Calle 123 # 43 - 20"
+        <label for="address">{{ 'auth.register.address' | transloco }} <span class="req">*</span></label>
+        <input id="address" type="text" formControlName="direccion" [placeholder]="'auth.register.addressPlaceholder' | transloco"
           autocomplete="street-address" [class.input--error]="direccionError" />
         @if (direccionError) {
         <span class="field-error">{{ direccionError }}</span>
@@ -220,22 +219,22 @@
         <path
           d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 3.18 5.11 2 2 0 0 1 5.36 7h3a2 2 0 0 1 2 1.72c.13 1.21.37 2.39.72 3.54a2 2 0 0 1-.45 1.95l-2.28 2.28a16 16 0 0 0 6.59 6.59l2.28-2.28a2 2 0 0 1 .95-.45c1.15-.35 2.33-.59 3.54-.72A2 2 0 0 1 22 16.92z" />
       </svg>
-      <span>4. Detalles de contacto</span>
+      <span>{{ 'auth.register.section4' | transloco }}</span>
     </div>
 
     <div class="reg-row">
       <div class="reg-field">
-        <label for="contactPhone">Teléfono de contacto <span class="req">*</span></label>
-        <input id="contactPhone" type="tel" formControlName="contacto_celular" placeholder="ej. +573012345678"
+        <label for="contactPhone">{{ 'auth.register.contactPhone' | transloco }} <span class="req">*</span></label>
+        <input id="contactPhone" type="tel" formControlName="contacto_celular" [placeholder]="'auth.register.contactPhonePlaceholder' | transloco"
           autocomplete="tel" [class.input--error]="contactPhoneError" />
         @if (contactPhoneError) {
         <span class="field-error">{{ contactPhoneError }}</span>
         }
       </div>
       <div class="reg-field">
-        <label for="contactEmail">Correo de contacto <span class="req">*</span></label>
+        <label for="contactEmail">{{ 'auth.register.contactEmail' | transloco }} <span class="req">*</span></label>
         <input id="contactEmail" type="email" formControlName="contacto_email"
-          placeholder="ej. contacto&#64;hotelname.com" autocomplete="email" [class.input--error]="contactEmailError" />
+          [placeholder]="'auth.register.contactEmailPlaceholder' | transloco" autocomplete="email" [class.input--error]="contactEmailError" />
         @if (contactEmailError) {
         <span class="field-error">{{ contactEmailError }}</span>
         }
@@ -255,28 +254,28 @@
         <line x1="8" y1="2" x2="8" y2="6" />
         <line x1="3" y1="10" x2="21" y2="10" />
       </svg>
-      <span>5. Operaciones</span>
+      <span>{{ 'auth.register.section5' | transloco }}</span>
     </div>
 
     <div class="reg-row">
       <div class="reg-field">
-        <label for="checkIn">Hora de check-in <span class="req">*</span></label>
+        <label for="checkIn">{{ 'auth.register.checkIn' | transloco }} <span class="req">*</span></label>
         <input id="checkIn" type="time" formControlName="check_in" [class.input--error]="checkInError" />
         @if (checkInError) {
         <span class="field-error">{{ checkInError }}</span>
         }
       </div>
       <div class="reg-field">
-        <label for="checkOut">Hora de check-out <span class="req">*</span></label>
+        <label for="checkOut">{{ 'auth.register.checkOut' | transloco }} <span class="req">*</span></label>
         <input id="checkOut" type="time" formControlName="check_out" [class.input--error]="checkOutError" />
         @if (checkOutError) {
         <span class="field-error">{{ checkOutError }}</span>
         }
       </div>
       <div class="reg-field">
-        <label for="modificationValue">Valor mínimo para modificaciones ($)</label>
+        <label for="modificationValue">{{ 'auth.register.modificationValue' | transloco }}</label>
         <input id="modificationValue" type="number" formControlName="valor_minimo_modificacion"
-          placeholder="ej. 50000" min="0" [class.input--error]="modificationValueError" />
+          [placeholder]="'auth.register.modificationValue' | transloco" min="0" [class.input--error]="modificationValueError" />
         @if (modificationValueError) {
         <span class="field-error">{{ modificationValueError }}</span>
         }
@@ -295,20 +294,20 @@
         <line x1="22" y1="7" x2="11" y2="13" />
         <polygon points="22 7 16.21 22.63 15.64 20.36 11.38 18.17 14.03 17.09 22 7" />
       </svg>
-      <span>6. Detalles y multimedia</span>
+      <span>{{ 'auth.register.section6' | transloco }}</span>
     </div>
 
     <!-- Amenities input with tags -->
     <div class="reg-row">
       <div class="reg-field full-width">
-        <label for="amenities">Amenidades</label>
+        <label for="amenities">{{ 'auth.register.amenities' | transloco }}</label>
         <app-amenities-tags formControlName="amenidades" [error]="amenitiesError" [editable]="true"></app-amenities-tags>
       </div>
     </div>
     <!-- Property images upload -->
     <div class="reg-row" formArrayName="imagenes">
       <div class="reg-field full-width">
-        <label>Imágenes del hotel (URLs) <span class="req">*</span></label>
+        <label>{{ 'auth.register.images' | transloco }} <span class="req">*</span></label>
         <div class="image-urls-container">
           @for (imgCtrl of imagenesControls; track $index) {
           <div class="input-wrapper" style="margin-bottom: 8px;">
@@ -317,7 +316,7 @@
               <circle cx="8.5" cy="8.5" r="1.5"/>
               <polyline points="21 15 16 10 5 21"/>
             </svg>
-            <input type="url" [formControlName]="$index" placeholder="ej. https://ejemplo.com/imagen.jpg" autocomplete="off"
+            <input type="url" [formControlName]="$index" [placeholder]="'auth.register.imagePlaceholder' | transloco" autocomplete="off"
               (input)="onImageInput($index)" [class.input--error]="imgCtrl.invalid && imgCtrl.touched" />
           </div>
           }
@@ -339,22 +338,20 @@
     <label class="consent-label"
       [class.consent-label--error]="travelerForm.get('consent')?.invalid && travelerForm.get('consent')?.touched">
       <input type="checkbox" formControlName="consent" />
-      <span>Acepto los <a href="/terms" target="_blank" class="terms-link" (click)="$event.stopPropagation()">Términos
-          de Servicio</a> de TravelHub</span>
+      <span>{{ 'auth.register.consentPart1' | transloco }} <a href="/terms" target="_blank" class="terms-link" (click)="$event.stopPropagation()">{{ 'auth.register.termsLink' | transloco }}</a> {{ 'auth.register.consentPart2' | transloco }}</span>
     </label>
     } @else {
     <label class="consent-label"
       [class.consent-label--error]="partnerForm.get('consent')?.invalid && partnerForm.get('consent')?.touched">
       <input type="checkbox" formControlName="consent" />
-      <span>Acepto los <a href="/terms" target="_blank" class="terms-link" (click)="$event.stopPropagation()">Términos
-          de Servicio</a> de TravelHub</span>
+      <span>{{ 'auth.register.consentPart1' | transloco }} <a href="/terms" target="_blank" class="terms-link" (click)="$event.stopPropagation()">{{ 'auth.register.termsLink' | transloco }}</a> {{ 'auth.register.consentPart2' | transloco }}</span>
     </label>
     }
 
     <div class="reg-actions">
-      <button type="button" class="btn-cancel" (click)="onCancel()">Cancelar</button>
+      <button type="button" class="btn-cancel" (click)="onCancel()">{{ 'auth.register.cancel' | transloco }}</button>
       <button type="submit" class="btn-primary" [disabled]="loading">
-        {{ loading ? 'Creando...' : 'Crear cuenta' }}
+        {{ loading ? ('auth.register.submitting' | transloco) : ('auth.register.submit' | transloco) }}
       </button>
     </div>
   </div>
@@ -363,7 +360,6 @@
 
 <div class="auth-divider"></div>
 <p class="auth-footer">
-  ¿Ya tienes una cuenta?
-  <button type="button" class="link-btn" (click)="auth.closeRegisterModal(); auth.openLoginModal()">Inicia
-    sesión</button>
+  {{ 'auth.register.hasAccount' | transloco }}
+  <button type="button" class="link-btn" (click)="auth.closeRegisterModal(); auth.openLoginModal()">{{ 'auth.register.loginLink' | transloco }}</button>
 </p>

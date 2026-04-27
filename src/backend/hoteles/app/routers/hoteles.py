@@ -1,28 +1,38 @@
 import uuid
 
-from fastapi import APIRouter, status, Depends, Query
+from fastapi import APIRouter, HTTPException, status, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from fastapi import Request
+
 from app.schemas.hotel import (
     AmenidadHotel,
     CrearHotelRequest,
     HotelDetalleResponse,
     ListaHotelesResponse,
+    ListaPaisesResponse,
     CrearHabitacionRequest,
     HabitacionDetalleResponse,
     ListaHabitacionesResponse,
+    ListaHabitacionesResumenResponse,
 )
 from app.services.hotel_service import (
     OrdenHoteles,
     crear_hotel_service,
     get_hotel_by_user,
+    listar_habitaciones_resumen_por_ids_service,
     listar_hoteles_service,
+    listar_paises_service,
     obtener_hotel_service,
 )
+from app.services.audit_logger import emit_habitacion_audit_log
 from app.services.habitacion_service import (
+    actualizar_habitacion_service,
     crear_habitacion_service,
+    eliminar_habitacion_service,
     listar_habitaciones_service,
+    obtener_habitacion_por_id_service,
 )
 from app.models.hotel import Hotel
 from travelhub_common.security import get_current_user, User, RoleChecker, RoleEnum
@@ -41,6 +51,8 @@ async def listar_hoteles(
     rango_50_1000: bool = Query(default=False),
     estrellas: list[int] | None = Query(default=None),
     amenidades_populares: list[AmenidadHotel] | None = Query(default=None),
+    ciudad: str | None = Query(default=None, max_length=100),
+    capacidad_min: int | None = Query(default=None, ge=1, le=20),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -54,6 +66,8 @@ async def listar_hoteles(
         rango_50_1000=rango_50_1000,
         estrellas=estrellas,
         amenidades_populares=amenidades_populares,
+        ciudad=ciudad,
+        capacidad_min=capacidad_min,
     )
 
 
@@ -95,6 +109,113 @@ async def listar_habitaciones(
     current_hotel: Annotated[Hotel, Depends(get_hotel_by_user)] = None
 ):
     return await listar_habitaciones_service(db=db, hotel=current_hotel, limit=limit, offset=offset)
+
+
+@router.get("/paises", response_model=ListaPaisesResponse, status_code=status.HTTP_200_OK)
+async def listar_paises(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return await listar_paises_service(db=db)
+
+
+@router.put(
+    "/habitaciones/{habitacion_id}",
+    response_model=HabitacionDetalleResponse,
+    status_code=status.HTTP_200_OK,
+    dependencies=[
+        Depends(RoleChecker([RoleEnum.MANAGER, RoleEnum.USER]))
+    ],
+)
+async def actualizar_habitacion(
+    habitacion_id: uuid.UUID,
+    body: CrearHabitacionRequest,
+    db: AsyncSession = Depends(get_db),
+    current_hotel: Annotated[Hotel, Depends(get_hotel_by_user)] = None,
+):
+    return await actualizar_habitacion_service(
+        db=db,
+        hotel=current_hotel,
+        habitacion_id=habitacion_id,
+        body=body,
+    )
+
+
+@router.get(
+    "/habitaciones/resumen",
+    response_model=ListaHabitacionesResumenResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def listar_habitaciones_resumen_por_ids(
+    habitacion_ids: list[uuid.UUID] = Query(default=[]),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return await listar_habitaciones_resumen_por_ids_service(
+        db=db,
+        habitacion_ids=habitacion_ids,
+    )
+
+
+@router.delete(
+    "/habitaciones/{habitacion_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(RoleChecker([RoleEnum.MANAGER, RoleEnum.USER, RoleEnum.ADMIN]))],
+)
+async def eliminar_habitacion(
+    habitacion_id: uuid.UUID,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    _reason_map = {403: "forbidden", 404: "not_found", 401: "unauthorized"}
+    try:
+        await eliminar_habitacion_service(db=db, habitacion_id=habitacion_id, current_user=current_user)
+        emit_habitacion_audit_log(
+            request=request,
+            event_type="audit.habitacion.delete.success",
+            success=True,
+            user_id=str(current_user.id),
+            email=current_user.email,
+            habitacion_id=str(habitacion_id),
+        )
+    except HTTPException as exc:
+        emit_habitacion_audit_log(
+            request=request,
+            event_type="audit.habitacion.delete.failure",
+            success=False,
+            user_id=str(current_user.id),
+            email=current_user.email,
+            habitacion_id=str(habitacion_id),
+            reason=_reason_map.get(exc.status_code, "http_error"),
+            status_code=exc.status_code,
+            detail=str(exc.detail),
+        )
+        raise
+    except Exception:
+        emit_habitacion_audit_log(
+            request=request,
+            event_type="audit.habitacion.delete.failure",
+            success=False,
+            user_id=str(current_user.id),
+            email=current_user.email,
+            habitacion_id=str(habitacion_id),
+            reason="internal_error",
+        )
+        raise
+
+
+@router.get(
+    "/habitaciones/{habitacion_id}",
+    response_model=HabitacionDetalleResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def obtener_habitacion(
+    habitacion_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return await obtener_habitacion_por_id_service(db=db, habitacion_id=habitacion_id)
 
 
 @router.get(

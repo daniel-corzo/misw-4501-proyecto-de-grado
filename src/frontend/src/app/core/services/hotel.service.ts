@@ -4,6 +4,7 @@ import { ApiService } from './api.service';
 
 export interface HabitacionDetalle {
   id: string;
+  hotel_id?: string;
   capacidad: number;
   numero: string;
   descripcion: string | null;
@@ -53,6 +54,7 @@ export interface HotelListItem {
   ciudad: string;
   pais: string;
   estrellas: number;
+  amenidades: string[];
   imagenes: string[];
   precio_minimo: number;
   created_at: string;
@@ -63,17 +65,49 @@ export interface ListaHotelesResponse {
   hoteles: HotelListItem[];
 }
 
+export interface HotelListParams {
+  limit?: number;
+  offset?: number;
+  ciudad?: string;
+  precio_min?: number;
+  precio_max?: number;
+  estrellas?: number[];
+  amenidades_populares?: string[];
+  capacidad_min?: number;
+  orden?: 'precio_asc' | 'precio_desc' | 'rating_desc' | 'nombre_asc' | 'nombre_desc';
+}
+
 @Injectable({ providedIn: 'root' })
 export class HotelService {
   private readonly api = inject(ApiService);
 
-  listHotels(params?: { limit?: number; offset?: number }): Observable<ListaHotelesResponse> {
-    const limit = params?.limit ?? 20;
-    const offset = params?.offset ?? 0;
-    return this.api.get<ListaHotelesResponse>('/hoteles', { limit, offset });
+  listHotels(params: HotelListParams = {}): Observable<ListaHotelesResponse> {
+    return this.api.get<ListaHotelesResponse>('/hoteles', {
+      limit: params.limit ?? 10,
+      offset: params.offset ?? 0,
+      orden: params.orden,
+      ciudad: params.ciudad,
+      capacidad_min: params.capacidad_min,
+      precio_min: params.precio_min,
+      precio_max: params.precio_max,
+      estrellas: params.estrellas,
+      amenidades_populares: params.amenidades_populares,
+    });
   }
 
   getHotelById(id: string): Observable<HotelDetalle> {
     return this.api.get<HotelDetalle>(`/hoteles/${id}`);
+  }
+
+  listCountries(): Observable<{ paises: string[] }> {
+    return this.api.get<{ paises: string[] }>('/hoteles/paises');
+  }
+
+  getRoomById(id: string): Observable<HabitacionDetalle> {
+    return this.api.get<HabitacionDetalle>(`/hoteles/habitaciones/${id}`);
+  }
+
+  deleteRoom(id: string): Observable<void> {
+    return this.api.delete<void>(`/hoteles/habitaciones/${id}`);
   }
 }

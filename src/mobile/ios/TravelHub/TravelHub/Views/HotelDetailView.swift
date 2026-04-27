@@ -17,6 +17,7 @@ struct HotelDetailView: View {
     @State private var descriptionIsTruncated = false
 
     @Environment(\.toastManager) private var toastManager: ToastManager
+    @Environment(Router.self) private var router
 
     var featuredAmenities: [HotelAmenity] {
         guard let hotel = viewModel.hotel else { return [] }
@@ -288,15 +289,17 @@ struct HotelDetailView: View {
 
                 Spacer()
 
-                Button {
-                    // TODO: Book reservation
-                } label: {
-                    Text(LocalizedStringResource.HotelDetail.bookNow)
-                        .bold()
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 32)
+                if let hotel = self.viewModel.hotel {
+                    Button {
+                        router.navigate(to: .createReservation(hotel, nil))
+                    } label: {
+                        Text(LocalizedStringResource.HotelDetail.bookNow)
+                            .bold()
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 32)
+                    }
+                    .capsuleButton()
                 }
-                .capsuleButton()
 
             } //: HStack
             .padding(.horizontal, 32)
