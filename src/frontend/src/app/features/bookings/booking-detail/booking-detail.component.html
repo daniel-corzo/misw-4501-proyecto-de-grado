@@ -154,7 +154,7 @@
                 type="button"
                 class="modal-close-btn"
                 (click)="closeCancelModal()"
-                aria-label="Close modal"
+                [attr.aria-label]="'shared.close' | transloco"
               >
                 ✕
               </button>
