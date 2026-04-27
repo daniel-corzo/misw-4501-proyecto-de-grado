@@ -235,7 +235,7 @@
           </div>
 
           <button type="button" class="booking-card__cta" [disabled]="!puedeReservar" (click)="reservarAhora()">
-            {{ reservando ? ('hotelDetail.bookingInProgress' | transloco) : ('hotelDetail.bookNow' | transloco) }}
+            {{ 'hotelDetail.bookNow' | transloco }}
           </button>
           <p class="booking-card__notice">
             @if (fechaEntrada && fechaSalida) {

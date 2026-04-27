@@ -178,17 +178,11 @@ export class BookingDetailComponent implements OnInit {
   }
 
   onModifyReservation(): void {
-    if (!this.booking || !this.booking.hotel.id) {
+    if (!this.booking) {
       return;
     }
 
-    this.router.navigate(['/hotels', this.booking.hotel.id], {
-      queryParams: {
-        checkIn: this.booking.fecha_entrada,
-        checkOut: this.booking.fecha_salida,
-        huespedes: this.booking.num_huespedes,
-      },
-    });
+    this.router.navigate(['/bookings', this.booking.id, 'edit']);
   }
 
   onCancelReservation(): void {

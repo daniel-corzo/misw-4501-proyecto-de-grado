@@ -74,12 +74,27 @@ export interface CreateBookingRequest {
   pago_id: string | null;
 }
 
+/** PATCH /reservas/{id} — at least one field required by backend. */
+export interface UpdateBookingRequest {
+  fecha_entrada?: string;
+  fecha_salida?: string;
+  num_huespedes?: number;
+  habitacion_id?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class BookingService {
   private readonly api = inject(ApiService);
 
   createReservation(body: CreateBookingRequest): Observable<BookingResponse> {
     return this.api.post<BookingResponse>('/reservas', body);
+  }
+
+  updateReservation(
+    reservaId: string,
+    body: UpdateBookingRequest
+  ): Observable<BookingResponse> {
+    return this.api.patch<BookingResponse>(`/reservas/${reservaId}`, body);
   }
 
   getUserBookings(userId: string, params?: { skip?: number; limit?: number }): Observable<BookingListResponse> {

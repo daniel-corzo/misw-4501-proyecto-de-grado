@@ -3,7 +3,6 @@ import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { HotelService, HotelDetalle, HabitacionDetalle } from '../../../core/services/hotel.service';
-import { BookingService } from '../../../core/services/booking.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { PLACEHOLDER_IMAGE } from '../../../shared/constants/images';
 import { AmenitiesTagsComponent } from '../components/amenities-tags/amenities-tags.component';
@@ -20,7 +19,6 @@ export class HotelDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly hotelService = inject(HotelService);
-  private readonly bookingService = inject(BookingService);
   private readonly toast = inject(ToastService);
   private readonly t = inject(TranslocoService);
 
@@ -29,7 +27,6 @@ export class HotelDetailComponent implements OnInit {
   error: string | null = null;
   selectedImageIndex = 0;
   selectedRoom: HabitacionDetalle | null = null;
-  reservando = false;
   fechaEntrada: string | null = null;
   fechaSalida: string | null = null;
   numHuespedes = 1;
@@ -86,10 +83,19 @@ export class HotelDetailComponent implements OnInit {
   }
 
   get puedeReservar(): boolean {
-    return !!this.selectedRoom?.disponible && !!this.fechaEntrada && !!this.fechaSalida && !this.reservando;
+    return (
+      !!this.hotel &&
+      !!this.selectedRoom?.disponible &&
+      !!this.fechaEntrada &&
+      !!this.fechaSalida
+    );
   }
 
+  /** Navigates to the shared create-reservation flow. */
   reservarAhora(): void {
+    if (!this.hotel) {
+      return;
+    }
     if (!this.selectedRoom?.disponible) {
       this.toast.warning(this.t.translate('hotelDetail.toastSelectAvailableRoom'));
       return;
@@ -100,25 +106,11 @@ export class HotelDetailComponent implements OnInit {
       return;
     }
 
-    this.reservando = true;
-    this.bookingService.createReservation({
-      habitacion_id: this.selectedRoom.id,
-      fecha_entrada: this.fechaEntrada,
-      fecha_salida: this.fechaSalida,
-      num_huespedes: this.numHuespedes,
-      pago_id: null,
-    }).subscribe({
-      next: () => {
-        this.toast.success(this.t.translate('hotelDetail.toastCreated'));
-        this.router.navigate(['/bookings']);
-      },
-      error: (err: HttpErrorResponse) => {
-        if (err.status === 409) {
-          this.toast.warning(this.t.translate('hotelDetail.toastRoomNoLongerAvailable'));
-        } else {
-          this.toast.danger(this.t.translate('hotelDetail.toastCreateError'));
-        }
-        this.reservando = false;
+    this.router.navigate(['/hotels', this.hotel.id, 'reserve'], {
+      queryParams: {
+        checkIn: this.fechaEntrada,
+        checkOut: this.fechaSalida,
+        huespedes: this.numHuespedes,
       },
     });
   }
