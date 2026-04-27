@@ -63,8 +63,8 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Crear Reserva"
+            "state" : "translated",
+            "value" : "Reserva"
           }
         }
       }
