@@ -73,11 +73,11 @@ export class HotelsListComponent implements OnInit, OnDestroy {
   huespedes = 1;
 
   // Filters — rango en COP para coincidir con los datos del seed
-  readonly PRICE_MIN = 50000;
+  readonly PRICE_MIN = 0;
   readonly PRICE_MAX = 3000000;
   readonly PRICE_STEP = 50000;
   readonly PRICE_GAP = 100000;
-  precioMin = 50000;
+  precioMin = 0;
   precioMax = 3000000;
   selectedStars: Set<number> = new Set();
   selectedAmenidades: Set<string> = new Set();
