@@ -169,8 +169,9 @@ struct CreateReservationView: View {
             } label: {
                 HStack {
                     Text(
-                        LocalizedStringResource.CreateReservation
-                            .proceedToPayment
+                        reservation == nil
+                            ? LocalizedStringResource.CreateReservation.createBooking
+                            : LocalizedStringResource.CreateReservation.modifyBooking
                     )
                     .font(.headline)
                     .fontWeight(.semibold)
