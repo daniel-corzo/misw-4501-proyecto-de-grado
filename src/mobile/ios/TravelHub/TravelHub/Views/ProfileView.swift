@@ -10,6 +10,7 @@ struct ProfileView: View {
     @Environment(\.userService) private var userService: UserService
     @Environment(\.authService) private var authService: AuthService
     @Environment(\.toastManager) private var toastManager: ToastManager
+    @Environment(Router.self) private var router
 
     @State private var viewModel = ViewModel()
 
@@ -41,13 +42,19 @@ struct ProfileView: View {
                     // MARK: - Account Overview
                     Section(LocalizedStringResource.Profile.accountOverview) {
                         Label(LocalizedStringResource.Profile.personalInformation, systemImage: "person")
-                        HStack {
-                            Label(LocalizedStringResource.Profile.bookingHistory, systemImage: "clock.arrow.circlepath")
-                            Spacer()
-                            Text(LocalizedStringResource.Profile.viewYourPastStays)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                        Button {
+                            router.pendingBookingTab = .past
+                            router.switchTab(to: .bookings)
+                        } label: {
+                            HStack {
+                                Label(LocalizedStringResource.Profile.bookingHistory, systemImage: "clock.arrow.circlepath")
+                                Spacer()
+                                Text(LocalizedStringResource.Profile.viewYourPastStays)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
+                        .tint(.primary)
                         Label(LocalizedStringResource.Profile.paymentMethods, systemImage: "creditcard")
                     }
 

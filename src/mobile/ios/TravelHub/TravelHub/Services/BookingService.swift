@@ -1,5 +1,5 @@
 //
-//  ReservationService.swift
+//  BookingService.swift
 //  TravelHub
 //
 //  Created by Andres Donoso on 18/04/26.
@@ -7,22 +7,22 @@
 
 import Foundation
 
-protocol ReservationService {
-    func create(reservation: NewReservation) async throws
-    
-    func fetchReservations(estado: String) async throws
-        -> ListReservationsResponse
-    
-    func fetchReservationDetail(id: UUID) async throws -> ReservationDetailDTO
-    
+protocol BookingService {
+    func create(booking: NewBooking) async throws
+
+    func fetchBookings(estado: String) async throws
+        -> ListBookingsResponse
+
+    func fetchBookingDetail(id: UUID) async throws -> BookingDetailDTO
+
     @discardableResult
-    func cancelReservation(id: UUID) async throws -> ReservationListItemDTO
-    
-    func modifyReservation(reservation: ModifyReservation) async throws
-        -> ModifyReservationResponse
+    func cancelBooking(id: UUID) async throws -> BookingListItemDTO
+
+    func modifyBooking(booking: ModifyBooking) async throws
+        -> ModifyBookingResponse
 }
 
-final class ReservationServiceImpl: ReservationService {
+final class BookingServiceImpl: BookingService {
     private let httpService: HttpService
     private let tokenStore: TokenStoring
 
@@ -34,28 +34,28 @@ final class ReservationServiceImpl: ReservationService {
         self.tokenStore = tokenStore
     }
 
-    func create(reservation: NewReservation) async throws {
-        let body = CreateReservationRequest(
-            habitacionID: reservation.habitacionID,
-            fechaEntrada: reservation.fechaEntrada.ISO8601Format(
+    func create(booking: NewBooking) async throws {
+        let body = CreateBookingRequest(
+            habitacionID: booking.habitacionID,
+            fechaEntrada: booking.fechaEntrada.ISO8601Format(
                 .iso8601.year().month().day()
             ),
-            fechaSalida: reservation.fechaSalida.ISO8601Format(
+            fechaSalida: booking.fechaSalida.ISO8601Format(
                 .iso8601.year().month().day()
             ),
-            numHuespedes: reservation.numHuespedes
+            numHuespedes: booking.numHuespedes
         )
         let token = try tokenStore.readToken() ?? ""
 
-        let _: CreateReservationResponse = try await httpService.post(
+        let _: CreateBookingResponse = try await httpService.post(
             url: HttpRoutes.reservas().url,
             body: body,
             token: token
         )
     }
 
-    func fetchReservations(estado: String) async throws
-        -> ListReservationsResponse
+    func fetchBookings(estado: String) async throws
+        -> ListBookingsResponse
     {
         let token = try tokenStore.readToken() ?? ""
         var components = URLComponents(
@@ -68,7 +68,7 @@ final class ReservationServiceImpl: ReservationService {
         return try await httpService.get(url: url, token: token)
     }
 
-    func fetchReservationDetail(id: UUID) async throws -> ReservationDetailDTO {
+    func fetchBookingDetail(id: UUID) async throws -> BookingDetailDTO {
         let token = try tokenStore.readToken() ?? ""
         let url = HttpRoutes.reservas().url.appendingPathComponent(
             id.uuidString
@@ -77,7 +77,7 @@ final class ReservationServiceImpl: ReservationService {
     }
 
     @discardableResult
-    func cancelReservation(id: UUID) async throws -> ReservationListItemDTO {
+    func cancelBooking(id: UUID) async throws -> BookingListItemDTO {
         let token = try tokenStore.readToken() ?? ""
         let url = HttpRoutes.reservas().url
             .appendingPathComponent(id.uuidString)
@@ -85,21 +85,21 @@ final class ReservationServiceImpl: ReservationService {
         return try await httpService.patch(url: url, token: token)
     }
 
-    func modifyReservation(reservation: ModifyReservation) async throws
-        -> ModifyReservationResponse
+    func modifyBooking(booking: ModifyBooking) async throws
+        -> ModifyBookingResponse
     {
         let token = try tokenStore.readToken() ?? ""
-        let url = HttpRoutes.reservas(id: reservation.id).url
+        let url = HttpRoutes.reservas(id: booking.id).url
 
-        let body = ModifyReservationRequest(
-            fechaEntrada: reservation.fechaEntrada.ISO8601Format(
+        let body = ModifyBookingRequest(
+            fechaEntrada: booking.fechaEntrada.ISO8601Format(
                 .iso8601.year().month().day()
             ),
-            fechaSalida: reservation.fechaSalida.ISO8601Format(
+            fechaSalida: booking.fechaSalida.ISO8601Format(
                 .iso8601.year().month().day()
             ),
-            numHuespedes: reservation.numHuespedes,
-            habitacionId: reservation.habitacionID
+            numHuespedes: booking.numHuespedes,
+            habitacionId: booking.habitacionID
         )
 
         return try await httpService.patch(url: url, token: token, body: body)

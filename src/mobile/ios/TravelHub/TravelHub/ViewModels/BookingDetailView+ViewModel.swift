@@ -1,18 +1,18 @@
 //
-//  ReservationDetailView+ViewModel.swift
+//  BookingDetailView+ViewModel.swift
 //  TravelHub
 //
 
 import SwiftUI
 
-extension ReservationDetailView {
+extension BookingDetailView {
     @Observable
     class ViewModel {
-        var reservationService: ReservationService = ReservationServiceKey.defaultValue
+        var bookingService: BookingService = BookingServiceKey.defaultValue
         var hotelService: HotelService = HotelServiceKey.defaultValue
         var toastManager: ToastManager = ToastManagerKey.defaultValue
 
-        var reservation: ReservationDetailDTO?
+        var booking: BookingDetailDTO?
         var isLoading = true
         var hasError = false
         var errorMessage: String?
@@ -21,21 +21,21 @@ extension ReservationDetailView {
         var hotel: Hotel?
 
         @MainActor
-        func fetchDetail(reservationId: UUID) async {
+        func fetchDetail(bookingId: UUID) async {
             isLoading = true
             hasError = false
             errorMessage = nil
             defer { isLoading = false }
 
             do {
-                reservation = try await reservationService.fetchReservationDetail(id: reservationId)
+                booking = try await bookingService.fetchBookingDetail(id: bookingId)
             } catch is CancellationError {
                 return
             } catch let error as HttpError where error == .invalidCredentials {
                 hasError = true
-                errorMessage = String(localized: .ReservationDetail.errorUnauthorized)
+                errorMessage = String(localized: .BookingDetail.errorUnauthorized)
                 toastManager.error(
-                    String(localized: .ReservationDetail.errorUnauthorized)
+                    String(localized: .BookingDetail.errorUnauthorized)
                 )
             } catch {
                 hasError = true
@@ -43,7 +43,7 @@ extension ReservationDetailView {
                 toastManager.error(error.localizedDescription)
             }
         }
-        
+
         @MainActor
         func fetchHotelDetail(id: UUID) async {
             do {
@@ -52,24 +52,24 @@ extension ReservationDetailView {
             } catch is CancellationError {
                  return
             } catch {
-                toastManager.error(String(localized: .ReservationDetail.errorRetrievingHotel))
+                toastManager.error(String(localized: .BookingDetail.errorRetrievingHotel))
             }
         }
 
         @MainActor
-        func cancelReservation(reservationId: UUID) async {
+        func cancelBooking(bookingId: UUID) async {
             isCancelling = true
             defer { isCancelling = false }
 
             do {
-                _ = try await reservationService.cancelReservation(id: reservationId)
+                _ = try await bookingService.cancelBooking(id: bookingId)
                 didCancel = true
                 toastManager.success(
-                    String(localized: .ReservationDetail.cancelSuccess)
+                    String(localized: .BookingDetail.cancelSuccess)
                 )
             } catch let error as HttpError where error == .invalidCredentials {
                 toastManager.error(
-                    String(localized: .ReservationDetail.errorUnauthorized)
+                    String(localized: .BookingDetail.errorUnauthorized)
                 )
             } catch {
                 toastManager.error(error.localizedDescription)

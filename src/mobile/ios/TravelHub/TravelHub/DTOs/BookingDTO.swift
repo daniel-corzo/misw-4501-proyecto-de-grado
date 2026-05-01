@@ -1,5 +1,5 @@
 //
-//  ReservationDTO.swift
+//  BookingDTO.swift
 //  TravelHub
 //
 //  Created by Andres Donoso on 18/04/26.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct CreateReservationRequest: Encodable {
+struct CreateBookingRequest: Encodable {
     var habitacionID: UUID
     var fechaEntrada: String
     var fechaSalida: String
@@ -23,7 +23,7 @@ struct CreateReservationRequest: Encodable {
     }
 }
 
-struct CreateReservationResponse: Decodable {
+struct CreateBookingResponse: Decodable {
     var id: UUID
     var habitacionId: UUID
     var fechaEntrada: String
@@ -44,8 +44,8 @@ struct CreateReservationResponse: Decodable {
     }
 }
 
-// MARK: - Modify Reservation
-struct ModifyReservationRequest: Encodable {
+// MARK: - Modify Booking
+struct ModifyBookingRequest: Encodable {
     var fechaEntrada: String?
     var fechaSalida: String?
     var numHuespedes: Int?
@@ -59,7 +59,7 @@ struct ModifyReservationRequest: Encodable {
     }
 }
 
-struct ModifyReservationResponse: Decodable {
+struct ModifyBookingResponse: Decodable {
     var id: UUID
     var habitacionId: UUID
     var nombreHabitacion: String?
@@ -91,14 +91,14 @@ struct ModifyReservationResponse: Decodable {
     }
 }
 
-// MARK: - List Reservations
+// MARK: - List Bookings
 
-struct ListReservationsResponse: Decodable {
+struct ListBookingsResponse: Decodable {
     let total: Int
-    let reservas: [ReservationListItemDTO]
+    let reservas: [BookingListItemDTO]
 }
 
-struct ReservationListItemDTO: Decodable, Identifiable {
+struct BookingListItemDTO: Decodable, Identifiable {
     let id: UUID
     let habitacionId: UUID
     let nombreHabitacion: String?
@@ -125,9 +125,9 @@ struct ReservationListItemDTO: Decodable, Identifiable {
     }
 }
 
-// MARK: - Reservation Detail
+// MARK: - Booking Detail
 
-struct ReservationDetailDTO: Decodable, Identifiable {
+struct BookingDetailDTO: Decodable, Identifiable {
     let id: UUID
     let codigoReserva: String
     let estado: EstadoReserva
@@ -136,8 +136,8 @@ struct ReservationDetailDTO: Decodable, Identifiable {
     let numHuespedes: Int
     let pagoId: UUID?
     let createdAt: String
-    let hotel: ReservationHotelDTO
-    let habitacion: ReservationRoomDTO
+    let hotel: BookingHotelDTO
+    let habitacion: BookingRoomDTO
     let amenidadesHotel: [String]
 
     enum CodingKeys: String, CodingKey {
@@ -152,7 +152,7 @@ struct ReservationDetailDTO: Decodable, Identifiable {
     }
 }
 
-struct ReservationHotelDTO: Decodable {
+struct BookingHotelDTO: Decodable {
     let id: UUID?
     let nombre: String
     let direccion: String?
@@ -200,7 +200,7 @@ struct ReservationHotelDTO: Decodable {
     }
 }
 
-struct ReservationRoomDTO: Decodable {
+struct BookingRoomDTO: Decodable {
     let id: UUID
     let nombre: String
     let descripcion: String?

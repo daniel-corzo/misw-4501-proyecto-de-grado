@@ -15,7 +15,7 @@ struct RoomSelectorView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
 
-            Text(LocalizedStringResource.CreateReservation.selectRoom)
+            Text(LocalizedStringResource.CreateBooking.selectRoom)
                 .font(.title3)
                 .fontWeight(.bold)
 
@@ -87,7 +87,7 @@ private struct RoomCard: View {
             }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(habitacion.descripcion ?? String(localized: LocalizedStringResource.CreateReservation.roomNumber(roomNumber: habitacion.numero)))
+                Text(habitacion.descripcion ?? String(localized: LocalizedStringResource.CreateBooking.roomNumber(roomNumber: habitacion.numero)))
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundStyle(.primary)
@@ -99,7 +99,7 @@ private struct RoomCard: View {
                         .fontWeight(.bold)
                         .foregroundStyle(isSelected ? .accent : .primary)
 
-                    Text(LocalizedStringResource.CreateReservation.perNight)
+                    Text(LocalizedStringResource.CreateBooking.perNight)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

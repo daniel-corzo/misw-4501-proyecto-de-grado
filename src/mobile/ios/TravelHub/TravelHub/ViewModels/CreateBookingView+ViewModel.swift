@@ -1,5 +1,5 @@
 //
-//  CreateReservationView+ViewModel.swift
+//  CreateBookingView+ViewModel.swift
 //  TravelHub
 //
 //  Created by Andres Donoso on 18/04/26.
@@ -7,10 +7,10 @@
 
 import SwiftUI
 
-extension CreateReservationView {
+extension CreateBookingView {
     @Observable
     class ViewModel {
-        var reservationService: ReservationService = ReservationServiceKey
+        var bookingService: BookingService = BookingServiceKey
             .defaultValue
         var toastManager: ToastManager = ToastManagerKey.defaultValue
 
@@ -26,7 +26,7 @@ extension CreateReservationView {
             isLoading = true
             defer { isLoading = false }
 
-            let newReservation = NewReservation(
+            let newBooking = NewBooking(
                 habitacionID: habitacionId,
                 fechaEntrada: fechaEntrada,
                 fechaSalida: fechaSalida,
@@ -35,18 +35,18 @@ extension CreateReservationView {
             )
 
             do {
-                try await reservationService.create(reservation: newReservation)
+                try await bookingService.create(booking: newBooking)
 
                 toastManager.success(
                     String(
-                        localized: .CreateReservation
+                        localized: .CreateBooking
                             .reservationCreatedDescription
                     ),
                     title: String(
-                        localized: .CreateReservation.reservationCreatedTitle
+                        localized: .CreateBooking.reservationCreatedTitle
                     )
                 )
-                
+
                 return true
             } catch is CancellationError {
                 return false
@@ -55,33 +55,33 @@ extension CreateReservationView {
                 return false
             }
         }
-        
+
         @MainActor
         func modify(id: UUID, habitacionId: UUID, fechaEntrada: Date, fechaSalida: Date, numHuespedes: Int) async -> Bool {
             isLoading = true
             defer { isLoading = false }
-            
-            let reservation = ModifyReservation(
+
+            let booking = ModifyBooking(
                 id: id,
                 habitacionID: habitacionId,
                 fechaEntrada: fechaEntrada,
                 fechaSalida: fechaSalida,
                 numHuespedes: numHuespedes,
             )
-            
+
             do {
-                let _ = try await reservationService.modifyReservation(reservation: reservation)
-                
+                let _ = try await bookingService.modifyBooking(booking: booking)
+
                 toastManager.success(
                     String(
-                        localized: .CreateReservation
+                        localized: .CreateBooking
                             .reservationModifiedDescription
                     ),
                     title: String(
-                        localized: .CreateReservation.reservationModifiedTitle
+                        localized: .CreateBooking.reservationModifiedTitle
                     )
                 )
-                
+
                 return true
             } catch is CancellationError {
                 return false
