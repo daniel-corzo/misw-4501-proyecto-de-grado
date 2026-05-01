@@ -16,7 +16,7 @@ struct GuestsCounterView: View {
 
     var body: some View {
         HStack {
-            Text(LocalizedStringResource.CreateReservation.guests)
+            Text(LocalizedStringResource.CreateBooking.guests)
                 .font(.headline)
 
             Spacer()

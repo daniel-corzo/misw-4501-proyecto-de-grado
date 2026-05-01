@@ -6,14 +6,14 @@
 import SwiftUI
 
 struct BookingCardView: View {
-    let reservation: ReservationListItemDTO
+    let booking: BookingListItemDTO
 
     private var hotelName: String {
-        reservation.nombreHotel ?? String(localized: .MyBookings.defaultHotelName)
+        booking.nombreHotel ?? String(localized: .MyBookings.defaultHotelName)
     }
 
     private var roomName: String {
-        reservation.nombreHabitacion ?? String(localized: .MyBookings.defaultRoomName)
+        booking.nombreHabitacion ?? String(localized: .MyBookings.defaultRoomName)
     }
 
     private static let inputFormatter: DateFormatter = {
@@ -35,9 +35,9 @@ struct BookingCardView: View {
     }()
 
     private var dateRangeText: String {
-        guard let start = Self.inputFormatter.date(from: reservation.fechaEntrada),
-              let end = Self.inputFormatter.date(from: reservation.fechaSalida) else {
-            return "\(reservation.fechaEntrada) - \(reservation.fechaSalida)"
+        guard let start = Self.inputFormatter.date(from: booking.fechaEntrada),
+              let end = Self.inputFormatter.date(from: booking.fechaSalida) else {
+            return "\(booking.fechaEntrada) - \(booking.fechaSalida)"
         }
 
         let startStr = Self.displayFormatter.string(from: start)
@@ -48,14 +48,14 @@ struct BookingCardView: View {
     }
 
     private var guestsText: String {
-        String(localized: .MyBookings.guests(reservation.numHuespedes))
+        String(localized: .MyBookings.guests(booking.numHuespedes))
     }
 
     var body: some View {
         VStack(spacing: 0) {
             // MARK: - Image with badge
             ZStack(alignment: .topTrailing) {
-                AsyncImage(url: reservation.imagenesHotel.first.flatMap { URL(string: $0) }) { phase in
+                AsyncImage(url: booking.imagenesHotel.first.flatMap { URL(string: $0) }) { phase in
                     switch phase {
                     case .success(let image):
                         Color.clear
@@ -82,12 +82,12 @@ struct BookingCardView: View {
                 }
 
                 // Badge
-                Text(reservation.estado.badgeLabel)
+                Text(booking.estado.badgeLabel)
                     .font(.caption2)
                     .fontWeight(.bold)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
-                    .background(reservation.estado.badgeColor.opacity(0.9))
+                    .background(booking.estado.badgeColor.opacity(0.9))
                     .foregroundStyle(.white)
                     .clipShape(Capsule())
                     .padding(12)
@@ -120,7 +120,7 @@ struct BookingCardView: View {
 
                 // View Details button
                 NavigationLink {
-                    ReservationDetailView(reservationId: reservation.id)
+                    BookingDetailView(bookingId: booking.id)
                 } label: {
                     Text(LocalizedStringResource.MyBookings.viewDetails)
                         .font(.subheadline)
@@ -144,7 +144,7 @@ struct BookingCardView: View {
 #Preview {
     NavigationStack {
         BookingCardView(
-            reservation: ReservationListItemDTO(
+            booking: BookingListItemDTO(
                 id: UUID(),
                 habitacionId: UUID(),
                 nombreHabitacion: "Deluxe Room",

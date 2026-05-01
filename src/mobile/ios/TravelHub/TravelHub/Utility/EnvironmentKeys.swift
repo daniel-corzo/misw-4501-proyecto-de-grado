@@ -24,8 +24,8 @@ struct HotelServiceKey: EnvironmentKey {
     static let defaultValue: HotelService = HotelServiceImpl(httpService: HttpServiceImpl.shared)
 }
 
-struct ReservationServiceKey: EnvironmentKey {
-    static let defaultValue: ReservationService = ReservationServiceImpl(httpService: HttpServiceImpl.shared)
+struct BookingServiceKey: EnvironmentKey {
+    static let defaultValue: BookingService = BookingServiceImpl(httpService: HttpServiceImpl.shared)
 }
 
 // MARK: - Environment Values
@@ -35,28 +35,28 @@ extension EnvironmentValues {
         get { self[ToastManagerKey.self] }
         set { self[ToastManagerKey.self] = newValue }
     }
-    
+
     // MARK: User Service
     var userService: UserService {
         get { self[UserServiceKey.self] }
         set { self[UserServiceKey.self] = newValue }
     }
-    
+
     // MARK: Auth Service
     var authService: AuthService {
         get { self[AuthServiceKey.self] }
         set { self[AuthServiceKey.self] = newValue }
     }
-    
+
     // MARK: Hotel Service
     var hotelService: HotelService {
         get { self[HotelServiceKey.self] }
         set { self[HotelServiceKey.self] = newValue }
     }
-    
-    // MARK: Reservation Service
-    var reservationService: ReservationService {
-        get { self[ReservationServiceKey.self] }
-        set { self[ReservationServiceKey.self] = newValue }
+
+    // MARK: Booking Service
+    var bookingService: BookingService {
+        get { self[BookingServiceKey.self] }
+        set { self[BookingServiceKey.self] = newValue }
     }
 }

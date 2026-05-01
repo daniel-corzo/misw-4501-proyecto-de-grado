@@ -28,18 +28,18 @@ struct PriceBreakdownView: View {
 
             PriceRow(
                 label:
-                    String(localized: .CreateReservation.pricePerNight(pricePerNight: habitacion.monto.formatted(.number), nights: nights)),
+                    String(localized: .CreateBooking.pricePerNight(pricePerNight: habitacion.monto.formatted(.number), nights: nights)),
                 amount: subtotal
             )
 
-            PriceRow(label: String(localized: .CreateReservation.serviceFee), amount: serviceFee)
+            PriceRow(label: String(localized: .CreateBooking.serviceFee), amount: serviceFee)
 
-            PriceRow(label: String(localized: .CreateReservation.occupancyTaxes), amount: habitacion.impuestos)
+            PriceRow(label: String(localized: .CreateBooking.occupancyTaxes), amount: habitacion.impuestos)
 
             Divider()
 
             HStack {
-                Text(LocalizedStringResource.CreateReservation.total)
+                Text(LocalizedStringResource.CreateBooking.total)
                     .font(.headline)
                     .fontWeight(.bold)
 

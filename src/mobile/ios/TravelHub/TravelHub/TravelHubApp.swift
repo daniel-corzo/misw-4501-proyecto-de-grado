@@ -11,14 +11,14 @@ import SwiftUI
 struct TravelHubApp: App {
     @State private var toastManager = ToastManager()
     @State private var router = Router()
-    
+
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environment(\.userService, UserServiceImpl(httpService: HttpServiceImpl.shared))
                 .environment(\.authService, AuthServiceImpl(httpService: HttpServiceImpl.shared))
                 .environment(\.hotelService, HotelServiceImpl(httpService: HttpServiceImpl.shared))
-                .environment(\.reservationService, ReservationServiceImpl(httpService: HttpServiceImpl.shared))
+                .environment(\.bookingService, BookingServiceImpl(httpService: HttpServiceImpl.shared))
                 .environment(\.toastManager, toastManager)
                 .toastOverlay(toastManager: toastManager)
                 .environment(router)

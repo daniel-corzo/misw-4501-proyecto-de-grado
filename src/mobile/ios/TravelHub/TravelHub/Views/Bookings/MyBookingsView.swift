@@ -6,8 +6,9 @@
 import SwiftUI
 
 struct MyBookingsView: View {
-    @Environment(\.reservationService) private var reservationService
+    @Environment(\.bookingService) private var bookingService
     @Environment(\.toastManager) private var toastManager
+    @Environment(Router.self) private var router
 
     @State private var viewModel = ViewModel()
 
@@ -49,24 +50,29 @@ struct MyBookingsView: View {
                 Spacer()
             } else if viewModel.hasError {
                 errorStateView
-            } else if viewModel.reservations.isEmpty {
+            } else if viewModel.bookings.isEmpty {
                 emptyStateView
             } else {
-                reservationsList
+                bookingsList
             }
         }
         .navigationTitle(LocalizedStringResource.MyBookings.navigationTitle)
         .navigationBarTitleDisplayMode(.inline)
         .task(id: viewModel.selectedTab) {
-            viewModel.reservationService = reservationService
+            if let pending = router.pendingBookingTab {
+                router.pendingBookingTab = nil
+                viewModel.selectedTab = pending
+                return
+            }
+            viewModel.bookingService = bookingService
             viewModel.toastManager = toastManager
-            await viewModel.fetchReservations()
+            await viewModel.fetchBookings()
         }
     }
 
-    // MARK: - Reservations List
+    // MARK: - Bookings List
 
-    private var reservationsList: some View {
+    private var bookingsList: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
                 // Section header
@@ -75,15 +81,15 @@ struct MyBookingsView: View {
                         .font(.title3)
                         .fontWeight(.bold)
 
-                    Text(viewModel.selectedTab.bookingCountMessage(viewModel.reservations.count))
+                    Text(viewModel.selectedTab.bookingCountMessage(viewModel.bookings.count))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
                 .padding(.horizontal, 4)
 
                 // Cards
-                ForEach(viewModel.reservations) { reservation in
-                    BookingCardView(reservation: reservation)
+                ForEach(viewModel.bookings) { booking in
+                    BookingCardView(booking: booking)
                 }
             }
             .padding(.horizontal, 20)
@@ -131,7 +137,7 @@ struct MyBookingsView: View {
 
             Button {
                 Task {
-                    await viewModel.fetchReservations()
+                    await viewModel.fetchBookings()
                 }
             } label: {
                 Text(LocalizedStringResource.MyBookings.retry)

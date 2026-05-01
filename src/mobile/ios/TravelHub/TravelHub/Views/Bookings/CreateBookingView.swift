@@ -1,5 +1,5 @@
 //
-//  CreateReservationView.swift
+//  CreateBookingView.swift
 //  TravelHub
 //
 //  Created by Andres Donoso on 17/04/26.
@@ -7,11 +7,11 @@
 
 import SwiftUI
 
-struct CreateReservationView: View {
+struct CreateBookingView: View {
     let hotel: Hotel
-    let reservation: ModifyReservation?
+    let booking: ModifyBooking?
 
-    @Environment(\.reservationService) private var reservationService
+    @Environment(\.bookingService) private var bookingService
     @Environment(\.toastManager) private var toastManager
     @Environment(\.dismiss) private var dismiss
     @Environment(Router.self) private var router
@@ -26,17 +26,17 @@ struct CreateReservationView: View {
 
     private var isButtonDisabled: Bool {
         print("Date Range: \(self.dateRange.start == self.dateRange.end)")
-        print("Reservation: \(self.reservation != nil) | Was Modified: \(self.wasModified)")
+        print("Booking: \(self.booking != nil) | Was Modified: \(self.wasModified)")
         print("Is Loading: \(self.viewModel.isLoading)")
-        
+
         if self.dateRange.start == self.dateRange.end {
             return true
         }
 
-        if self.reservation != nil && !self.wasModified {
+        if self.booking != nil && !self.wasModified {
             return true
         }
-        
+
         if self.viewModel.isLoading {
             return true
         }
@@ -45,34 +45,34 @@ struct CreateReservationView: View {
     }
 
     private var wasModified: Bool {
-        if let reservation = self.reservation {
-            return reservation.habitacionID != self.selectedHabitacion.id
-                || reservation.fechaEntrada != self.dateRange.start
-                || reservation.fechaSalida != self.dateRange.end
-                || reservation.numHuespedes != self.guests
+        if let booking = self.booking {
+            return booking.habitacionID != self.selectedHabitacion.id
+                || booking.fechaEntrada != self.dateRange.start
+                || booking.fechaSalida != self.dateRange.end
+                || booking.numHuespedes != self.guests
         }
 
         return false
     }
 
     private func getModificationValue() -> Double {
-        guard let reservation = self.reservation else {
+        guard let booking = self.booking else {
             return 0
         }
 
         let modificationBaseValue = self.hotel.valorMinimoModificacion
         let currentRoomValue =
             self.hotel.habitaciones.first(where: {
-                $0.id == reservation.habitacionID
+                $0.id == booking.habitacionID
             })?.monto ?? 0
         let newRoomValue = self.selectedHabitacion.monto
 
         return modificationBaseValue + max(newRoomValue - currentRoomValue, 0)
     }
 
-    init(hotel: Hotel, reservation: ModifyReservation? = nil) {
+    init(hotel: Hotel, booking: ModifyBooking? = nil) {
         self.hotel = hotel
-        self.reservation = reservation
+        self.booking = booking
         self._selectedHabitacion = .init(
             initialValue: hotel.habitaciones.first!
         )
@@ -97,7 +97,7 @@ struct CreateReservationView: View {
                     selectedHabitacion: $selectedHabitacion
                 )
 
-                if reservation == nil {
+                if booking == nil {
                     PriceBreakdownView(
                         habitacion: self.selectedHabitacion,
                         dateRange: dateRange
@@ -106,7 +106,7 @@ struct CreateReservationView: View {
                     VStack(spacing: 12) {
                         HStack {
                             Text(
-                                LocalizedStringResource.CreateReservation
+                                LocalizedStringResource.CreateBooking
                                     .totalForModify
                             )
                             .font(.headline)
@@ -134,22 +134,22 @@ struct CreateReservationView: View {
             .padding(.top, 16)
         }
         .navigationTitle(
-            LocalizedStringResource.CreateReservation.navigationTitle
+            LocalizedStringResource.CreateBooking.navigationTitle
         )
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
             Button {
                 // TODO: Navigate to payment
                 Task {
-                    if let reservation = self.reservation {
+                    if let booking = self.booking {
                         let didSave = await self.viewModel.modify(
-                            id: reservation.id,
+                            id: booking.id,
                             habitacionId: self.selectedHabitacion.id,
                             fechaEntrada: self.dateRange.start,
                             fechaSalida: self.dateRange.end,
                             numHuespedes: self.guests
                         )
-                        
+
                         if didSave {
                             dismiss()
                         }
@@ -160,7 +160,7 @@ struct CreateReservationView: View {
                             fechaSalida: self.dateRange.end,
                             numHuespedes: self.guests
                         )
-                        
+
                         if didSave {
                             router.switchTab(to: .bookings)
                         }
@@ -169,9 +169,9 @@ struct CreateReservationView: View {
             } label: {
                 HStack {
                     Text(
-                        reservation == nil
-                            ? LocalizedStringResource.CreateReservation.createBooking
-                            : LocalizedStringResource.CreateReservation.modifyBooking
+                        booking == nil
+                            ? LocalizedStringResource.CreateBooking.createBooking
+                            : LocalizedStringResource.CreateBooking.modifyBooking
                     )
                     .font(.headline)
                     .fontWeight(.semibold)
@@ -189,18 +189,18 @@ struct CreateReservationView: View {
             .background(.ultraThinMaterial)
         }
         .task {
-            self.viewModel.reservationService = self.reservationService
+            self.viewModel.bookingService = self.bookingService
             self.viewModel.toastManager = self.toastManager
         }
         .onAppear {
-            if let reservation = self.reservation {
+            if let booking = self.booking {
                 self.dateRange = .init(
-                    start: reservation.fechaEntrada,
-                    end: reservation.fechaSalida
+                    start: booking.fechaEntrada,
+                    end: booking.fechaSalida
                 )
-                self.guests = reservation.numHuespedes
+                self.guests = booking.numHuespedes
                 self.selectedHabitacion = self.hotel.habitaciones.first(where: {
-                    $0.id == reservation.habitacionID
+                    $0.id == booking.habitacionID
                 }) ?? self.hotel.habitaciones.first!
             } else {
                 self.selectedHabitacion = self.hotel.habitaciones.first!
@@ -256,7 +256,7 @@ struct CreateReservationView: View {
     ]
 
     NavigationStack {
-        CreateReservationView(
+        CreateBookingView(
             hotel: Hotel(
                 id: UUID(),
                 nombre: "Grand Plaza Hotel",
@@ -282,7 +282,7 @@ struct CreateReservationView: View {
                 habitaciones: habitaciones,
                 precioMinimo: 420000
             ),
-            reservation: ModifyReservation(
+            booking: ModifyBooking(
                 id: UUID(),
                 habitacionID: habitaciones.first!.id,
                 fechaEntrada: Calendar.current.date(

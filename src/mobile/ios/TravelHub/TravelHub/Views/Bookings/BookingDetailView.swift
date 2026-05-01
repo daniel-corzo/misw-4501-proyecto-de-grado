@@ -1,14 +1,14 @@
 //
-//  ReservationDetailView.swift
+//  BookingDetailView.swift
 //  TravelHub
 //
 
 import SwiftUI
 
-struct ReservationDetailView: View {
-    let reservationId: UUID
+struct BookingDetailView: View {
+    let bookingId: UUID
 
-    @Environment(\.reservationService) private var reservationService
+    @Environment(\.bookingService) private var bookingService
     @Environment(\.hotelService) private var hotelService
     @Environment(\.toastManager) private var toastManager
     @Environment(\.dismiss) private var dismiss
@@ -23,25 +23,25 @@ struct ReservationDetailView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if viewModel.hasError {
                 errorView
-            } else if let reservation = viewModel.reservation {
-                successView(reservation)
+            } else if let booking = viewModel.booking {
+                successView(booking)
             }
         }
-        .navigationTitle(LocalizedStringResource.ReservationDetail.navigationTitle)
+        .navigationTitle(LocalizedStringResource.BookingDetail.navigationTitle)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
         .task {
-            viewModel.reservationService = reservationService
+            viewModel.bookingService = bookingService
             viewModel.toastManager = toastManager
             viewModel.hotelService = hotelService
-            await viewModel.fetchDetail(reservationId: reservationId)
-            
-            if let reservation = self.viewModel.reservation, let hotelId = reservation.hotel.id {
+            await viewModel.fetchDetail(bookingId: bookingId)
+
+            if let booking = self.viewModel.booking, let hotelId = booking.hotel.id {
                 await viewModel.fetchHotelDetail(id: hotelId)
             }
         }
         .refreshable {
-            await viewModel.fetchDetail(reservationId: reservationId)
+            await viewModel.fetchDetail(bookingId: bookingId)
         }
         .onChange(of: viewModel.didCancel) { _, didCancel in
             if didCancel {
@@ -52,23 +52,23 @@ struct ReservationDetailView: View {
 
     // MARK: - Success Content
 
-    private func successView(_ reservation: ReservationDetailDTO) -> some View {
+    private func successView(_ booking: BookingDetailDTO) -> some View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(spacing: 20) {
-                    statusCard(reservation)
-                    hotelCard(reservation)
-                    datesCard(reservation)
-                    roomCard(reservation)
+                    statusCard(booking)
+                    hotelCard(booking)
+                    datesCard(booking)
+                    roomCard(booking)
                     qrCodeCard
-                    contactCard(reservation)
+                    contactCard(booking)
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 16)
                 .padding(.bottom, 24)
             }
 
-            if reservation.estado == .confirmada || reservation.estado == .pendiente {
+            if booking.estado == .confirmada || booking.estado == .pendiente {
                 footerButtons
             }
         }
@@ -76,23 +76,23 @@ struct ReservationDetailView: View {
 
     // MARK: - Status Card
 
-    private func statusCard(_ reservation: ReservationDetailDTO) -> some View {
+    private func statusCard(_ booking: BookingDetailDTO) -> some View {
         VStack(spacing: 12) {
-            Image(systemName: reservation.estado.detailIcon)
+            Image(systemName: booking.estado.detailIcon)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 48, height: 48)
-                .foregroundStyle(reservation.estado.badgeColor)
+                .foregroundStyle(booking.estado.badgeColor)
 
-            Text(reservation.estado.badgeLabel)
+            Text(booking.estado.badgeLabel)
                 .font(.headline)
                 .fontWeight(.bold)
-                .foregroundStyle(reservation.estado.badgeColor)
+                .foregroundStyle(booking.estado.badgeColor)
 
             Text(
                 String(
-                    localized: .ReservationDetail.bookingId(
-                        reservation.codigoReserva
+                    localized: .BookingDetail.bookingId(
+                        booking.codigoReserva
                     )
                 )
             )
@@ -108,10 +108,10 @@ struct ReservationDetailView: View {
 
     // MARK: - Hotel Card
 
-    private func hotelCard(_ reservation: ReservationDetailDTO) -> some View {
+    private func hotelCard(_ booking: BookingDetailDTO) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             // Hotel image
-            AsyncImage(url: reservation.hotel.imagenes.first.flatMap { URL(string: $0) }) { phase in
+            AsyncImage(url: booking.hotel.imagenes.first.flatMap { URL(string: $0) }) { phase in
                 switch phase {
                 case .success(let image):
                     Color.clear
@@ -147,13 +147,13 @@ struct ReservationDetailView: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text(reservation.hotel.nombre)
+                    Text(booking.hotel.nombre)
                         .font(.title3)
                         .fontWeight(.bold)
 
                     Spacer()
 
-                    if let stars = reservation.hotel.estrellas {
+                    if let stars = booking.hotel.estrellas {
                         HStack(spacing: 2) {
                             Text("\(stars)")
                                 .font(.subheadline)
@@ -165,11 +165,11 @@ struct ReservationDetailView: View {
                     }
                 }
 
-                if let address = reservation.hotel.direccion {
+                if let address = booking.hotel.direccion {
                     HStack(spacing: 4) {
                         Image(systemName: "mappin.and.ellipse")
                             .font(.caption)
-                        Text(hotelLocationText(reservation.hotel, address: address))
+                        Text(hotelLocationText(booking.hotel, address: address))
                             .font(.subheadline)
                     }
                     .foregroundStyle(.secondary)
@@ -185,22 +185,22 @@ struct ReservationDetailView: View {
 
     // MARK: - Dates Card
 
-    private func datesCard(_ reservation: ReservationDetailDTO) -> some View {
+    private func datesCard(_ booking: BookingDetailDTO) -> some View {
         HStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(LocalizedStringResource.ReservationDetail.checkIn)
+                Text(LocalizedStringResource.BookingDetail.checkIn)
                     .font(.caption)
                     .fontWeight(.semibold)
                     .foregroundStyle(.accent)
 
-                Text(formattedDate(reservation.fechaEntrada))
+                Text(formattedDate(booking.fechaEntrada))
                     .font(.headline)
                     .fontWeight(.bold)
 
-                if let checkIn = reservation.hotel.checkIn {
+                if let checkIn = booking.hotel.checkIn {
                     Text(
                         String(
-                            localized: .ReservationDetail.fromTime(
+                            localized: .BookingDetail.fromTime(
                                 formattedTime(checkIn)
                             )
                         )
@@ -215,19 +215,19 @@ struct ReservationDetailView: View {
                 .frame(height: 60)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(LocalizedStringResource.ReservationDetail.checkOut)
+                Text(LocalizedStringResource.BookingDetail.checkOut)
                     .font(.caption)
                     .fontWeight(.semibold)
                     .foregroundStyle(.accent)
 
-                Text(formattedDate(reservation.fechaSalida))
+                Text(formattedDate(booking.fechaSalida))
                     .font(.headline)
                     .fontWeight(.bold)
 
-                if let checkOut = reservation.hotel.checkOut {
+                if let checkOut = booking.hotel.checkOut {
                     Text(
                         String(
-                            localized: .ReservationDetail.beforeTime(
+                            localized: .BookingDetail.beforeTime(
                                 formattedTime(checkOut)
                             )
                         )
@@ -247,18 +247,18 @@ struct ReservationDetailView: View {
 
     // MARK: - Room Card
 
-    private func roomCard(_ reservation: ReservationDetailDTO) -> some View {
+    private func roomCard(_ booking: BookingDetailDTO) -> some View {
         HStack(spacing: 12) {
             Image(systemName: "bed.double.fill")
                 .foregroundStyle(.accent)
                 .font(.title3)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(reservation.habitacion.nombre)
+                Text(booking.habitacion.nombre)
                     .font(.subheadline)
                     .fontWeight(.semibold)
 
-                let details = roomDetailsText(reservation)
+                let details = roomDetailsText(booking)
                 if !details.isEmpty {
                     Text(details)
                         .font(.caption)
@@ -278,7 +278,7 @@ struct ReservationDetailView: View {
 
     private var qrCodeCard: some View {
         VStack(spacing: 12) {
-            Text(LocalizedStringResource.ReservationDetail.qrTitle)
+            Text(LocalizedStringResource.BookingDetail.qrTitle)
                 .font(.subheadline)
                 .fontWeight(.semibold)
 
@@ -294,7 +294,7 @@ struct ReservationDetailView: View {
                         .foregroundStyle(.gray.opacity(0.5))
                 }
 
-            Text(LocalizedStringResource.ReservationDetail.qrDescription)
+            Text(LocalizedStringResource.BookingDetail.qrDescription)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -309,13 +309,13 @@ struct ReservationDetailView: View {
 
     // MARK: - Contact Card
 
-    private func contactCard(_ reservation: ReservationDetailDTO) -> some View {
+    private func contactCard(_ booking: BookingDetailDTO) -> some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text(LocalizedStringResource.ReservationDetail.hotelContact)
+            Text(LocalizedStringResource.BookingDetail.hotelContact)
                 .font(.headline)
                 .fontWeight(.bold)
 
-            if let phone = reservation.hotel.contactoCelular, !phone.isEmpty {
+            if let phone = booking.hotel.contactoCelular, !phone.isEmpty {
                 Button {
                     if let url = URL(string: "tel:\(phone.filter { $0.isNumber || $0 == "+" })") {
                         UIApplication.shared.open(url)
@@ -333,7 +333,7 @@ struct ReservationDetailView: View {
                                 .font(.subheadline)
                                 .fontWeight(.medium)
                                 .foregroundStyle(.primary)
-                            Text(LocalizedStringResource.ReservationDetail.directFrontDesk)
+                            Text(LocalizedStringResource.BookingDetail.directFrontDesk)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -343,7 +343,7 @@ struct ReservationDetailView: View {
                 }
             }
 
-            if let email = reservation.hotel.contactoEmail, !email.isEmpty {
+            if let email = booking.hotel.contactoEmail, !email.isEmpty {
                 Button {
                     if let url = URL(string: "mailto:\(email)") {
                         UIApplication.shared.open(url)
@@ -361,7 +361,7 @@ struct ReservationDetailView: View {
                                 .font(.subheadline)
                                 .fontWeight(.medium)
                                 .foregroundStyle(.primary)
-                            Text(LocalizedStringResource.ReservationDetail.conciergeServices)
+                            Text(LocalizedStringResource.BookingDetail.conciergeServices)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -383,24 +383,24 @@ struct ReservationDetailView: View {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withFullDate]
         formatter.timeZone = .current
-        
+
         return HStack(spacing: 16) {
                 NavigationLink {
                     if let hotel = self.viewModel.hotel,
-                       let reservation = self.viewModel.reservation {
-                        CreateReservationView(
+                       let booking = self.viewModel.booking {
+                        CreateBookingView(
                             hotel: hotel,
-                            reservation: ModifyReservation(
-                                id: reservation.id,
-                                habitacionID: reservation.habitacion.id,
-                                fechaEntrada: formatter.date(from: reservation.fechaEntrada) ?? .init(),
-                                fechaSalida: formatter.date(from: reservation.fechaSalida) ?? .init(),
-                                numHuespedes: reservation.numHuespedes
+                            booking: ModifyBooking(
+                                id: booking.id,
+                                habitacionID: booking.habitacion.id,
+                                fechaEntrada: formatter.date(from: booking.fechaEntrada) ?? .init(),
+                                fechaSalida: formatter.date(from: booking.fechaSalida) ?? .init(),
+                                numHuespedes: booking.numHuespedes
                             )
                         )
                     }
                 } label: {
-                    Text(LocalizedStringResource.ReservationDetail.modify)
+                    Text(LocalizedStringResource.BookingDetail.modify)
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundStyle(.accent)
@@ -411,7 +411,7 @@ struct ReservationDetailView: View {
                                 .stroke(Color.accentColor, lineWidth: 2)
                         )
                 }
-                .disabled(viewModel.isCancelling || self.viewModel.reservation == nil || self.viewModel.hotel == nil)
+                .disabled(viewModel.isCancelling || self.viewModel.booking == nil || self.viewModel.hotel == nil)
 
             Button(role: .destructive) {
                 showCancelConfirmation = true
@@ -421,7 +421,7 @@ struct ReservationDetailView: View {
                         ProgressView()
                             .tint(.white)
                     } else {
-                        Text(LocalizedStringResource.ReservationDetail.cancel)
+                        Text(LocalizedStringResource.BookingDetail.cancel)
                     }
                 }
                 .font(.subheadline)
@@ -434,20 +434,20 @@ struct ReservationDetailView: View {
             }
             .disabled(viewModel.isCancelling)
             .confirmationDialog(
-                String(localized: .ReservationDetail.cancelConfirmTitle),
+                String(localized: .BookingDetail.cancelConfirmTitle),
                 isPresented: $showCancelConfirmation,
                 titleVisibility: .visible
             ) {
                 Button(
-                    String(localized: .ReservationDetail.cancelConfirmAction),
+                    String(localized: .BookingDetail.cancelConfirmAction),
                     role: .destructive
                 ) {
                     Task {
-                        await viewModel.cancelReservation(reservationId: reservationId)
+                        await viewModel.cancelBooking(bookingId: bookingId)
                     }
                 }
             } message: {
-                Text(LocalizedStringResource.ReservationDetail.cancelConfirmMessage)
+                Text(LocalizedStringResource.BookingDetail.cancelConfirmMessage)
             }
         }
         .padding(.horizontal, 20)
@@ -467,7 +467,7 @@ struct ReservationDetailView: View {
                 .frame(width: 56, height: 56)
                 .foregroundStyle(.orange)
 
-            Text(viewModel.errorMessage ?? String(localized: .ReservationDetail.errorGeneric))
+            Text(viewModel.errorMessage ?? String(localized: .BookingDetail.errorGeneric))
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -475,10 +475,10 @@ struct ReservationDetailView: View {
 
             Button {
                 Task {
-                    await viewModel.fetchDetail(reservationId: reservationId)
+                    await viewModel.fetchDetail(bookingId: bookingId)
                 }
             } label: {
-                Text(LocalizedStringResource.ReservationDetail.retry)
+                Text(LocalizedStringResource.BookingDetail.retry)
                     .fontWeight(.semibold)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 32)
@@ -533,20 +533,20 @@ struct ReservationDetailView: View {
         return formatter.string(from: date)
     }
 
-    private func hotelLocationText(_ hotel: ReservationHotelDTO, address: String) -> String {
+    private func hotelLocationText(_ hotel: BookingHotelDTO, address: String) -> String {
         var parts = [address]
         if let city = hotel.ciudad { parts.append(city) }
         if let country = hotel.pais { parts.append(country) }
         return parts.joined(separator: ", ")
     }
 
-    private func roomDetailsText(_ reservation: ReservationDetailDTO) -> String {
+    private func roomDetailsText(_ booking: BookingDetailDTO) -> String {
         var parts: [String] = []
         parts.append(
-            String(localized: .ReservationDetail.guests(reservation.numHuespedes))
+            String(localized: .BookingDetail.guests(booking.numHuespedes))
         )
 
-        let amenities = reservation.amenidadesHotel.compactMap { raw in
+        let amenities = booking.amenidadesHotel.compactMap { raw in
             HotelAmenity(rawValue: raw)
         }
         let featured = amenities.filter(\.isFeatured).prefix(3)
@@ -573,6 +573,6 @@ extension EstadoReserva {
 
 #Preview {
     NavigationStack {
-        ReservationDetailView(reservationId: UUID())
+        BookingDetailView(bookingId: UUID())
     }
 }
