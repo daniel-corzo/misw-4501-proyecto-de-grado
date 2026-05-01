@@ -10,7 +10,7 @@ from fastapi import HTTPException, status
 from app.config import Settings
 from app.models.pago import EstadoPago, Pago
 from app.schemas.pago import PagarRequest, PayloadTarjetaInterno, PagoResponse
-from app.services.crypto_pago import DecifradoTarjetaError, descifrar_payload_rsa_base64, ultimos_cuatro_digitos
+from app.services.crypto_pago import DescifradoTarjetaError, descifrar_payload_rsa_base64, ultimos_cuatro_digitos
 
 
 def _pago_to_response(pago: Pago) -> PagoResponse:
@@ -37,7 +37,7 @@ async def registrar_pago_response(
         raw = descifrar_payload_rsa_base64(settings.pago_rsa_private_key_pem, body.payload_cifrado)
         tarjeta = PayloadTarjetaInterno.model_validate_json(raw.decode("utf-8"))
         ultimos = ultimos_cuatro_digitos(tarjeta.numero)
-    except DecifradoTarjetaError as exc:
+    except DescifradoTarjetaError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise HTTPException(status_code=400, detail="Datos de tarjeta invalidos") from exc
@@ -50,7 +50,7 @@ async def registrar_pago_response(
 
     pago = Pago(
         monto=body.monto,
-        medio_de_pago=body.medio_de_pago.strip(),
+        medio_de_pago=body.medio_de_pago,
         estado=estado,
         tarjeta_ultimos_4=ultimos,
     )

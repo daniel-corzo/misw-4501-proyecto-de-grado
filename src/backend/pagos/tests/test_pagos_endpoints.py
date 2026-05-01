@@ -131,6 +131,25 @@ async def client_pagos(mock_db_session, pagos_app_settings):
 
 
 @pytest.mark.asyncio
+async def test_post_pagar_422_medio_de_pago_solo_espacios(client_pagos, rsa_keys):
+    _, pub = rsa_keys
+    inner = _synthetic_tarjeta_inner()
+    payload_b64 = _encrypt_inner_json(pub, inner)
+
+    response = await client_pagos.post(
+        "/pagos/pagar",
+        json={
+            "monto": 1000,
+            "medio_de_pago": "   ",
+            "debe_fallar": False,
+            "payload_cifrado": payload_b64,
+        },
+    )
+
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_post_pagar_201_successful(client_pagos, mock_db_session, rsa_keys):
     _, pub = rsa_keys
     inner = _synthetic_tarjeta_inner()
@@ -140,7 +159,7 @@ async def test_post_pagar_201_successful(client_pagos, mock_db_session, rsa_keys
         "/pagos/pagar",
         json={
             "monto": 1000,
-            "medio_de_pago": "tarjeta_credito",
+            "medio_de_pago": "  tarjeta_credito  ",
             "debe_fallar": False,
             "payload_cifrado": payload_b64,
         },

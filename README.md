@@ -15,7 +15,7 @@ Este repositorio contiene el MVP desarrollado como proyecto de grado.
 |------|-----------|
 | Web | Angular 19 |
 | Móvil | SwiftUI (iOS) |
-| Backend | FastAPI (Python 3.12) — 5 microservicios |
+| Backend | FastAPI (Python 3.12) — 6 microservicios |
 | Base de datos | PostgreSQL |
 | Caché | Redis |
 | Cloud | AWS (ECS Fargate, ALB, SQS, RDS Aurora) |
@@ -34,6 +34,7 @@ src/
 │   ├── busquedas/     # Motor de búsqueda de alojamiento
 │   ├── hoteles/       # Gestión de propiedades y tarifas
 │   ├── reservas/      # Procesamiento de reservas
+│   ├── pagos/         # Cobros con payload de tarjeta cifrado (RSA-OAEP)
 │   └── notificaciones/# Notificaciones y alertas
 ├── infrastructure/    # Terraform + AWS
 └── tests/e2e/         # Pruebas end-to-end
@@ -48,12 +49,20 @@ src/
 
 ### Backend
 
-1. Generar llaves JWT:
+1. Generar llaves **JWT** con el script del repo (desde la raíz):
    ```bash
-   python generate_keys.py
+   python utils/generate_keys.py
    ```
+   Copia los valores que imprime (`PRIVATE_KEY` / `PUBLIC_KEY`) a `JWT_PRIVATE_KEY` y `JWT_PUBLIC_KEY` en tu `.env`.
 
-2. Crear `.env` en la raíz (ver plantilla abajo) y levantar:
+2. Generar otro par **RSA solo para pagos**: ejecuta **el mismo script otra vez** (cada corrida crea un par nuevo). **No reutilices** las llaves JWT. El PEM privado que imprime como `PRIVATE_KEY` es compatible con el servicio `pagos` (formato tradicional OpenSSL, `BEGIN RSA PRIVATE KEY`).
+   ```bash
+   python utils/generate_keys.py
+   ```
+   - Asigna ese `PRIVATE_KEY` a `PAGO_RSA_PRIVATE_KEY_PEM` en el `.env` (misma forma que con JWT: comillas y `\n`, o PEM multilínea).
+   - Guarda el `PUBLIC_KEY` correspondiente para el **cliente** (web/móvil): con esa clave pública se **cifra** el JSON de la tarjeta antes de enviarlo en `payload_cifrado` (Base64 del ciphertext RSA-OAEP).
+
+3. Crear `.env` en la raíz (ver plantilla abajo) y levantar:
    ```bash
    docker-compose up --build
    ```
@@ -64,8 +73,9 @@ ENVIRONMENT=local
 POSTGRES_USER=travelhub
 POSTGRES_PASSWORD=travelhub
 POSTGRES_DB=travelhub
-JWT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----...-----END PRIVATE KEY-----"
+JWT_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----...-----END RSA PRIVATE KEY-----"
 JWT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----...-----END PUBLIC KEY-----"
+PAGO_RSA_PRIVATE_KEY_PEM="-----BEGIN RSA PRIVATE KEY-----...-----END RSA PRIVATE KEY-----"
 AWS_REGION=us-east-1
 REDIS_URL=redis://redis:6379
 SQS_ENDPOINT=http://localstack:4566
@@ -92,6 +102,7 @@ Web en `http://localhost:4200`
 | hoteles | 8004 | http://localhost:8004/docs |
 | reservas | 8006 | http://localhost:8006/docs |
 | notificaciones | 8007 | http://localhost:8007/docs |
+| pagos | 8008 | http://localhost:8008/docs |
 
 El Swagger UI unificado en `http://localhost:8080/docs` agrupa todos los servicios con un dropdown para navegar entre ellos.
 
