@@ -56,6 +56,7 @@ struct ListHotelView: View {
                         .foregroundColor(viewModel.hasActiveFilters ? .white : .gray)
                         .cornerRadius(12)
                 }
+                .accessibilityLabel(Text(LocalizedStringResource.HotelList.filterAndSort))
                 .sheet(isPresented: $showFilterSheet) {
                     FilterSortView(viewModel: viewModel) {
                         Task {
@@ -68,29 +69,45 @@ struct ListHotelView: View {
             .padding(.horizontal)
 
             // Hotel list
-            ScrollView {
-                LazyVStack(spacing: 24) {
-                    ForEach(filteredHotels) { hotel in
+            if filteredHotels.isEmpty && !viewModel.isLoadingMore {
+                ContentUnavailableView(
+                    String(localized: .HotelList.noResultsTitle),
+                    systemImage: "magnifyingglass",
+                    description: Text(LocalizedStringResource.HotelList.noResultsMessage)
+                )
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 24) {
+                        ForEach(filteredHotels) { hotel in
 
-                        Button {
-                            router.navigate(to: .hotelDetail(hotel.id))
-                        } label: {
-                            ListElementView(
-                                id: hotel.id,
-                                imageURL: hotel.images.first ?? "",
-                                title: hotel.nombre,
-                                location: hotel.ciudad,
-                                price: (hotel.precioMinimo).formatted(.currency(code: "COP")),
-                                rating: hotel.estrellas,
-                                fetchHotelDetail: { return await self.viewModel.fetchHotelDetail(hotelId: hotel.id, toastManager: self.toastManager) }
-                            )
+                            Button {
+                                router.navigate(to: .hotelDetail(hotel.id))
+                            } label: {
+                                ListElementView(
+                                    id: hotel.id,
+                                    imageURL: hotel.images.first ?? "",
+                                    title: hotel.nombre,
+                                    location: hotel.ciudad,
+                                    price: (hotel.precioMinimo).formatted(.currency(code: "COP")),
+                                    rating: hotel.estrellas,
+                                    fetchHotelDetail: { return await self.viewModel.fetchHotelDetail(hotelId: hotel.id, toastManager: self.toastManager) }
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.horizontal)
+                            .task {
+                                await viewModel.loadMoreIfNeeded(currentHotel: hotel, toastManager: toastManager)
+                            }
                         }
-                        .buttonStyle(.plain)
-                        .padding(.horizontal)
+
+                        if viewModel.isLoadingMore {
+                            ProgressView()
+                                .padding()
+                        }
                     }
+                    .padding(.top)
+                    .padding(.bottom, 20)
                 }
-                .padding(.top)
-                .padding(.bottom, 20)
             }
         }
         .task {

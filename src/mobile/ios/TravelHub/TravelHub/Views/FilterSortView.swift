@@ -118,10 +118,16 @@ struct FilterSortView: View {
         dismiss()
     }
 
+    private typealias Defaults = ListHotelView.ViewModel
+
+    private func formatPrice(_ value: Double) -> String {
+        Int(value).formatted(.currency(code: "COP").precision(.fractionLength(0)))
+    }
+
     private func reset() {
-        sortOrder = .recommended
-        priceLow = 0
-        priceHigh = 1_000_000
+        sortOrder = Defaults.defaultSortOrder
+        priceLow = Defaults.defaultPriceLow
+        priceHigh = Defaults.defaultPriceHigh
         selectedStars = []
         selectedAmenities = []
     }
@@ -223,7 +229,7 @@ struct FilterSortView: View {
 
                 Spacer()
 
-                Text("$\(Int(priceLow).formatted()) - $\(Int(priceHigh).formatted())")
+                Text("\(formatPrice(priceLow)) - \(formatPrice(priceHigh))")
                     .foregroundStyle(.blue)
                     .fontWeight(.medium)
             }
@@ -231,19 +237,19 @@ struct FilterSortView: View {
             PriceRangeSlider(
                 lowValue: $priceLow,
                 highValue: $priceHigh,
-                bounds: 0...1_000_000,
+                bounds: Defaults.defaultPriceLow...Defaults.defaultPriceHigh,
                 step: 10_000
             )
             .padding(.vertical, 4)
 
             HStack {
-                Text("$0")
+                Text(formatPrice(Defaults.defaultPriceLow))
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
                 Spacer()
 
-                Text("$1,000,000+")
+                Text("\(formatPrice(Defaults.defaultPriceHigh))+")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -308,26 +314,23 @@ struct FilterSortView: View {
                 .font(.headline)
 
             ForEach(featuredAmenities, id: \.self) { amenity in
-                HStack {
-                    Image(systemName: amenity.icon)
-                        .frame(width: 24)
-                        .foregroundStyle(.secondary)
-
-                    Text(amenity.localizedName)
-
-                    Spacer()
-
-                    Toggle("", isOn: Binding(
-                        get: { selectedAmenities.contains(amenity) },
-                        set: { isOn in
-                            if isOn {
-                                selectedAmenities.insert(amenity)
-                            } else {
-                                selectedAmenities.remove(amenity)
-                            }
+                Toggle(isOn: Binding(
+                    get: { selectedAmenities.contains(amenity) },
+                    set: { isOn in
+                        if isOn {
+                            selectedAmenities.insert(amenity)
+                        } else {
+                            selectedAmenities.remove(amenity)
                         }
-                    ))
-                    .labelsHidden()
+                    }
+                )) {
+                    HStack {
+                        Image(systemName: amenity.icon)
+                            .frame(width: 24)
+                            .foregroundStyle(.secondary)
+
+                        Text(amenity.localizedName)
+                    }
                 }
             }
         }

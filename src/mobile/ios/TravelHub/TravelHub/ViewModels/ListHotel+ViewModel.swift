@@ -9,7 +9,6 @@ import Foundation
 import SwiftUI
 
 enum HotelSortOrder: CaseIterable, Identifiable {
-    case recommended
     case priceLowToHigh
     case priceHighToLow
     case ratingHighToLow
@@ -18,7 +17,7 @@ enum HotelSortOrder: CaseIterable, Identifiable {
 
     var queryValue: String {
         switch self {
-        case .recommended, .ratingHighToLow: return "rating_desc"
+        case .ratingHighToLow: return "rating_desc"
         case .priceLowToHigh: return "precio_asc"
         case .priceHighToLow: return "precio_desc"
         }
@@ -26,7 +25,6 @@ enum HotelSortOrder: CaseIterable, Identifiable {
 
     var localizedName: LocalizedStringResource {
         switch self {
-        case .recommended: return .HotelList.recommended
         case .priceLowToHigh: return .HotelList.priceLowToHigh
         case .priceHighToLow: return .HotelList.priceHighToLow
         case .ratingHighToLow: return .HotelList.ratingHighToLow
@@ -37,48 +35,58 @@ enum HotelSortOrder: CaseIterable, Identifiable {
 extension ListHotelView {
     @Observable
     class ViewModel {
+        static let defaultSortOrder: HotelSortOrder = .ratingHighToLow
+        static let defaultPriceLow: Double = 0
+        static let defaultPriceHigh: Double = 1_000_000
+        static let pageSize = 20
+
         var hotels: [Hotel] = []
         var totalCount: Int = 0
+        var isLoadingMore: Bool = false
         var hotelService: HotelService = HotelServiceKey.defaultValue
 
-        // Filter state
-        var sortOrder: HotelSortOrder = .recommended
-        var priceLow: Double = 0
-        var priceHigh: Double = 1_000_000
+        var sortOrder: HotelSortOrder = defaultSortOrder
+        var priceLow: Double = defaultPriceLow
+        var priceHigh: Double = defaultPriceHigh
         var selectedStars: Set<Int> = []
         var selectedAmenities: Set<HotelAmenity> = []
 
+        var hasMorePages: Bool {
+            hotels.count < totalCount
+        }
+
         var hasActiveFilters: Bool {
-            sortOrder != .recommended ||
-            priceLow > 0 ||
-            priceHigh < 1_000_000 ||
+            sortOrder != Self.defaultSortOrder ||
+            priceLow > Self.defaultPriceLow ||
+            priceHigh < Self.defaultPriceHigh ||
             !selectedStars.isEmpty ||
             !selectedAmenities.isEmpty
         }
 
         func resetFilters() {
-            sortOrder = .recommended
-            priceLow = 0
-            priceHigh = 1_000_000
+            sortOrder = Self.defaultSortOrder
+            priceLow = Self.defaultPriceLow
+            priceHigh = Self.defaultPriceHigh
             selectedStars = []
             selectedAmenities = []
         }
 
-        func buildQueryItems() -> [URLQueryItem] {
+        func buildQueryItems(offset: Int) -> [URLQueryItem] {
             var items: [URLQueryItem] = []
             items.append(URLQueryItem(name: "orden", value: sortOrder.queryValue))
-            items.append(URLQueryItem(name: "limit", value: "100"))
+            items.append(URLQueryItem(name: "limit", value: String(Self.pageSize)))
+            items.append(URLQueryItem(name: "offset", value: String(offset)))
 
-            if priceLow > 0 {
+            if priceLow > Self.defaultPriceLow {
                 items.append(URLQueryItem(name: "precio_min", value: String(Int(priceLow))))
             }
-            if priceHigh < 1_000_000 {
+            if priceHigh < Self.defaultPriceHigh {
                 items.append(URLQueryItem(name: "precio_max", value: String(Int(priceHigh))))
             }
             for star in selectedStars.sorted() {
                 items.append(URLQueryItem(name: "estrellas", value: String(star)))
             }
-            for amenity in selectedAmenities {
+            for amenity in selectedAmenities.sorted(by: { $0.rawValue < $1.rawValue }) {
                 items.append(URLQueryItem(name: "amenidades_populares", value: amenity.rawValue))
             }
 
@@ -88,7 +96,7 @@ extension ListHotelView {
         @MainActor
         func fetchHotels(toastManager: ToastManager) async {
             do {
-                let queryItems = buildQueryItems()
+                let queryItems = buildQueryItems(offset: 0)
                 let response: HotelsResponseDTO = try await hotelService.getHotels(queryItems: queryItems)
                 hotels = response.hoteles.map { $0.toDomain() }
                 totalCount = response.total
@@ -97,6 +105,28 @@ extension ListHotelView {
             } catch {
                 toastManager.error(error.localizedDescription)
             }
+        }
+
+        @MainActor
+        func loadMoreIfNeeded(currentHotel: Hotel, toastManager: ToastManager) async {
+            guard !isLoadingMore, hasMorePages else { return }
+
+            let thresholdIndex = max(hotels.count - 5, 0)
+            guard let index = hotels.firstIndex(where: { $0.id == currentHotel.id }),
+                  index >= thresholdIndex else { return }
+
+            isLoadingMore = true
+            do {
+                let queryItems = buildQueryItems(offset: hotels.count)
+                let response: HotelsResponseDTO = try await hotelService.getHotels(queryItems: queryItems)
+                hotels.append(contentsOf: response.hoteles.map { $0.toDomain() })
+                totalCount = response.total
+            } catch is CancellationError {
+                // no-op
+            } catch {
+                toastManager.error(error.localizedDescription)
+            }
+            isLoadingMore = false
         }
 
         @MainActor
