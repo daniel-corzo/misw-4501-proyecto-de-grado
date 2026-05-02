@@ -74,5 +74,8 @@ xcuserdata/
 
 **/.DS_Store
 
+# iOS payment RSA public key override (pair with backend PAGO_RSA_PRIVATE_KEY_PEM)
+**/payment_public.pem
+
 
 .idea/

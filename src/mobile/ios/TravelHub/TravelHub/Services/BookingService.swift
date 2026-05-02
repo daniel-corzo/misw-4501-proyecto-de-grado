@@ -43,7 +43,8 @@ final class BookingServiceImpl: BookingService {
             fechaSalida: booking.fechaSalida.ISO8601Format(
                 .iso8601.year().month().day()
             ),
-            numHuespedes: booking.numHuespedes
+            numHuespedes: booking.numHuespedes,
+            pagoID: booking.pagoID
         )
         let token = try tokenStore.readToken() ?? ""
 
