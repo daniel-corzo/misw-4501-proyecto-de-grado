@@ -28,6 +28,10 @@ struct BookingServiceKey: EnvironmentKey {
     static let defaultValue: BookingService = BookingServiceImpl(httpService: HttpServiceImpl.shared)
 }
 
+struct PaymentServiceKey: EnvironmentKey {
+    static let defaultValue: PaymentService = PaymentServiceImpl(httpService: HttpServiceImpl.shared)
+}
+
 // MARK: - Environment Values
 extension EnvironmentValues {
     // MARK: Toast Manager
@@ -58,5 +62,11 @@ extension EnvironmentValues {
     var bookingService: BookingService {
         get { self[BookingServiceKey.self] }
         set { self[BookingServiceKey.self] = newValue }
+    }
+    
+    // MARK: Payment Service
+    var paymentService: PaymentService {
+        get { self[PaymentServiceKey.self] }
+        set { self[PaymentServiceKey.self] = newValue }
     }
 }

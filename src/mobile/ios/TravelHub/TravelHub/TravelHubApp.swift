@@ -19,6 +19,7 @@ struct TravelHubApp: App {
                 .environment(\.authService, AuthServiceImpl(httpService: HttpServiceImpl.shared))
                 .environment(\.hotelService, HotelServiceImpl(httpService: HttpServiceImpl.shared))
                 .environment(\.bookingService, BookingServiceImpl(httpService: HttpServiceImpl.shared))
+                .environment(\.paymentService, PaymentServiceImpl(httpService: HttpServiceImpl.shared))
                 .environment(\.toastManager, toastManager)
                 .toastOverlay(toastManager: toastManager)
                 .environment(router)
