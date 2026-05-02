@@ -10,12 +10,11 @@ import SwiftUI
 struct ListHotelView: View {
     @State private var viewModel = ViewModel()
     @State private var searchText: String = ""
-    @State private var filterIsActive = false
     @State private var showFilterSheet = false
-    
+
     @Environment(\.toastManager) private var toastManager: ToastManager
     @Environment(Router.self) private var router
-    
+
     var filteredHotels: [Hotel] {
         if searchText.isEmpty {
             return viewModel.hotels
@@ -26,70 +25,53 @@ struct ListHotelView: View {
             }
         }
     }
-    
+
     var body: some View {
         VStack(spacing: 16) {
             Text(LocalizedStringResource.HotelList.screenName)
                 .font(.title3)
                 .fontWeight(.bold)
                 .frame(maxWidth: .infinity)
-            
-            // 🔍 Search
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(.gray)
-                TextField(LocalizedStringResource.HotelList.searchMessage, text: $searchText)
-                    .textInputAutocapitalization(.never)
-                    .disableAutocorrection(true)
-            }
-            .padding(10)
-            .background(Color(.systemGray6))
-            .cornerRadius(12)
-            .padding(.horizontal)
-            
-            // 🎛️ Filtros
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    
-                    Button {
-                        filterIsActive.toggle()
-                        showFilterSheet = true
-                    } label: {
-                        Label(LocalizedStringResource.HotelList.filter, systemImage: "slider.horizontal.3")
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(filterIsActive ? Color.blue : Color(.systemGray5))
-                            .foregroundColor(filterIsActive ? .white : .gray)
-                            .clipShape(Capsule())
-                    }
-                    .sheet(isPresented: $showFilterSheet) {
-                        Text("Filter options here")
-                            .presentationDetents([.medium])
-                    }
-                    
-                    Button(LocalizedStringResource.HotelList.sort) {
-                        // Acción sort
-                    }
-                    .buttonStyle(.bordered)
-                    
-                    Button(LocalizedStringResource.HotelList.price) {
-                        // Acción price
-                    }
-                    .buttonStyle(.bordered)
-                    
-                    Button(LocalizedStringResource.HotelList.rating) {
-                        // Acción rating
-                    }
-                    .buttonStyle(.bordered)
+
+            // Search + Filter
+            HStack(spacing: 10) {
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.gray)
+                    TextField(LocalizedStringResource.HotelList.searchMessage, text: $searchText)
+                        .textInputAutocapitalization(.never)
+                        .disableAutocorrection(true)
                 }
-                .padding(.horizontal)
+                .padding(10)
+                .background(Color(.systemGray6))
+                .cornerRadius(12)
+
+                Button {
+                    showFilterSheet = true
+                } label: {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.title3)
+                        .padding(10)
+                        .background(viewModel.hasActiveFilters ? Color.blue : Color(.systemGray6))
+                        .foregroundColor(viewModel.hasActiveFilters ? .white : .gray)
+                        .cornerRadius(12)
+                }
+                .sheet(isPresented: $showFilterSheet) {
+                    FilterSortView(viewModel: viewModel) {
+                        Task {
+                            await viewModel.fetchHotels(toastManager: toastManager)
+                        }
+                    }
+                    .presentationDragIndicator(.hidden)
+                }
             }
-            
-            // 🏨 Lista
+            .padding(.horizontal)
+
+            // Hotel list
             ScrollView {
                 LazyVStack(spacing: 24) {
                     ForEach(filteredHotels) { hotel in
-                        
+
                         Button {
                             router.navigate(to: .hotelDetail(hotel.id))
                         } label: {
@@ -115,7 +97,7 @@ struct ListHotelView: View {
             await viewModel.fetchHotels(toastManager: toastManager)
         }
     }
-    
+
 }
 
 #Preview {
