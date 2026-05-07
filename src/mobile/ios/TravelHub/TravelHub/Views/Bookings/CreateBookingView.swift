@@ -14,7 +14,6 @@ struct CreateBookingView: View {
     @Environment(\.bookingService) private var bookingService
     @Environment(\.toastManager) private var toastManager
     @Environment(\.dismiss) private var dismiss
-    @Environment(Router.self) private var router
 
     @State private var viewModel = ViewModel()
     @State private var dateRange = DateRange(
@@ -23,6 +22,7 @@ struct CreateBookingView: View {
     )
     @State private var guests: Int = 1
     @State private var selectedHabitacion: Habitacion
+    @State private var navigateToNewBookingPayment = false
 
     private var isButtonDisabled: Bool {
         print("Date Range: \(self.dateRange.start == self.dateRange.end)")
@@ -139,9 +139,8 @@ struct CreateBookingView: View {
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
             Button {
-                // TODO: Navigate to payment
-                Task {
-                    if let booking = self.booking {
+                if let booking = self.booking {
+                    Task {
                         let didSave = await self.viewModel.modify(
                             id: booking.id,
                             habitacionId: self.selectedHabitacion.id,
@@ -153,18 +152,9 @@ struct CreateBookingView: View {
                         if didSave {
                             dismiss()
                         }
-                    } else {
-                        let didSave = await self.viewModel.create(
-                            habitacionId: selectedHabitacion.id,
-                            fechaEntrada: self.dateRange.start,
-                            fechaSalida: self.dateRange.end,
-                            numHuespedes: self.guests
-                        )
-
-                        if didSave {
-                            router.switchTab(to: .bookings)
-                        }
                     }
+                } else {
+                    navigateToNewBookingPayment = true
                 }
             } label: {
                 HStack {
@@ -208,6 +198,86 @@ struct CreateBookingView: View {
         }
         .onChange(of: self.selectedHabitacion) { _, newValue in
             self.guests = min(newValue.capacidad, self.guests)
+        }
+        .navigationDestination(isPresented: $navigateToNewBookingPayment) {
+            CreateBookingPaymentDestination(
+                hotel: hotel,
+                habitacion: selectedHabitacion,
+                fechaEntrada: dateRange.start,
+                fechaSalida: dateRange.end,
+                numHuespedes: guests
+            )
+        }
+    }
+}
+
+/// Checkout + finalize booking flow for new reservations (same stack as ``CreateBookingView``).
+private struct CreateBookingPaymentDestination: View {
+    let hotel: Hotel
+    let habitacion: Habitacion
+    let fechaEntrada: Date
+    let fechaSalida: Date
+    let numHuespedes: Int
+
+    @Environment(\.bookingService) private var bookingService
+    @Environment(\.toastManager) private var toastManager
+    @Environment(Router.self) private var router
+
+    @State private var isCreatingReservation = false
+
+    private var nights: Int {
+        Calendar.current.dateComponents(
+            [.day],
+            from: fechaEntrada,
+            to: fechaSalida
+        ).day ?? 0
+    }
+
+    private var subtotal: Double {
+        Double(habitacion.monto) * Double(nights)
+    }
+
+    private var taxesAndFees: Double {
+        Double(habitacion.impuestos)
+    }
+
+    var body: some View {
+        PaymentDetailView(
+            subtotal: subtotal,
+            taxesAndFees: taxesAndFees,
+            hotel: hotel,
+            nights: max(nights, 1),
+            onPaymentSuccess: { payment in
+                await finalizeBooking(afterPayment: payment)
+            },
+            supplementalBlocking: $isCreatingReservation
+        )
+        .toolbar(.hidden, for: .tabBar)
+    }
+
+    @MainActor
+    private func finalizeBooking(afterPayment payment: Payment) async {
+        isCreatingReservation = true
+        defer { isCreatingReservation = false }
+
+        let booking = NewBooking(
+            habitacionID: habitacion.id,
+            fechaEntrada: fechaEntrada,
+            fechaSalida: fechaSalida,
+            numHuespedes: numHuespedes,
+            pagoID: payment.id
+        )
+
+        do {
+            try await bookingService.create(booking: booking)
+
+            toastManager.success(
+                String(localized: .CreateBooking.reservationCreatedDescription),
+                title: String(localized: .CreateBooking.reservationCreatedTitle)
+            )
+            router.switchTab(to: .bookings)
+        } catch {
+            toastManager.error(error.localizedDescription)
         }
     }
 }

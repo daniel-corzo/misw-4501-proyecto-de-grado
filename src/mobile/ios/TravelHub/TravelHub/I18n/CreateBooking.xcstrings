@@ -35,6 +35,40 @@
         }
       }
     },
+    "invalidRoomCheckoutDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This room is no longer linked to this hotel. Go back and pick a valid room."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta habitación ya no está disponible para este hotel. Vuelve atrás y elige una habitación válida."
+          }
+        }
+      }
+    },
+    "invalidRoomCheckoutTitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Room unavailable"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Habitación no disponible"
+          }
+        }
+      }
+    },
     "modifyBooking" : {
       "extractionState" : "manual",
       "localizations" : {
