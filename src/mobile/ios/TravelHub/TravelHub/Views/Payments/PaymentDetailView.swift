@@ -56,10 +56,6 @@ struct PaymentDetailView: View {
     }
     
     private var isButtonDisabled: Bool {
-        print("isLoading: \(viewModel.isLoading)")
-        print("isPaymentFormValid: \(isPaymentFormValid)")
-        print("isExternallyBlocked: \(isExternallyBlocked)")
-        
         return viewModel.isLoading
         || !isPaymentFormValid
         || isExternallyBlocked
