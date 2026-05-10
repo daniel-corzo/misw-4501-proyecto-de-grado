@@ -62,7 +62,7 @@ export class PartnerDashboardComponent implements OnInit {
   }
 
   previousPage(): void {
-    if (!this.hasPreviousPage || this.loading) {
+    if (!this.hasPreviousPage || this.loading || this.refreshing) {
       return;
     }
     this.skip = Math.max(this.skip - this.limit, 0);
@@ -70,7 +70,7 @@ export class PartnerDashboardComponent implements OnInit {
   }
 
   nextPage(): void {
-    if (!this.hasNextPage || this.loading) {
+    if (!this.hasNextPage || this.loading || this.refreshing) {
       return;
     }
     this.skip += this.limit;

@@ -197,11 +197,11 @@
           {{ 'partner.dashboard.reservations.showingOf' | transloco: { shown: reservations.length, total: totalReservations } }}
         </span>
         <div class="pagination-controls">
-          <button class="btn-link" type="button" (click)="previousPage()" [disabled]="!hasPreviousPage || loading">
+          <button class="btn-link" type="button" (click)="previousPage()" [disabled]="!hasPreviousPage || loading || refreshing">
             {{ 'partner.dashboard.reservations.previous' | transloco }}
           </button>
           <span>{{ currentPage }} / {{ totalPages }}</span>
-          <button class="btn-link" type="button" (click)="nextPage()" [disabled]="!hasNextPage || loading">
+          <button class="btn-link" type="button" (click)="nextPage()" [disabled]="!hasNextPage || loading || refreshing">
             {{ 'partner.dashboard.reservations.next' | transloco }}
           </button>
         </div>
