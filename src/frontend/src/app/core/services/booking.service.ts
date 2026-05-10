@@ -1,9 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
+import type { HabitacionDetalle } from './hotel.service';
 
 export type BookingStatus = 'pendiente' | 'confirmada' | 'cancelada' | 'completada';
 export type BookingFilter = 'activas' | 'canceladas' | 'pasadas';
+export type PaymentStatus = 'successful' | 'failed';
 
 export interface BookingResponse {
   id: string;
@@ -24,6 +26,21 @@ export interface BookingResponse {
 export interface BookingListResponse {
   total: number;
   reservas: BookingResponse[];
+}
+
+export interface HotelBookingResponse extends BookingResponse {
+  nombre_viajero: string | null;
+  email_viajero: string | null;
+  numero_habitacion: string | null;
+  total_noches: number;
+  monto_total: number | null;
+  estado_pago: PaymentStatus | null;
+}
+
+export interface HotelBookingListResponse {
+  total: number;
+  reservas: HotelBookingResponse[];
+  habitaciones: HabitacionDetalle[];
 }
 
 export interface BookingDetailHotel {
@@ -107,11 +124,23 @@ export class BookingService {
     return this.api.get<BookingListResponse>('/reservas', { estado: status });
   }
 
+  getHotelReservations(skip = 0, limit = 10): Observable<HotelBookingListResponse> {
+    return this.api.get<HotelBookingListResponse>('/reservas/hoteles', { skip, limit });
+  }
+
   getBookingById(bookingId: string): Observable<BookingDetailResponse> {
     return this.api.get<BookingDetailResponse>(`/reservas/${bookingId}`);
   }
 
   cancelReservation(bookingId: string): Observable<BookingResponse> {
     return this.api.patch<BookingResponse>(`/reservas/${bookingId}/cancelar`, {});
+  }
+
+  confirmHotelReservation(bookingId: string): Observable<HotelBookingResponse> {
+    return this.api.patch<HotelBookingResponse>(`/reservas/${bookingId}/confirmar`, {});
+  }
+
+  rejectHotelReservation(bookingId: string): Observable<HotelBookingResponse> {
+    return this.api.patch<HotelBookingResponse>(`/reservas/${bookingId}/rechazar`, {});
   }
 }
