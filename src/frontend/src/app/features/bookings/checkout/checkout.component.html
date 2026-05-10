@@ -188,7 +188,7 @@
             @if (state.hotelEstrellas) {
               <div
                 class="summary-card__stars"
-                [attr.aria-label]="state.hotelEstrellas + ' stars'"
+                [attr.aria-label]="'checkout.starsAria' | transloco: { count: state.hotelEstrellas }"
               >
                 @for (s of stars(state.hotelEstrellas); track s) {
                   <span class="summary-card__star">★</span>

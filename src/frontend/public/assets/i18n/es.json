@@ -258,6 +258,7 @@
     "checkIn": "ENTRADA",
     "checkOut": "SALIDA",
     "freeCancellation": "Cancelación gratuita antes del check-in. Sin cargos de reserva ni cargos ocultos.",
+    "starsAria": "{{ count }} estrellas",
     "errors": {
       "cardholderRequired": "El nombre del titular es requerido",
       "cardNumberInvalid": "El número de tarjeta debe tener 16 dígitos",

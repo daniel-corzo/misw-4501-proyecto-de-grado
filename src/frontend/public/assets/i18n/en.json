@@ -258,6 +258,7 @@
     "checkIn": "CHECK-IN",
     "checkOut": "CHECK-OUT",
     "freeCancellation": "Free cancellation before check-in. No booking fees or hidden charges.",
+    "starsAria": "{{ count }} stars",
     "errors": {
       "cardholderRequired": "Cardholder name is required",
       "cardNumberInvalid": "Card number must be 16 digits",

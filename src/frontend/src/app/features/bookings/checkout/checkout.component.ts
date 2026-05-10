@@ -58,19 +58,31 @@ export class CheckoutComponent implements OnInit {
     const nav = this.router.getCurrentNavigation();
     const s = (nav?.extras?.state ?? window.history.state) as Partial<CheckoutState> | null;
 
-    if (
-      !s ||
-      !s.hotelId ||
-      !s.habitacionId ||
-      !s.fechaEntrada ||
-      !s.fechaSalida ||
-      typeof s.total !== 'number'
-    ) {
+    if (!this.isValidCheckoutState(s)) {
       this.missingData = true;
       return;
     }
 
-    this.state = s as CheckoutState;
+    this.state = s;
+  }
+
+  private isValidCheckoutState(s: Partial<CheckoutState> | null): s is CheckoutState {
+    return (
+      !!s &&
+      !!s.hotelId &&
+      !!s.habitacionId &&
+      !!s.fechaEntrada &&
+      !!s.fechaSalida &&
+      typeof s.subtotal === 'number' &&
+      Number.isFinite(s.subtotal) &&
+      typeof s.taxes === 'number' &&
+      Number.isFinite(s.taxes) &&
+      typeof s.total === 'number' &&
+      Number.isFinite(s.total) &&
+      typeof s.stayNights === 'number' &&
+      Number.isFinite(s.stayNights) &&
+      s.stayNights > 0
+    );
   }
 
   // ── Formatters ──────────────────────────────────────────────────────────
