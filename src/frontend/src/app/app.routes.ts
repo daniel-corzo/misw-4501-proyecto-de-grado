@@ -91,6 +91,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'hotels/:id/checkout',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/bookings/checkout/checkout.component').then(
+            (m) => m.CheckoutComponent
+          ),
+      },
+      {
         path: 'hotels/:id',
         canActivate: [authGuard],
         loadComponent: () =>
