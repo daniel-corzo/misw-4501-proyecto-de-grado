@@ -423,34 +423,25 @@ export class CreateReservationComponent implements OnInit {
   }
 
   private submitCreate(): void {
-    this.submitting = true;
-    this.bookingService
-      .createReservation({
-        habitacion_id: this.selectedRoom!.id,
-        fecha_entrada: this.fechaEntrada!,
-        fecha_salida: this.fechaSalida!,
-        num_huespedes: this.numHuespedes,
-        pago_id: null,
-      })
-      .subscribe({
-        next: (res) => {
-          this.toast.success(this.t.translate('createReservation.toastCreated'));
-          this.submitting = false;
-          this.router.navigate(['/bookings', res.id]);
-        },
-        error: (err: HttpErrorResponse) => {
-          this.submitting = false;
-          if (err.status === 409) {
-            this.toast.warning(
-              this.t.translate('createReservation.toastConflict')
-            );
-          } else {
-            this.toast.danger(
-              this.t.translate('createReservation.toastCreateError')
-            );
-          }
-        },
-      });
+    const room = this.selectedRoom!;
+    const hotel = this.hotel!;
+
+    this.router.navigate(['/hotels', hotel.id, 'checkout'], {
+      state: {
+        hotelId: hotel.id,
+        hotelNombre: hotel.nombre,
+        hotelImagen: hotel.imagenes?.[0] ?? null,
+        hotelEstrellas: hotel.estrellas ?? null,
+        fechaEntrada: this.fechaEntrada!,
+        fechaSalida: this.fechaSalida!,
+        numHuespedes: this.numHuespedes,
+        habitacionId: room.id,
+        subtotal: this.roomSubtotal,
+        taxes: this.roomTaxes,
+        total: this.totalPrice,
+        stayNights: this.stayNights,
+      },
+    });
   }
 
   private submitEdit(): void {
@@ -511,8 +502,6 @@ export class CreateReservationComponent implements OnInit {
         ? 'createReservation.saving'
         : 'createReservation.saveChanges';
     }
-    return this.submitting
-      ? 'createReservation.submitting'
-      : 'createReservation.book';
+    return 'checkout.proceedToPayment';
   }
 }
