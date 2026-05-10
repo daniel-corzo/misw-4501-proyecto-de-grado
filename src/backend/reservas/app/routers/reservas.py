@@ -16,18 +16,23 @@ from app.schemas.reserva import (
     ListaReservasHotelResponse,
     ListaReservasResponse,
     ReservaDetalleResponse,
+    ReservaHotelResponse,
 )
 from app.services.hotel_service import obtener_habitaciones_hotel
 from app.services.hotel_service import obtener_detalles_habitaciones_por_ids
 from app.services.reserva_service import (
     cancelar_reserva_service,
+    construir_reservas_hotel_response,
+    confirmar_reserva_service,
     crear_reserva_service,
+    listar_reservas_hotel_service,
+    rechazar_reserva_service,
     reserva_to_detalle_response,
     reserva_to_response,
     modificar_reserva_service,
     listar_reservas_usuario_service,
 )
-from travelhub_common.security import get_current_user, User, RoleEnum
+from travelhub_common.security import RoleChecker, RoleEnum, User, get_current_user
 
 router = APIRouter(prefix="/reservas", tags=["reservas"])
 
@@ -112,24 +117,16 @@ async def listar_reservas_por_estado(
 @router.get("/hoteles", response_model=ListaReservasHotelResponse, status_code=status.HTTP_200_OK)
 async def listar_reservas_hotel(
     request: Request,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    habitaciones = await obtener_habitaciones_hotel(request.headers.get("Authorization"))
-    habitacion_ids = [habitacion.id for habitacion in habitaciones]
-
-    if not habitacion_ids:
-        return ListaReservasHotelResponse(total=0, reservas=[], habitaciones=[])
-
-    stmt = select(Reserva).where(Reserva.habitaciones_ids.overlap(habitacion_ids))
-
-    stmt = stmt.order_by(Reserva.created_at.desc())
-    result = await db.execute(stmt)
-    reservas = [reserva_to_response(r) for r in result.scalars().all()]
-    return ListaReservasHotelResponse(
-        total=len(reservas),
-        reservas=reservas,
-        habitaciones=habitaciones,
+    return await listar_reservas_hotel_service(
+        db=db,
+        authorization_header=request.headers.get("Authorization"),
+        skip=skip,
+        limit=limit,
     )
 
 
@@ -208,6 +205,42 @@ async def modificar_reserva(
         ciudad_hotel=detalle.ciudad_hotel if detalle else None,
         pais_hotel=detalle.pais_hotel if detalle else None,
     )
+
+
+@router.patch("/{reserva_id}/confirmar", response_model=ReservaHotelResponse, status_code=status.HTTP_200_OK)
+async def confirmar_reserva(
+    reserva_id: uuid.UUID,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    _current_user: User = Depends(RoleChecker([RoleEnum.MANAGER])),
+):
+    authorization_header = request.headers.get("Authorization")
+    habitaciones = await obtener_habitaciones_hotel(authorization_header)
+    reserva = await confirmar_reserva_service(
+        db=db,
+        reserva_id=reserva_id,
+        habitacion_ids_hotel=[habitacion.id for habitacion in habitaciones],
+    )
+    reservas = await construir_reservas_hotel_response(authorization_header, [reserva])
+    return reservas[0]
+
+
+@router.patch("/{reserva_id}/rechazar", response_model=ReservaHotelResponse, status_code=status.HTTP_200_OK)
+async def rechazar_reserva(
+    reserva_id: uuid.UUID,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    _current_user: User = Depends(RoleChecker([RoleEnum.MANAGER])),
+):
+    authorization_header = request.headers.get("Authorization")
+    habitaciones = await obtener_habitaciones_hotel(authorization_header)
+    reserva = await rechazar_reserva_service(
+        db=db,
+        reserva_id=reserva_id,
+        habitacion_ids_hotel=[habitacion.id for habitacion in habitaciones],
+    )
+    reservas = await construir_reservas_hotel_response(authorization_header, [reserva])
+    return reservas[0]
 
 
 @router.patch("/{reserva_id}/cancelar", response_model=ReservaResponse, status_code=status.HTTP_200_OK)

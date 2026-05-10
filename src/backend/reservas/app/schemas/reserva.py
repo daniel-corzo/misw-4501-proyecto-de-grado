@@ -13,6 +13,11 @@ class EstadoReserva(str, Enum):
     completada = "completada"
 
 
+class EstadoPagoReserva(str, Enum):
+    successful = "successful"
+    failed = "failed"
+
+
 class FiltroReservasUsuario(str, Enum):
     activas = "activas"
     canceladas = "canceladas"
@@ -67,6 +72,15 @@ class ReservaResponse(BaseModel):
     estado: EstadoReserva
     pago_id: Optional[UUID] = None
     created_at: datetime
+
+
+class ReservaHotelResponse(ReservaResponse):
+    nombre_viajero: Optional[str] = None
+    email_viajero: Optional[str] = None
+    numero_habitacion: Optional[str] = None
+    total_noches: int = Field(default=0, ge=0)
+    monto_total: Optional[int] = None
+    estado_pago: Optional[EstadoPagoReserva] = None
 
 
 class ReservaHotelDetalleResponse(BaseModel):
@@ -151,5 +165,5 @@ class HabitacionReservaDetalleResponse(BaseModel):
 
 class ListaReservasHotelResponse(BaseModel):
     total: int
-    reservas: List[ReservaResponse]
+    reservas: List[ReservaHotelResponse]
     habitaciones: List[HabitacionHotelResponse]

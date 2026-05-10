@@ -1,11 +1,22 @@
 import uuid
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.schemas.usuario import CrearUsuarioRequest, ActualizarUsuarioRequest, UsuarioResponse
+from app.schemas.usuario import (
+    ActualizarUsuarioRequest,
+    CrearUsuarioRequest,
+    ListaUsuariosResumenResponse,
+    UsuarioResponse,
+)
 from app.database import get_db
 from travelhub_common.security import get_current_user, User, RoleChecker, RoleEnum
 from app.config import get_settings, Settings
-from app.services.usuario_service import create_user, get_my_profile, get_user_by_id, update_user_profile
+from app.services.usuario_service import (
+    create_user,
+    get_my_profile,
+    get_user_by_id,
+    get_users_summary,
+    update_user_profile,
+)
 
 router = APIRouter(prefix="/usuarios", tags=["usuarios"])
 
@@ -32,6 +43,15 @@ async def obtener_mi_perfil(
     Retorna el propio perfil del usuario autenticado.
     """
     return await get_my_profile(current_user, db)
+
+
+@router.get("/resumen", response_model=ListaUsuariosResumenResponse, status_code=status.HTTP_200_OK)
+async def obtener_resumen_usuarios(
+    ids: list[uuid.UUID] = Query([]),
+    db: AsyncSession = Depends(get_db),
+    _current_user: User = Depends(RoleChecker([RoleEnum.MANAGER, RoleEnum.ADMIN, RoleEnum.USER])),
+):
+    return await get_users_summary(ids, db)
 
 @router.get("/{usuario_id}", response_model=UsuarioResponse, status_code=status.HTTP_200_OK)
 async def obtener_usuario(

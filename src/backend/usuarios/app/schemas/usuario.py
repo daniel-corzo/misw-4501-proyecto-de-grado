@@ -52,3 +52,13 @@ class UsuarioResponse(BaseModel):
     viajero: Optional[ViajeroResponse]
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class UsuarioResumenResponse(BaseModel):
+    id: UUID
+    nombre: Optional[str] = None
+    email: str
+
+
+class ListaUsuariosResumenResponse(BaseModel):
+    usuarios: list[UsuarioResumenResponse]

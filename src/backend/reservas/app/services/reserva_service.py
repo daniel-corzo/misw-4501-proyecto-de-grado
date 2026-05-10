@@ -10,14 +10,23 @@ from app.models.reserva import Reserva
 from app.schemas.reserva import (
     CrearReservaRequest,
     EstadoReserva,
+    EstadoPagoReserva,
     HabitacionReservaDetalleResponse,
+    ListaReservasHotelResponse,
     ModificarReservaRequest,
     ReservaDetalleResponse,
     ReservaHabitacionDetalleCompletoResponse,
+    ReservaHotelResponse,
     ReservaHotelDetalleResponse,
     ReservaResponse,
     ListaReservasResponse,
 )
+from app.services.hotel_service import (
+    obtener_detalles_habitaciones_por_ids,
+    obtener_habitaciones_hotel,
+)
+from app.services.pago_service import obtener_pagos_por_ids
+from app.services.usuario_service import obtener_usuarios_resumen_por_ids
 
 
 def _fecha_to_utc_start(d: date) -> datetime:
@@ -52,6 +61,159 @@ def reserva_to_response(
         estado=EstadoReserva(reserva.estado),
         pago_id=reserva.pago_id,
         created_at=reserva.created_at,
+    )
+
+
+def reserva_to_hotel_response(
+    reserva: Reserva,
+    nombre_habitacion: str | None = None,
+    nombre_hotel: str | None = None,
+    imagenes_hotel: list[str] | None = None,
+    ciudad_hotel: str | None = None,
+    pais_hotel: str | None = None,
+    nombre_viajero: str | None = None,
+    email_viajero: str | None = None,
+    numero_habitacion: str | None = None,
+    monto_total: int | None = None,
+    estado_pago: str | None = None,
+) -> ReservaHotelResponse:
+    base_response = reserva_to_response(
+        reserva,
+        nombre_habitacion=nombre_habitacion,
+        nombre_hotel=nombre_hotel,
+        imagenes_hotel=imagenes_hotel,
+        ciudad_hotel=ciudad_hotel,
+        pais_hotel=pais_hotel,
+    )
+    total_noches = max((reserva.check_out.date() - reserva.check_in.date()).days, 0)
+    return ReservaHotelResponse(
+        **base_response.model_dump(),
+        nombre_viajero=nombre_viajero,
+        email_viajero=email_viajero,
+        numero_habitacion=numero_habitacion,
+        total_noches=total_noches,
+        monto_total=monto_total,
+        estado_pago=EstadoPagoReserva(estado_pago) if estado_pago else None,
+    )
+
+
+async def construir_reservas_hotel_response(
+    authorization_header: str | None,
+    reservas_db: list[Reserva],
+) -> list[ReservaHotelResponse]:
+    if not reservas_db:
+        return []
+
+    habitacion_ids = list(
+        {
+            habitacion_id
+            for reserva in reservas_db
+            for habitacion_id in (reserva.habitaciones_ids or [])
+        }
+    )
+    detalles_por_habitacion = await obtener_detalles_habitaciones_por_ids(
+        authorization_header,
+        habitacion_ids,
+    )
+
+    viajero_ids = list({reserva.viajero_id for reserva in reservas_db})
+    viajeros_por_id = await obtener_usuarios_resumen_por_ids(
+        authorization_header,
+        viajero_ids,
+    )
+
+    pago_ids = list(
+        {reserva.pago_id for reserva in reservas_db if reserva.pago_id is not None}
+    )
+    pagos_por_id = await obtener_pagos_por_ids(authorization_header, pago_ids)
+
+    reservas: list[ReservaHotelResponse] = []
+    for reserva in reservas_db:
+        habitacion_id = reserva.habitaciones_ids[0] if reserva.habitaciones_ids else None
+        detalle_habitacion = (
+            detalles_por_habitacion.get(habitacion_id) if habitacion_id else None
+        )
+        viajero = viajeros_por_id.get(reserva.viajero_id)
+        pago = pagos_por_id.get(reserva.pago_id) if reserva.pago_id else None
+
+        monto_total = None
+        if detalle_habitacion and detalle_habitacion.monto_habitacion is not None:
+            total_noches = max(
+                (reserva.check_out.date() - reserva.check_in.date()).days,
+                0,
+            )
+            monto_total = total_noches * (
+                detalle_habitacion.monto_habitacion
+                + (detalle_habitacion.impuestos_habitacion or 0)
+            )
+
+        reservas.append(
+            reserva_to_hotel_response(
+                reserva,
+                nombre_habitacion=(
+                    detalle_habitacion.nombre_habitacion if detalle_habitacion else None
+                ),
+                nombre_hotel=(
+                    detalle_habitacion.nombre_hotel if detalle_habitacion else None
+                ),
+                imagenes_hotel=(
+                    detalle_habitacion.imagenes_hotel if detalle_habitacion else []
+                ),
+                ciudad_hotel=(
+                    detalle_habitacion.ciudad_hotel if detalle_habitacion else None
+                ),
+                pais_hotel=(
+                    detalle_habitacion.pais_hotel if detalle_habitacion else None
+                ),
+                nombre_viajero=viajero.nombre if viajero else None,
+                email_viajero=viajero.email if viajero else None,
+                numero_habitacion=(
+                    detalle_habitacion.numero_habitacion if detalle_habitacion else None
+                ),
+                monto_total=monto_total,
+                estado_pago=pago.estado if pago else None,
+            )
+        )
+
+    return reservas
+
+
+async def listar_reservas_hotel_service(
+    db: AsyncSession,
+    authorization_header: str | None,
+    skip: int,
+    limit: int,
+) -> ListaReservasHotelResponse:
+    habitaciones = await obtener_habitaciones_hotel(authorization_header)
+    habitacion_ids = [habitacion.id for habitacion in habitaciones]
+
+    if not habitacion_ids:
+        return ListaReservasHotelResponse(total=0, reservas=[], habitaciones=[])
+
+    total_result = await db.execute(
+        select(func.count(Reserva.id)).where(
+            Reserva.habitaciones_ids.overlap(habitacion_ids)
+        )
+    )
+    total = total_result.scalar_one()
+
+    stmt = (
+        select(Reserva)
+        .where(Reserva.habitaciones_ids.overlap(habitacion_ids))
+        .order_by(Reserva.check_in.asc(), Reserva.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    result = await db.execute(stmt)
+    reservas_db = result.scalars().all()
+    reservas = await construir_reservas_hotel_response(
+        authorization_header,
+        reservas_db,
+    )
+    return ListaReservasHotelResponse(
+        total=total,
+        reservas=reservas,
+        habitaciones=habitaciones,
     )
 
 
@@ -191,6 +353,73 @@ async def cancelar_reserva_service(
     await db.commit()
     await db.refresh(reserva)
     return reserva_to_response(reserva)
+
+
+async def confirmar_reserva_service(
+    db: AsyncSession,
+    reserva_id: uuid.UUID,
+    habitacion_ids_hotel: list[uuid.UUID],
+) -> Reserva:
+    result = await db.execute(select(Reserva).where(Reserva.id == reserva_id))
+    reserva = result.scalar_one_or_none()
+
+    if reserva is None or not set(reserva.habitaciones_ids or []).intersection(
+        habitacion_ids_hotel
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Reserva no encontrada",
+        )
+
+    if reserva.estado != EstadoReserva.pendiente.value:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="La reserva no puede ser confirmada en su estado actual",
+        )
+
+    reserva.estado = EstadoReserva.confirmada.value
+    await db.flush()
+    await db.commit()
+    await db.refresh(reserva)
+    return reserva
+
+
+async def rechazar_reserva_service(
+    db: AsyncSession,
+    reserva_id: uuid.UUID,
+    habitacion_ids_hotel: list[uuid.UUID],
+) -> Reserva:
+    result = await db.execute(select(Reserva).where(Reserva.id == reserva_id))
+    reserva = result.scalar_one_or_none()
+
+    if reserva is None or not set(reserva.habitaciones_ids or []).intersection(
+        habitacion_ids_hotel
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Reserva no encontrada",
+        )
+
+    if reserva.estado == EstadoReserva.cancelada.value:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="La reserva ya está cancelada",
+        )
+
+    if reserva.estado not in (
+        EstadoReserva.pendiente.value,
+        EstadoReserva.confirmada.value,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="La reserva no puede ser rechazada en su estado actual",
+        )
+
+    reserva.estado = EstadoReserva.cancelada.value
+    await db.flush()
+    await db.commit()
+    await db.refresh(reserva)
+    return reserva
 
 
 async def modificar_reserva_service(
