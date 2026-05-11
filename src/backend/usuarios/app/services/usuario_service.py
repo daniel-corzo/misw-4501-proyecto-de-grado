@@ -33,7 +33,10 @@ async def create_user(
             detail="Usuario ya existe con este email",
         )
 
-    role = body.role if body.role is not None else RoleEnum.USER
+    if body.tipo == TipoUsuario.HOTEL:
+        role = RoleEnum.MANAGER
+    else:
+        role = body.role if body.role is not None else RoleEnum.USER
     user = Usuario(
         id=uuid.uuid4(),
         email=body.email,
