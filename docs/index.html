@@ -332,19 +332,20 @@ const ASSIGNEES = {
 };
 
 const WEEKS = [
-  { label: 'Semana 1', start: new Date('2026-03-23'), end: new Date('2026-03-29'), planned: 32 },
-  { label: 'Semana 2', start: new Date('2026-03-30'), end: new Date('2026-04-05'), planned: 32 },
-  { label: 'Semana 3', start: new Date('2026-04-06'), end: new Date('2026-04-12'), planned: 32 },
-  { label: 'Semana 4', start: new Date('2026-04-13'), end: new Date('2026-04-19'), planned: 33 },
-  { label: 'Semana 5', start: new Date('2026-04-20'), end: new Date('2026-04-26'), planned: 33 },
-  { label: 'Semana 6', start: new Date('2026-04-27'), end: new Date('2026-05-03'), planned: 49 },
-  { label: 'Semana 7', start: new Date('2026-05-04'), end: new Date('2026-05-10'), planned: 49 },
-  { label: 'Semana 8', start: new Date('2026-05-11'), end: new Date('2026-05-17'), planned: 0  }
+  { label: 'Semana 1',      start: new Date('2026-03-23'), end: new Date('2026-03-29'), planned: 32, productive: true  },
+  { label: 'Semana receso', start: new Date('2026-03-30'), end: new Date('2026-04-05'), planned: 32, productive: false },
+  { label: 'Semana 2',      start: new Date('2026-04-06'), end: new Date('2026-04-12'), planned: 33, productive: true  },
+  { label: 'Semana 3',      start: new Date('2026-04-13'), end: new Date('2026-04-19'), planned: 33, productive: true  },
+  { label: 'Semana 4',      start: new Date('2026-04-20'), end: new Date('2026-04-26'), planned: 33, productive: true  },
+  { label: 'Semana 5',      start: new Date('2026-04-27'), end: new Date('2026-05-03'), planned: 49, productive: true  },
+  { label: 'Semana 6',      start: new Date('2026-05-04'), end: new Date('2026-05-10'), planned: 49, productive: true  },
+  { label: 'Semana 7',      start: new Date('2026-05-11'), end: new Date('2026-05-17'), planned: 49, productive: true  },
+  { label: 'Semana 8',      start: new Date('2026-05-18'), end: new Date('2026-05-24'), planned: 0,  productive: false }
 ];
 
 const RELEASE_SPRINTS = [
-  { label: 'Sprint 1', start: new Date('2026-03-23'), end: new Date('2026-04-12') },
-  { label: 'Sprint 2', start: new Date('2026-04-13'), end: new Date('2026-04-26') },
+  { label: 'Sprint 1', start: new Date('2026-03-23'), end: new Date('2026-04-05') },
+  { label: 'Sprint 2', start: new Date('2026-04-06'), end: new Date('2026-04-26') },
   { label: 'Sprint 3', start: new Date('2026-04-27'), end: new Date('2026-05-17') },
   { label: 'Entrega',  start: new Date('2026-05-18'), end: new Date('2026-05-24') }
 ];
@@ -774,8 +775,8 @@ function buildVelocityChart(allIssues) {
 
 function buildValueChart(allIssues) {
   const today = new Date();
-  const devWeeks = WEEKS.length - 1; // last week is presentation only
-  const idealPerWeek = 100 / devWeeks;
+  const productiveWeeks = WEEKS.filter(w => w.productive).length;
+  const idealPerWeek = 100 / productiveWeeks;
   let accumulated = 0;
   const realCumulative = WEEKS.map(w => {
     if (isFutureWeek(w.start)) return null;
@@ -785,11 +786,15 @@ function buildValueChart(allIssues) {
     accumulated += weekBV;
     return Math.round(accumulated * 10) / 10;
   });
-  const idealCumulative = WEEKS.map((_, idx) => Math.round(Math.min(100, idealPerWeek * (idx + 1)) * 10) / 10);
+  let productiveIdx = 0;
+  const idealCumulative = WEEKS.map(w => {
+    if (w.productive) productiveIdx++;
+    return Math.round(Math.min(100, idealPerWeek * productiveIdx) * 10) / 10;
+  });
 
-  const currentReal  = realCumulative.filter(v => v !== null).slice(-1)[0] || 0;
-  const weeksElapsed = realCumulative.filter(v => v !== null).length;
-  const currentIdeal = Math.round(idealPerWeek * weeksElapsed * 10) / 10;
+  const currentReal = realCumulative.filter(v => v !== null).slice(-1)[0] || 0;
+  const weeksElapsedProductive = WEEKS.filter((w, i) => w.productive && realCumulative[i] !== null).length;
+  const currentIdeal = Math.round(Math.min(100, idealPerWeek * weeksElapsedProductive) * 10) / 10;
   const diff = Math.round((currentReal - currentIdeal) * 10) / 10;
   const storiesDone = allIssues.filter(i => isDone(i.status) && i.bv > 0).length;
 
