@@ -12,6 +12,7 @@ struct CreateBookingView: View {
     let booking: ModifyBooking?
 
     @Environment(\.bookingService) private var bookingService
+    @Environment(\.bookingPoller) private var bookingPoller
     @Environment(\.toastManager) private var toastManager
     @Environment(\.dismiss) private var dismiss
 
@@ -221,6 +222,7 @@ private struct CreateBookingPaymentDestination: View {
 
     @Environment(\.bookingService) private var bookingService
     @Environment(\.toastManager) private var toastManager
+    @Environment(\.bookingPoller) private var bookingPoller
     @Environment(Router.self) private var router
 
     @State private var isCreatingReservation = false
@@ -270,6 +272,9 @@ private struct CreateBookingPaymentDestination: View {
 
         do {
             try await bookingService.create(booking: booking)
+
+            // Seed the new booking into the poller so it can detect status changes.
+            await bookingPoller.refreshNow(bookingService: bookingService)
 
             toastManager.success(
                 String(localized: .CreateBooking.reservationCreatedDescription),

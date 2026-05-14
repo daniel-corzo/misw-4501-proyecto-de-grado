@@ -6,11 +6,19 @@
 //
 
 import SwiftUI
+import UserNotifications
 
 @main
 struct TravelHubApp: App {
     @State private var toastManager = ToastManager()
     @State private var router = Router()
+    @State private var bookingPoller = BookingPollerService()
+
+    private let notificationDelegate = NotificationDelegate()
+
+    init() {
+        UNUserNotificationCenter.current().delegate = notificationDelegate
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -20,9 +28,14 @@ struct TravelHubApp: App {
                 .environment(\.hotelService, HotelServiceImpl(httpService: HttpServiceImpl.shared))
                 .environment(\.bookingService, BookingServiceImpl(httpService: HttpServiceImpl.shared))
                 .environment(\.paymentService, PaymentServiceKey.defaultValue)
+                .environment(\.bookingPoller, bookingPoller)
                 .environment(\.toastManager, toastManager)
                 .toastOverlay(toastManager: toastManager)
                 .environment(router)
+                .task {
+                    try? await UNUserNotificationCenter.current()
+                        .requestAuthorization(options: [.alert, .sound])
+                }
         }
     }
 }
