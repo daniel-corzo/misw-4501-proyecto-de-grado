@@ -450,7 +450,18 @@
         "toastConfirmSuccess": "Reservation confirmed successfully",
         "toastConfirmError": "Could not confirm the reservation",
         "toastRejectSuccess": "Reservation rejected successfully",
-        "toastRejectError": "Could not reject the reservation"
+        "toastRejectError": "Could not reject the reservation",
+        "filterRoomPlaceholder": "All room types",
+        "filterDateFrom": "From",
+        "filterDateTo": "To",
+        "filterState": "Booking State",
+        "filterStatePlaceholder": "All statuses",
+        "filterPaymentStatus": "Payment Status",
+        "filterPaymentStatusPlaceholder": "All",
+        "filterGuests": "Number of guests",
+        "filterGuestsPlaceholder": "Any",
+        "clearFilters": "Clear filters",
+        "emptyFiltered": "No reservations match the applied filters."
       }
     },
     "hotel": {

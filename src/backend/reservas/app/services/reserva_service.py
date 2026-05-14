@@ -1,5 +1,5 @@
 import uuid
-from datetime import UTC, date, datetime, time, timezone
+from datetime import UTC, date, datetime, time, timedelta, timezone
 
 from fastapi import HTTPException, status
 from sqlalchemy import and_, func, select
@@ -10,7 +10,9 @@ from app.models.reserva import Reserva
 from app.schemas.reserva import (
     CrearReservaRequest,
     EstadoReserva,
+    EstadoPagoFiltro,
     EstadoPagoReserva,
+    HabitacionHotelResponse,
     HabitacionReservaDetalleResponse,
     ListaReservasHotelResponse,
     ModificarReservaRequest,
@@ -183,6 +185,13 @@ async def listar_reservas_hotel_service(
     authorization_header: str | None,
     skip: int,
     limit: int,
+    nombre_viajero: str | None = None,
+    tipo_habitacion: str | None = None,
+    estado: EstadoReserva | None = None,
+    fecha_inicio: date | None = None,
+    fecha_fin: date | None = None,
+    estado_pago: EstadoPagoFiltro | None = None,
+    num_huespedes: int | None = None,
 ) -> ListaReservasHotelResponse:
     habitaciones = await obtener_habitaciones_hotel(authorization_header)
     habitacion_ids = [habitacion.id for habitacion in habitaciones]
@@ -190,30 +199,105 @@ async def listar_reservas_hotel_service(
     if not habitacion_ids:
         return ListaReservasHotelResponse(total=0, reservas=[], habitaciones=[])
 
-    total_result = await db.execute(
-        select(func.count(Reserva.id)).where(
-            Reserva.habitaciones_ids.overlap(habitacion_ids)
+    # Build SQL-level conditions (fields available in DB)
+    conditions: list = [Reserva.habitaciones_ids.overlap(habitacion_ids)]
+    if estado is not None:
+        conditions.append(Reserva.estado == estado.value)
+    if num_huespedes is not None:
+        conditions.append(Reserva.personas == num_huespedes)
+    if fecha_inicio is not None:
+        # Overlap: reservation check_out must be after start of fecha_inicio
+        conditions.append(Reserva.check_out > _fecha_to_utc_start(fecha_inicio))
+    if fecha_fin is not None:
+        # Overlap: reservation check_in must be before end of fecha_fin
+        conditions.append(
+            Reserva.check_in < _fecha_to_utc_start(fecha_fin) + timedelta(days=1)
         )
-    )
-    total = total_result.scalar_one()
 
-    stmt = (
-        select(Reserva)
-        .where(Reserva.habitaciones_ids.overlap(habitacion_ids))
-        .order_by(Reserva.check_in.asc(), Reserva.created_at.desc())
-        .offset(skip)
-        .limit(limit)
+    has_memory_filters = bool(nombre_viajero or tipo_habitacion or estado_pago is not None)
+
+    if has_memory_filters:
+        # Fetch all SQL-matching candidates, enrich, then filter in memory
+        stmt = (
+            select(Reserva)
+            .where(and_(*conditions))
+            .order_by(Reserva.check_in.asc(), Reserva.created_at.desc())
+        )
+        result = await db.execute(stmt)
+        reservas_db = list(result.scalars().all())
+
+        all_responses = await construir_reservas_hotel_response(
+            authorization_header,
+            reservas_db,
+        )
+
+        # Apply in-memory filters
+        if nombre_viajero:
+            q = nombre_viajero.strip().lower()
+            all_responses = [
+                r for r in all_responses
+                if (r.nombre_viajero and q in r.nombre_viajero.lower())
+                or (r.email_viajero and q in r.email_viajero.lower())
+            ]
+        if tipo_habitacion:
+            q = tipo_habitacion.strip().lower()
+            all_responses = [
+                r for r in all_responses
+                if r.nombre_habitacion and q in r.nombre_habitacion.lower()
+            ]
+        if estado_pago is not None:
+            if estado_pago == EstadoPagoFiltro.pending:
+                all_responses = [r for r in all_responses if r.estado_pago is None]
+            else:
+                all_responses = [
+                    r for r in all_responses
+                    if r.estado_pago is not None and r.estado_pago.value == estado_pago.value
+                ]
+
+        total = len(all_responses)
+        reservas = all_responses[skip: skip + limit]
+    else:
+        # Efficient path: SQL count + paginated query (no in-memory filters)
+        total_result = await db.execute(
+            select(func.count(Reserva.id)).where(and_(*conditions))
+        )
+        total = total_result.scalar_one()
+
+        stmt = (
+            select(Reserva)
+            .where(and_(*conditions))
+            .order_by(Reserva.check_in.asc(), Reserva.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        result = await db.execute(stmt)
+        reservas_db = result.scalars().all()
+        reservas = await construir_reservas_hotel_response(
+            authorization_header,
+            reservas_db,
+        )
+
+    # Enrich habitaciones list with nombre_habitacion for the frontend dropdown
+    detalles_hab = await obtener_detalles_habitaciones_por_ids(
+        authorization_header, habitacion_ids
     )
-    result = await db.execute(stmt)
-    reservas_db = result.scalars().all()
-    reservas = await construir_reservas_hotel_response(
-        authorization_header,
-        reservas_db,
-    )
+    habitaciones_enriquecidas = [
+        hab.model_copy(
+            update={
+                "nombre_habitacion": (
+                    detalles_hab[hab.id].nombre_habitacion
+                    if hab.id in detalles_hab
+                    else None
+                )
+            }
+        )
+        for hab in habitaciones
+    ]
+
     return ListaReservasHotelResponse(
         total=total,
         reservas=reservas,
-        habitaciones=habitaciones,
+        habitaciones=habitaciones_enriquecidas,
     )
 
 

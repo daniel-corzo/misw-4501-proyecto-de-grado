@@ -450,7 +450,18 @@
         "toastConfirmSuccess": "Reserva confirmada correctamente",
         "toastConfirmError": "No se pudo confirmar la reserva",
         "toastRejectSuccess": "Reserva rechazada correctamente",
-        "toastRejectError": "No se pudo rechazar la reserva"
+        "toastRejectError": "No se pudo rechazar la reserva",
+        "filterRoomPlaceholder": "Todos los tipos",
+        "filterDateFrom": "Desde",
+        "filterDateTo": "Hasta",
+        "filterState": "Estado de reserva",
+        "filterStatePlaceholder": "Todos los estados",
+        "filterPaymentStatus": "Estado de pago",
+        "filterPaymentStatusPlaceholder": "Todos",
+        "filterGuests": "Número de huéspedes",
+        "filterGuestsPlaceholder": "Cualquiera",
+        "clearFilters": "Limpiar filtros",
+        "emptyFiltered": "No hay reservas que coincidan con los filtros aplicados."
       }
     },
     "hotel": {

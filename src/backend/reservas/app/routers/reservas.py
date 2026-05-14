@@ -1,5 +1,6 @@
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
+from typing import Optional
 
 from fastapi import APIRouter, status, Depends, Request, HTTPException, Query
 from sqlalchemy import select
@@ -9,10 +10,11 @@ from app.database import get_db
 from app.models.reserva import Reserva
 from app.schemas.reserva import (
     CrearReservaRequest,
+    EstadoReserva,
+    EstadoPagoFiltro,
     FiltroReservasUsuario,
     ModificarReservaRequest,
     ReservaResponse,
-    EstadoReserva,
     ListaReservasHotelResponse,
     ListaReservasResponse,
     ReservaDetalleResponse,
@@ -119,6 +121,13 @@ async def listar_reservas_hotel(
     request: Request,
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),
+    nombre_viajero: Optional[str] = Query(None),
+    tipo_habitacion: Optional[str] = Query(None),
+    estado: Optional[EstadoReserva] = Query(None),
+    fecha_inicio: Optional[date] = Query(None),
+    fecha_fin: Optional[date] = Query(None),
+    estado_pago: Optional[EstadoPagoFiltro] = Query(None),
+    num_huespedes: Optional[int] = Query(None, ge=1),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -127,6 +136,13 @@ async def listar_reservas_hotel(
         authorization_header=request.headers.get("Authorization"),
         skip=skip,
         limit=limit,
+        nombre_viajero=nombre_viajero,
+        tipo_habitacion=tipo_habitacion,
+        estado=estado,
+        fecha_inicio=fecha_inicio,
+        fecha_fin=fecha_fin,
+        estado_pago=estado_pago,
+        num_huespedes=num_huespedes,
     )
 
 

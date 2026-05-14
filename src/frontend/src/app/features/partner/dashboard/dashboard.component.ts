@@ -1,13 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 import {
   BookingService,
   BookingStatus,
   HotelBookingResponse,
+  HotelReservationsFilters,
   PaymentStatus,
 } from '../../../core/services/booking.service';
+import type { HabitacionDetalle } from '../../../core/services/hotel.service';
 import { ToastService } from '../../../core/services/toast.service';
 
 type ReservationAction = 'confirm' | 'reject';
@@ -15,12 +18,13 @@ type ReservationAction = 'confirm' | 'reject';
 @Component({
   selector: 'app-partner-dashboard',
   standalone: true,
-  imports: [CommonModule, TranslocoPipe],
+  imports: [CommonModule, FormsModule, TranslocoPipe],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
-export class PartnerDashboardComponent implements OnInit {
+export class PartnerDashboardComponent implements OnInit, OnDestroy {
   reservations: HotelBookingResponse[] = [];
+  habitaciones: HabitacionDetalle[] = [];
   totalReservations = 0;
   limit = 10;
   skip = 0;
@@ -30,14 +34,71 @@ export class PartnerDashboardComponent implements OnInit {
   actionReservationId: string | null = null;
   actionType: ReservationAction | null = null;
 
+  // Filter state
+  searchGuest = '';
+  selectedHabitacion: string | null = null;
+  fechaInicio: string | null = null;
+  fechaFin: string | null = null;
+  selectedEstado: BookingStatus | null = null;
+  selectedNumHuespedes: number | null = null;
+  showMoreFilters = false;
+
   private readonly bookingService = inject(BookingService);
   private readonly toast = inject(ToastService);
   private readonly transloco = inject(TranslocoService);
+  private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit(): void {
     this.loadReservations();
   }
 
+  ngOnDestroy(): void {
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+  }
+
+  onSearchGuestChange(): void {
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => this.applyFilters(), 300);
+  }
+
+  onFilterChange(): void {
+    this.applyFilters();
+  }
+
+  toggleMoreFilters(): void {
+    this.showMoreFilters = !this.showMoreFilters;
+  }
+
+  clearFilters(): void {
+    this.searchGuest = '';
+    this.selectedHabitacion = null;
+    this.fechaInicio = null;
+    this.fechaFin = null;
+    this.selectedEstado = null;
+    this.selectedNumHuespedes = null;
+    this.showMoreFilters = false;
+    this.applyFilters();
+  }
+
+  hasActiveFilters(): boolean {
+    return !!(
+      this.searchGuest ||
+      this.selectedHabitacion ||
+      this.fechaInicio ||
+      this.fechaFin ||
+      this.selectedEstado ||
+      this.selectedNumHuespedes !== null
+    );
+  }
+
+  private applyFilters(): void {
+    this.skip = 0;
+    this.loadReservations();
+  }
   get currentPage(): number {
     return Math.floor(this.skip / this.limit) + 1;
   }
@@ -247,10 +308,19 @@ export class PartnerDashboardComponent implements OnInit {
     this.refreshing = isRefresh;
     this.loadError = false;
 
-    this.bookingService.getHotelReservations(this.skip, this.limit).subscribe({
+    const filters: HotelReservationsFilters = {};
+    if (this.searchGuest.trim()) filters.nombre_viajero = this.searchGuest.trim();
+    if (this.selectedHabitacion) filters.tipo_habitacion = this.selectedHabitacion;
+    if (this.selectedEstado) filters.estado = this.selectedEstado;
+    if (this.fechaInicio) filters.fecha_inicio = this.fechaInicio;
+    if (this.fechaFin) filters.fecha_fin = this.fechaFin;
+    if (this.selectedNumHuespedes !== null) filters.num_huespedes = this.selectedNumHuespedes;
+
+    this.bookingService.getHotelReservations(this.skip, this.limit, filters).subscribe({
       next: (response) => {
         this.reservations = response.reservas;
         this.totalReservations = response.total;
+        this.habitaciones = response.habitaciones;
         this.loading = false;
         this.refreshing = false;
       },

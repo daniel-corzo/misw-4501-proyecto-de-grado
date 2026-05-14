@@ -426,6 +426,109 @@
   cursor: not-allowed;
 }
 
+/* --- Filter controls enhancements --- */
+
+.filter-input select {
+  flex: 1;
+  padding: var(--space-sm) 0;
+  font-size: 14px;
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+}
+
+.filter-input input[type="date"] {
+  flex: 1;
+  padding: var(--space-sm) 0;
+  font-size: 14px;
+  background: transparent;
+  border: none;
+  outline: none;
+}
+
+.date-sep {
+  margin: 0 var(--space-xs);
+  color: var(--color-secondary);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.btn-secondary.is-active {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  background: #eff6ff;
+}
+
+/* --- "Más filtros" dropdown panel --- */
+
+.more-filters-container {
+  position: relative;
+}
+
+.more-filters-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 100;
+  min-width: 280px;
+  padding: var(--space-md);
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.more-filter-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.more-filter-row label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-secondary-dk);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.more-filter-row select,
+.more-filter-row input[type="number"] {
+  padding: 8px 12px;
+  font-size: 14px;
+  background: #f8f9fa;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  outline: none;
+  width: 100%;
+}
+
+.more-filter-row select:focus,
+.more-filter-row input[type="number"]:focus {
+  border-color: var(--color-primary);
+}
+
+/* --- Clear filters button --- */
+
+.btn-clear-filters {
+  align-self: center;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-danger);
+  background: #fef2f2;
+  border: 1px solid #fee2e2;
+  border-radius: var(--border-radius);
+  white-space: nowrap;
+}
+
+/* --- Animations --- */
+
 @keyframes spin {
   from {
     transform: rotate(0deg);
@@ -471,7 +574,9 @@
     flex: 1 1 100%;
     width: 100%;
   }
+
+  .more-filters-panel {
+    right: auto;
+    left: 0;
+  }
 }
-
-
-

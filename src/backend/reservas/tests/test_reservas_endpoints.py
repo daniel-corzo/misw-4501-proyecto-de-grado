@@ -1171,3 +1171,125 @@ async def test_get_reservas_estado_missing_returns_422(override_client):
     response = await override_client.get("/reservas")
 
     assert response.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# Filtros hotel: /reservas/hoteles query params
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_get_reservas_hotel_passes_nombre_viajero_to_service(override_manager_client, mock_db_session):
+    service_response = ListaReservasHotelResponse(total=0, reservas=[], habitaciones=[])
+    mock_service = AsyncMock(return_value=service_response)
+    with patch("app.routers.reservas.listar_reservas_hotel_service", new=mock_service):
+        response = await override_manager_client.get(
+            "/reservas/hoteles?skip=0&limit=10&nombre_viajero=Alice"
+        )
+
+    assert response.status_code == 200
+    assert mock_service.await_args.kwargs["nombre_viajero"] == "Alice"
+    assert mock_service.await_args.kwargs["skip"] == 0
+    assert mock_service.await_args.kwargs["limit"] == 10
+
+
+@pytest.mark.asyncio
+async def test_get_reservas_hotel_passes_tipo_habitacion_to_service(override_manager_client, mock_db_session):
+    service_response = ListaReservasHotelResponse(total=0, reservas=[], habitaciones=[])
+    mock_service = AsyncMock(return_value=service_response)
+    with patch("app.routers.reservas.listar_reservas_hotel_service", new=mock_service):
+        response = await override_manager_client.get(
+            "/reservas/hoteles?tipo_habitacion=Suite"
+        )
+
+    assert response.status_code == 200
+    assert mock_service.await_args.kwargs["tipo_habitacion"] == "Suite"
+
+
+@pytest.mark.asyncio
+async def test_get_reservas_hotel_passes_estado_to_service(override_manager_client, mock_db_session):
+    service_response = ListaReservasHotelResponse(total=0, reservas=[], habitaciones=[])
+    mock_service = AsyncMock(return_value=service_response)
+    with patch("app.routers.reservas.listar_reservas_hotel_service", new=mock_service):
+        response = await override_manager_client.get(
+            "/reservas/hoteles?estado=confirmada"
+        )
+
+    assert response.status_code == 200
+    from app.schemas.reserva import EstadoReserva
+    assert mock_service.await_args.kwargs["estado"] == EstadoReserva.confirmada
+
+
+@pytest.mark.asyncio
+async def test_get_reservas_hotel_passes_date_range_to_service(override_manager_client, mock_db_session):
+    from datetime import date
+    service_response = ListaReservasHotelResponse(total=0, reservas=[], habitaciones=[])
+    mock_service = AsyncMock(return_value=service_response)
+    with patch("app.routers.reservas.listar_reservas_hotel_service", new=mock_service):
+        response = await override_manager_client.get(
+            "/reservas/hoteles?fecha_inicio=2026-06-01&fecha_fin=2026-06-30"
+        )
+
+    assert response.status_code == 200
+    assert mock_service.await_args.kwargs["fecha_inicio"] == date(2026, 6, 1)
+    assert mock_service.await_args.kwargs["fecha_fin"] == date(2026, 6, 30)
+
+
+@pytest.mark.asyncio
+async def test_get_reservas_hotel_passes_estado_pago_to_service(override_manager_client, mock_db_session):
+    service_response = ListaReservasHotelResponse(total=0, reservas=[], habitaciones=[])
+    mock_service = AsyncMock(return_value=service_response)
+    with patch("app.routers.reservas.listar_reservas_hotel_service", new=mock_service):
+        response = await override_manager_client.get(
+            "/reservas/hoteles?estado_pago=pending"
+        )
+
+    assert response.status_code == 200
+    from app.schemas.reserva import EstadoPagoFiltro
+    assert mock_service.await_args.kwargs["estado_pago"] == EstadoPagoFiltro.pending
+
+
+@pytest.mark.asyncio
+async def test_get_reservas_hotel_passes_num_huespedes_to_service(override_manager_client, mock_db_session):
+    service_response = ListaReservasHotelResponse(total=0, reservas=[], habitaciones=[])
+    mock_service = AsyncMock(return_value=service_response)
+    with patch("app.routers.reservas.listar_reservas_hotel_service", new=mock_service):
+        response = await override_manager_client.get(
+            "/reservas/hoteles?num_huespedes=3"
+        )
+
+    assert response.status_code == 200
+    assert mock_service.await_args.kwargs["num_huespedes"] == 3
+
+
+@pytest.mark.asyncio
+async def test_get_reservas_hotel_invalid_estado_returns_422(override_manager_client, mock_db_session):
+    response = await override_manager_client.get(
+        "/reservas/hoteles?estado=invalido"
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_get_reservas_hotel_invalid_estado_pago_returns_422(override_manager_client, mock_db_session):
+    response = await override_manager_client.get(
+        "/reservas/hoteles?estado_pago=unknown_value"
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_get_reservas_hotel_filters_default_to_none(override_manager_client, mock_db_session):
+    service_response = ListaReservasHotelResponse(total=0, reservas=[], habitaciones=[])
+    mock_service = AsyncMock(return_value=service_response)
+    with patch("app.routers.reservas.listar_reservas_hotel_service", new=mock_service):
+        response = await override_manager_client.get("/reservas/hoteles")
+
+    assert response.status_code == 200
+    kwargs = mock_service.await_args.kwargs
+    assert kwargs["nombre_viajero"] is None
+    assert kwargs["tipo_habitacion"] is None
+    assert kwargs["estado"] is None
+    assert kwargs["fecha_inicio"] is None
+    assert kwargs["fecha_fin"] is None
+    assert kwargs["estado_pago"] is None
+    assert kwargs["num_huespedes"] is None
