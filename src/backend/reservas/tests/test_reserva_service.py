@@ -10,6 +10,8 @@ from fastapi import HTTPException
 from app.models.reserva import Reserva
 from app.schemas.reserva import (
     CrearReservaRequest,
+    EstadoPagoFiltro,
+    EstadoReserva,
     HabitacionHotelResponse,
     HabitacionReservaDetalleResponse,
     ModificarReservaRequest,
@@ -383,6 +385,9 @@ async def test_listar_reservas_hotel_service_applies_pagination_and_order(mock_d
     ), patch(
         "app.services.reserva_service.construir_reservas_hotel_response",
         new=AsyncMock(return_value=[_hotel_reserva_response(reserva)]),
+    ), patch(
+        "app.services.reserva_service.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value={}),
     ):
         response = await listar_reservas_hotel_service(
             db=mock_db,
@@ -394,6 +399,7 @@ async def test_listar_reservas_hotel_service_applies_pagination_and_order(mock_d
     assert response.total == 24
     assert len(response.reservas) == 1
     assert len(response.habitaciones) == 1
+    assert response.habitaciones[0].nombre_habitacion is None
     executed_stmt = mock_db.execute.await_args_list[1].args[0]
     assert "check_in asc" in str(executed_stmt).lower()
     assert executed_stmt._limit_clause.value == 5
@@ -657,3 +663,396 @@ async def test_modificar_reserva_service_400_fechas_invalidas(mock_db):
 
     assert exc.value.status_code == 400
     mock_db.commit.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# Filtros: listar_reservas_hotel_service
+# ---------------------------------------------------------------------------
+
+def _make_habitaciones():
+    return [
+        HabitacionHotelResponse(
+            id=HAB_ID,
+            capacidad=2,
+            numero="101",
+            descripcion=None,
+            imagenes=[],
+            monto=100,
+            impuestos=10,
+            disponible=True,
+        )
+    ]
+
+
+def _make_list_result(reservas_list):
+    list_result = MagicMock()
+    list_scalar = MagicMock()
+    list_scalar.all.return_value = reservas_list
+    list_result.scalars.return_value = list_scalar
+    return list_result
+
+
+@pytest.mark.asyncio
+async def test_listar_reservas_hotel_service_sql_estado_filter(mock_db):
+    """Estado filter goes to SQL (efficient path, 2 executes)."""
+    reserva = _reserva_modificable(estado="confirmada")
+
+    count_result = MagicMock()
+    count_result.scalar_one.return_value = 1
+    list_result = _make_list_result([reserva])
+    mock_db.execute = AsyncMock(side_effect=[count_result, list_result])
+
+    with patch(
+        "app.services.reserva_service.obtener_habitaciones_hotel",
+        new=AsyncMock(return_value=_make_habitaciones()),
+    ), patch(
+        "app.services.reserva_service.construir_reservas_hotel_response",
+        new=AsyncMock(return_value=[_hotel_reserva_response(reserva)]),
+    ), patch(
+        "app.services.reserva_service.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value={}),
+    ):
+        response = await listar_reservas_hotel_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+            skip=0,
+            limit=10,
+            estado=EstadoReserva.confirmada,
+        )
+
+    assert response.total == 1
+    # SQL path: 2 executes (count + list)
+    assert mock_db.execute.await_count == 2
+    count_stmt = str(mock_db.execute.await_args_list[0].args[0]).lower()
+    assert "estado" in count_stmt
+
+
+@pytest.mark.asyncio
+async def test_listar_reservas_hotel_service_sql_num_huespedes_filter(mock_db):
+    """num_huespedes filter goes to SQL (efficient path, 2 executes)."""
+    reserva = _reserva_modificable()
+
+    count_result = MagicMock()
+    count_result.scalar_one.return_value = 1
+    list_result = _make_list_result([reserva])
+    mock_db.execute = AsyncMock(side_effect=[count_result, list_result])
+
+    with patch(
+        "app.services.reserva_service.obtener_habitaciones_hotel",
+        new=AsyncMock(return_value=_make_habitaciones()),
+    ), patch(
+        "app.services.reserva_service.construir_reservas_hotel_response",
+        new=AsyncMock(return_value=[_hotel_reserva_response(reserva)]),
+    ), patch(
+        "app.services.reserva_service.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value={}),
+    ):
+        response = await listar_reservas_hotel_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+            skip=0,
+            limit=10,
+            num_huespedes=2,
+        )
+
+    assert response.total == 1
+    assert mock_db.execute.await_count == 2
+    count_stmt = mock_db.execute.await_args_list[0].args[0]
+    assert "personas" in str(count_stmt).lower()
+
+
+@pytest.mark.asyncio
+async def test_listar_reservas_hotel_service_sql_date_overlap_filter(mock_db):
+    """fecha_inicio/fecha_fin filter goes to SQL (efficient path, 2 executes)."""
+    from datetime import date as date_
+
+    reserva = _reserva_modificable()
+
+    count_result = MagicMock()
+    count_result.scalar_one.return_value = 1
+    list_result = _make_list_result([reserva])
+    mock_db.execute = AsyncMock(side_effect=[count_result, list_result])
+
+    with patch(
+        "app.services.reserva_service.obtener_habitaciones_hotel",
+        new=AsyncMock(return_value=_make_habitaciones()),
+    ), patch(
+        "app.services.reserva_service.construir_reservas_hotel_response",
+        new=AsyncMock(return_value=[_hotel_reserva_response(reserva)]),
+    ), patch(
+        "app.services.reserva_service.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value={}),
+    ):
+        response = await listar_reservas_hotel_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+            skip=0,
+            limit=10,
+            fecha_inicio=date_(2026, 6, 1),
+            fecha_fin=date_(2026, 6, 30),
+        )
+
+    assert response.total == 1
+    assert mock_db.execute.await_count == 2
+    count_stmt = str(mock_db.execute.await_args_list[0].args[0]).lower()
+    assert "check_in" in count_stmt or "check_out" in count_stmt
+
+
+@pytest.mark.asyncio
+async def test_listar_reservas_hotel_service_nombre_viajero_filter(mock_db):
+    """nombre_viajero triggers in-memory path (1 SQL execute). Matching reservation passes."""
+    reserva = _reserva_modificable()
+
+    list_result = _make_list_result([reserva])
+    mock_db.execute = AsyncMock(return_value=list_result)
+
+    hotel_resp = _hotel_reserva_response(reserva)  # nombre_viajero="Alice"
+
+    with patch(
+        "app.services.reserva_service.obtener_habitaciones_hotel",
+        new=AsyncMock(return_value=_make_habitaciones()),
+    ), patch(
+        "app.services.reserva_service.construir_reservas_hotel_response",
+        new=AsyncMock(return_value=[hotel_resp]),
+    ), patch(
+        "app.services.reserva_service.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value={}),
+    ):
+        response = await listar_reservas_hotel_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+            skip=0,
+            limit=10,
+            nombre_viajero="alice",
+        )
+
+    # In-memory path: 1 execute (no separate count query)
+    assert mock_db.execute.await_count == 1
+    assert response.total == 1
+    assert len(response.reservas) == 1
+
+
+@pytest.mark.asyncio
+async def test_listar_reservas_hotel_service_nombre_viajero_no_match(mock_db):
+    """nombre_viajero filter returns empty when no match."""
+    reserva = _reserva_modificable()
+
+    list_result = _make_list_result([reserva])
+    mock_db.execute = AsyncMock(return_value=list_result)
+
+    hotel_resp = _hotel_reserva_response(reserva)  # nombre_viajero="Alice"
+
+    with patch(
+        "app.services.reserva_service.obtener_habitaciones_hotel",
+        new=AsyncMock(return_value=_make_habitaciones()),
+    ), patch(
+        "app.services.reserva_service.construir_reservas_hotel_response",
+        new=AsyncMock(return_value=[hotel_resp]),
+    ), patch(
+        "app.services.reserva_service.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value={}),
+    ):
+        response = await listar_reservas_hotel_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+            skip=0,
+            limit=10,
+            nombre_viajero="bob",
+        )
+
+    assert response.total == 0
+    assert len(response.reservas) == 0
+
+
+@pytest.mark.asyncio
+async def test_listar_reservas_hotel_service_tipo_habitacion_filter(mock_db):
+    """tipo_habitacion filters by nombre_habitacion substring (in-memory)."""
+    reserva = _reserva_modificable()
+
+    list_result = _make_list_result([reserva])
+    mock_db.execute = AsyncMock(return_value=list_result)
+
+    hotel_resp = _hotel_reserva_response(reserva)  # nombre_habitacion="Suite"
+
+    with patch(
+        "app.services.reserva_service.obtener_habitaciones_hotel",
+        new=AsyncMock(return_value=_make_habitaciones()),
+    ), patch(
+        "app.services.reserva_service.construir_reservas_hotel_response",
+        new=AsyncMock(return_value=[hotel_resp]),
+    ), patch(
+        "app.services.reserva_service.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value={}),
+    ):
+        response_match = await listar_reservas_hotel_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+            skip=0,
+            limit=10,
+            tipo_habitacion="suite",
+        )
+
+    assert response_match.total == 1
+
+    mock_db.execute = AsyncMock(return_value=list_result)
+    with patch(
+        "app.services.reserva_service.obtener_habitaciones_hotel",
+        new=AsyncMock(return_value=_make_habitaciones()),
+    ), patch(
+        "app.services.reserva_service.construir_reservas_hotel_response",
+        new=AsyncMock(return_value=[hotel_resp]),
+    ), patch(
+        "app.services.reserva_service.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value={}),
+    ):
+        response_no_match = await listar_reservas_hotel_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+            skip=0,
+            limit=10,
+            tipo_habitacion="deluxe",
+        )
+
+    assert response_no_match.total == 0
+
+
+@pytest.mark.asyncio
+async def test_listar_reservas_hotel_service_estado_pago_pending_filter(mock_db):
+    """estado_pago=pending keeps reservations with estado_pago=None."""
+    reserva = _reserva_modificable()
+
+    list_result = _make_list_result([reserva])
+    mock_db.execute = AsyncMock(return_value=list_result)
+
+    hotel_resp = _hotel_reserva_response(reserva)  # estado_pago=None (pago_id is None)
+    assert hotel_resp.estado_pago is None
+
+    with patch(
+        "app.services.reserva_service.obtener_habitaciones_hotel",
+        new=AsyncMock(return_value=_make_habitaciones()),
+    ), patch(
+        "app.services.reserva_service.construir_reservas_hotel_response",
+        new=AsyncMock(return_value=[hotel_resp]),
+    ), patch(
+        "app.services.reserva_service.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value={}),
+    ):
+        response = await listar_reservas_hotel_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+            skip=0,
+            limit=10,
+            estado_pago=EstadoPagoFiltro.pending,
+        )
+
+    assert response.total == 1
+    assert len(response.reservas) == 1
+
+
+@pytest.mark.asyncio
+async def test_listar_reservas_hotel_service_estado_pago_successful_filter(mock_db):
+    """estado_pago=successful keeps only successful-payment reservations."""
+    reserva = _reserva_modificable()
+
+    list_result = _make_list_result([reserva])
+    mock_db.execute = AsyncMock(return_value=list_result)
+
+    hotel_resp_pending = _hotel_reserva_response(reserva)  # estado_pago=None
+
+    with patch(
+        "app.services.reserva_service.obtener_habitaciones_hotel",
+        new=AsyncMock(return_value=_make_habitaciones()),
+    ), patch(
+        "app.services.reserva_service.construir_reservas_hotel_response",
+        new=AsyncMock(return_value=[hotel_resp_pending]),
+    ), patch(
+        "app.services.reserva_service.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value={}),
+    ):
+        response = await listar_reservas_hotel_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+            skip=0,
+            limit=10,
+            estado_pago=EstadoPagoFiltro.successful,
+        )
+
+    assert response.total == 0
+
+
+@pytest.mark.asyncio
+async def test_listar_reservas_hotel_service_in_memory_pagination(mock_db):
+    """In-memory filtering applies skip/limit after filtering; total reflects filtered count."""
+    now = datetime.now(UTC)
+    reservas_db = [
+        _reserva_modificable(id=uuid.uuid4(), estado="confirmada")
+        for _ in range(5)
+    ]
+
+    list_result = _make_list_result(reservas_db)
+    mock_db.execute = AsyncMock(return_value=list_result)
+
+    hotel_responses = [_hotel_reserva_response(r) for r in reservas_db]
+
+    with patch(
+        "app.services.reserva_service.obtener_habitaciones_hotel",
+        new=AsyncMock(return_value=_make_habitaciones()),
+    ), patch(
+        "app.services.reserva_service.construir_reservas_hotel_response",
+        new=AsyncMock(return_value=hotel_responses),
+    ), patch(
+        "app.services.reserva_service.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value={}),
+    ):
+        response = await listar_reservas_hotel_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+            skip=2,
+            limit=2,
+            nombre_viajero="alice",
+        )
+
+    # All 5 match "alice" → total=5, page[2:4] → 2 reservas
+    assert response.total == 5
+    assert len(response.reservas) == 2
+
+
+@pytest.mark.asyncio
+async def test_listar_reservas_hotel_service_enriches_habitaciones(mock_db):
+    """habitaciones list is enriched with nombre_habitacion from room summary."""
+    reserva = _reserva_modificable()
+
+    count_result = MagicMock()
+    count_result.scalar_one.return_value = 1
+    list_result = _make_list_result([reserva])
+    mock_db.execute = AsyncMock(side_effect=[count_result, list_result])
+
+    room_detalle = HabitacionReservaDetalleResponse(
+        id=HAB_ID,
+        nombre_habitacion="Deluxe King Suite",
+        nombre_hotel="Grand Palace",
+        imagenes_hotel=[],
+        numero_habitacion="101",
+        monto_habitacion=100,
+        impuestos_habitacion=10,
+    )
+
+    with patch(
+        "app.services.reserva_service.obtener_habitaciones_hotel",
+        new=AsyncMock(return_value=_make_habitaciones()),
+    ), patch(
+        "app.services.reserva_service.construir_reservas_hotel_response",
+        new=AsyncMock(return_value=[_hotel_reserva_response(reserva)]),
+    ), patch(
+        "app.services.reserva_service.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value={HAB_ID: room_detalle}),
+    ):
+        response = await listar_reservas_hotel_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+            skip=0,
+            limit=10,
+        )
+
+    assert len(response.habitaciones) == 1
+    assert response.habitaciones[0].nombre_habitacion == "Deluxe King Suite"

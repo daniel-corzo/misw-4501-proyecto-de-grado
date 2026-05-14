@@ -1,26 +1,39 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { Subject, switchMap, EMPTY, catchError } from 'rxjs';
 
 import {
   BookingService,
   BookingStatus,
   HotelBookingResponse,
+  HotelReservationsFilters,
   PaymentStatus,
 } from '../../../core/services/booking.service';
+import type { HabitacionDetalle } from '../../../core/services/hotel.service';
 import { ToastService } from '../../../core/services/toast.service';
 
 type ReservationAction = 'confirm' | 'reject';
 
+interface LoadReservationsParams {
+  skip: number;
+  limit: number;
+  filters: HotelReservationsFilters;
+  isRefresh: boolean;
+}
+
 @Component({
   selector: 'app-partner-dashboard',
   standalone: true,
-  imports: [CommonModule, TranslocoPipe],
+  imports: [CommonModule, FormsModule, TranslocoPipe],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
-export class PartnerDashboardComponent implements OnInit {
+export class PartnerDashboardComponent implements OnInit, OnDestroy {
   reservations: HotelBookingResponse[] = [];
+  habitaciones: HabitacionDetalle[] = [];
   totalReservations = 0;
   limit = 10;
   skip = 0;
@@ -30,14 +43,104 @@ export class PartnerDashboardComponent implements OnInit {
   actionReservationId: string | null = null;
   actionType: ReservationAction | null = null;
 
+  // Filter state
+  searchGuest = '';
+  selectedHabitacion: string | null = null;
+  fechaInicio: string | null = null;
+  fechaFin: string | null = null;
+  selectedEstado: BookingStatus | null = null;
+  selectedNumHuespedes: number | null = null;
+  showMoreFilters = false;
+
   private readonly bookingService = inject(BookingService);
   private readonly toast = inject(ToastService);
   private readonly transloco = inject(TranslocoService);
+  private readonly destroyRef = inject(DestroyRef);
+  private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  private readonly loadTrigger$ = new Subject<LoadReservationsParams>();
+
+  constructor() {
+    this.loadTrigger$
+      .pipe(
+        switchMap((params) => {
+          this.loading = !params.isRefresh;
+          this.refreshing = params.isRefresh;
+          this.loadError = false;
+          return this.bookingService
+            .getHotelReservations(params.skip, params.limit, params.filters)
+            .pipe(
+              catchError(() => {
+                this.clearLoadingState();
+                this.loadError = true;
+                this.toast.danger(
+                  this.transloco.translate('partner.dashboard.reservations.loadError')
+                );
+                return EMPTY;
+              })
+            );
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((response) => {
+        this.reservations = response.reservas;
+        this.totalReservations = response.total;
+        this.habitaciones = response.habitaciones;
+        this.clearLoadingState();
+      });
+  }
 
   ngOnInit(): void {
     this.loadReservations();
   }
 
+  ngOnDestroy(): void {
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+  }
+
+  onSearchGuestChange(): void {
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => this.applyFilters(), 300);
+  }
+
+  onFilterChange(): void {
+    this.applyFilters();
+  }
+
+  toggleMoreFilters(): void {
+    this.showMoreFilters = !this.showMoreFilters;
+  }
+
+  clearFilters(): void {
+    this.searchGuest = '';
+    this.selectedHabitacion = null;
+    this.fechaInicio = null;
+    this.fechaFin = null;
+    this.selectedEstado = null;
+    this.selectedNumHuespedes = null;
+    this.showMoreFilters = false;
+    this.applyFilters();
+  }
+
+  hasActiveFilters(): boolean {
+    return !!(
+      this.searchGuest.trim() ||
+      this.selectedHabitacion ||
+      this.fechaInicio ||
+      this.fechaFin ||
+      this.selectedEstado ||
+      this.selectedNumHuespedes !== null
+    );
+  }
+
+  private applyFilters(): void {
+    this.skip = 0;
+    this.loadReservations();
+  }
   get currentPage(): number {
     return Math.floor(this.skip / this.limit) + 1;
   }
@@ -243,31 +346,32 @@ export class PartnerDashboardComponent implements OnInit {
   }
 
   private loadReservations(isRefresh = false): void {
-    this.loading = !isRefresh;
-    this.refreshing = isRefresh;
-    this.loadError = false;
+    const filters: HotelReservationsFilters = {};
+    const validNumHuespedes =
+      this.selectedNumHuespedes !== null &&
+      Number.isInteger(this.selectedNumHuespedes) &&
+      this.selectedNumHuespedes >= 1
+        ? this.selectedNumHuespedes
+        : null;
 
-    this.bookingService.getHotelReservations(this.skip, this.limit).subscribe({
-      next: (response) => {
-        this.reservations = response.reservas;
-        this.totalReservations = response.total;
-        this.loading = false;
-        this.refreshing = false;
-      },
-      error: () => {
-        this.loading = false;
-        this.refreshing = false;
-        this.loadError = true;
-        this.toast.danger(
-          this.transloco.translate('partner.dashboard.reservations.loadError')
-        );
-      },
-    });
+    if (this.searchGuest.trim()) filters.nombre_viajero = this.searchGuest.trim();
+    if (this.selectedHabitacion) filters.tipo_habitacion = this.selectedHabitacion;
+    if (this.selectedEstado) filters.estado = this.selectedEstado;
+    if (this.fechaInicio) filters.fecha_inicio = this.fechaInicio;
+    if (this.fechaFin) filters.fecha_fin = this.fechaFin;
+    if (validNumHuespedes !== null) filters.num_huespedes = validNumHuespedes;
+
+    this.loadTrigger$.next({ skip: this.skip, limit: this.limit, filters, isRefresh });
   }
 
   private clearActionState(): void {
     this.actionReservationId = null;
     this.actionType = null;
+  }
+
+  private clearLoadingState(): void {
+    this.loading = false;
+    this.refreshing = false;
   }
 
   private getLocale(): string {

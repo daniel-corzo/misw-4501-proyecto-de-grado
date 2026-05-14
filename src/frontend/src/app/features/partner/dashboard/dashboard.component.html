@@ -80,23 +80,91 @@
     <div class="filters-toolbar">
       <div class="filter-input search-input">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        <input type="text" [placeholder]="'partner.dashboard.reservations.searchPlaceholder' | transloco">
+        <input
+          type="text"
+          [(ngModel)]="searchGuest"
+          (ngModelChange)="onSearchGuestChange()"
+          [placeholder]="'partner.dashboard.reservations.searchPlaceholder' | transloco"
+        >
       </div>
-      
-      <button class="filter-input select-input filter-trigger" type="button">
-        <span>{{ 'partner.dashboard.reservations.roomType' | transloco }}</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-      </button>
-      
+
+      <div class="filter-input select-input">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+        <select
+          [(ngModel)]="selectedHabitacion"
+          (ngModelChange)="onFilterChange()"
+        >
+          <option [ngValue]="null">{{ 'partner.dashboard.reservations.filterRoomPlaceholder' | transloco }}</option>
+          @for (hab of habitaciones; track hab.id) {
+            @if (hab.nombre_habitacion) {
+              <option [value]="hab.nombre_habitacion">{{ hab.nombre_habitacion }}</option>
+            }
+          }
+        </select>
+      </div>
+
       <div class="filter-input date-input">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-        <input type="text" [placeholder]="'partner.dashboard.reservations.dateRange' | transloco" readonly>
+        <input
+          type="date"
+          [(ngModel)]="fechaInicio"
+          (ngModelChange)="onFilterChange()"
+          [attr.placeholder]="'partner.dashboard.reservations.filterDateFrom' | transloco"
+          [max]="fechaFin ?? ''"
+        >
+        <span class="date-sep">–</span>
+        <input
+          type="date"
+          [(ngModel)]="fechaFin"
+          (ngModelChange)="onFilterChange()"
+          [attr.placeholder]="'partner.dashboard.reservations.filterDateTo' | transloco"
+          [min]="fechaInicio ?? ''"
+        >
       </div>
-      
-      <button class="btn-secondary" type="button">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-        {{ 'partner.dashboard.reservations.moreFilters' | transloco }}
-      </button>
+
+      <div class="more-filters-container">
+        <button
+          class="btn-secondary"
+          type="button"
+          (click)="toggleMoreFilters()"
+          [class.is-active]="showMoreFilters"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+          {{ 'partner.dashboard.reservations.moreFilters' | transloco }}
+        </button>
+
+        @if (showMoreFilters) {
+          <div class="more-filters-panel">
+            <div class="more-filter-row">
+              <label>{{ 'partner.dashboard.reservations.filterState' | transloco }}</label>
+              <select [(ngModel)]="selectedEstado" (ngModelChange)="onFilterChange()">
+                <option [ngValue]="null">{{ 'partner.dashboard.reservations.filterStatePlaceholder' | transloco }}</option>
+                <option value="pendiente">{{ 'bookings.statusPending' | transloco }}</option>
+                <option value="confirmada">{{ 'bookings.statusConfirmed' | transloco }}</option>
+                <option value="cancelada">{{ 'bookings.statusCancelled' | transloco }}</option>
+                <option value="completada">{{ 'bookings.statusCompleted' | transloco }}</option>
+              </select>
+            </div>
+
+            <div class="more-filter-row">
+              <label>{{ 'partner.dashboard.reservations.filterGuests' | transloco }}</label>
+              <input
+                type="number"
+                min="1"
+                [(ngModel)]="selectedNumHuespedes"
+                (ngModelChange)="onFilterChange()"
+                [placeholder]="'partner.dashboard.reservations.filterGuestsPlaceholder' | transloco"
+              >
+            </div>
+          </div>
+        }
+      </div>
+
+      @if (hasActiveFilters()) {
+        <button class="btn-clear-filters" type="button" (click)="clearFilters()">
+          {{ 'partner.dashboard.reservations.clearFilters' | transloco }}
+        </button>
+      }
     </div>
 
     @if (loading && reservations.length === 0) {
@@ -109,7 +177,7 @@
       </div>
     } @else if (!loading && reservations.length === 0) {
       <div class="table-state">
-        {{ 'partner.dashboard.reservations.empty' | transloco }}
+        {{ (hasActiveFilters() ? 'partner.dashboard.reservations.emptyFiltered' : 'partner.dashboard.reservations.empty') | transloco }}
       </div>
     } @else {
       <div class="table-wrapper">

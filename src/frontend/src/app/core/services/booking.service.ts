@@ -6,6 +6,7 @@ import type { HabitacionDetalle } from './hotel.service';
 export type BookingStatus = 'pendiente' | 'confirmada' | 'cancelada' | 'completada';
 export type BookingFilter = 'activas' | 'canceladas' | 'pasadas';
 export type PaymentStatus = 'successful' | 'failed';
+export type PaymentStatusFilter = PaymentStatus | 'pending';
 
 export interface BookingResponse {
   id: string;
@@ -99,6 +100,16 @@ export interface UpdateBookingRequest {
   habitacion_id?: string;
 }
 
+export interface HotelReservationsFilters {
+  nombre_viajero?: string;
+  tipo_habitacion?: string;
+  estado?: BookingStatus;
+  fecha_inicio?: string;
+  fecha_fin?: string;
+  estado_pago?: PaymentStatusFilter;
+  num_huespedes?: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class BookingService {
   private readonly api = inject(ApiService);
@@ -124,8 +135,18 @@ export class BookingService {
     return this.api.get<BookingListResponse>('/reservas', { estado: status });
   }
 
-  getHotelReservations(skip = 0, limit = 10): Observable<HotelBookingListResponse> {
-    return this.api.get<HotelBookingListResponse>('/reservas/hoteles', { skip, limit });
+  getHotelReservations(skip = 0, limit = 10, filters?: HotelReservationsFilters): Observable<HotelBookingListResponse> {
+    const params: Record<string, string | number> = { skip, limit };
+    if (filters) {
+      if (filters.nombre_viajero) params['nombre_viajero'] = filters.nombre_viajero;
+      if (filters.tipo_habitacion) params['tipo_habitacion'] = filters.tipo_habitacion;
+      if (filters.estado) params['estado'] = filters.estado;
+      if (filters.fecha_inicio) params['fecha_inicio'] = filters.fecha_inicio;
+      if (filters.fecha_fin) params['fecha_fin'] = filters.fecha_fin;
+      if (filters.estado_pago) params['estado_pago'] = filters.estado_pago;
+      if (filters.num_huespedes !== undefined) params['num_huespedes'] = filters.num_huespedes;
+    }
+    return this.api.get<HotelBookingListResponse>('/reservas/hoteles', params);
   }
 
   getBookingById(bookingId: string): Observable<BookingDetailResponse> {

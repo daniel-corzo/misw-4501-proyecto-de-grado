@@ -18,6 +18,12 @@ class EstadoPagoReserva(str, Enum):
     failed = "failed"
 
 
+class EstadoPagoFiltro(str, Enum):
+    successful = "successful"
+    failed = "failed"
+    pending = "pending"
+
+
 class FiltroReservasUsuario(str, Enum):
     activas = "activas"
     canceladas = "canceladas"
@@ -137,6 +143,7 @@ class HabitacionHotelResponse(BaseModel):
     monto: int
     impuestos: int
     disponible: bool
+    nombre_habitacion: Optional[str] = None
 
 
 class HabitacionReservaDetalleResponse(BaseModel):
