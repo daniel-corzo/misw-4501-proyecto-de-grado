@@ -17,6 +17,13 @@ import { ToastService } from '../../../core/services/toast.service';
 
 type ReservationAction = 'confirm' | 'reject';
 
+interface LoadReservationsParams {
+  skip: number;
+  limit: number;
+  filters: HotelReservationsFilters;
+  isRefresh: boolean;
+}
+
 @Component({
   selector: 'app-partner-dashboard',
   standalone: true,
@@ -51,12 +58,7 @@ export class PartnerDashboardComponent implements OnInit, OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
   private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-  private readonly loadTrigger$ = new Subject<{
-    skip: number;
-    limit: number;
-    filters: HotelReservationsFilters;
-    isRefresh: boolean;
-  }>();
+  private readonly loadTrigger$ = new Subject<LoadReservationsParams>();
 
   constructor() {
     this.loadTrigger$
@@ -69,8 +71,7 @@ export class PartnerDashboardComponent implements OnInit, OnDestroy {
             .getHotelReservations(params.skip, params.limit, params.filters)
             .pipe(
               catchError(() => {
-                this.loading = false;
-                this.refreshing = false;
+                this.clearLoadingState();
                 this.loadError = true;
                 this.toast.danger(
                   this.transloco.translate('partner.dashboard.reservations.loadError')
@@ -85,8 +86,7 @@ export class PartnerDashboardComponent implements OnInit, OnDestroy {
         this.reservations = response.reservas;
         this.totalReservations = response.total;
         this.habitaciones = response.habitaciones;
-        this.loading = false;
-        this.refreshing = false;
+        this.clearLoadingState();
       });
   }
 
@@ -367,6 +367,11 @@ export class PartnerDashboardComponent implements OnInit, OnDestroy {
   private clearActionState(): void {
     this.actionReservationId = null;
     this.actionType = null;
+  }
+
+  private clearLoadingState(): void {
+    this.loading = false;
+    this.refreshing = false;
   }
 
   private getLocale(): string {
