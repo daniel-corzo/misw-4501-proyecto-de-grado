@@ -695,7 +695,6 @@ def _make_list_result(reservas_list):
 @pytest.mark.asyncio
 async def test_listar_reservas_hotel_service_sql_estado_filter(mock_db):
     """Estado filter goes to SQL (efficient path, 2 executes)."""
-    now = datetime.now(UTC)
     reserva = _reserva_modificable(estado="confirmada")
 
     count_result = MagicMock()
