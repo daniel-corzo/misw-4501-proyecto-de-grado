@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { Subject, switchMap, EMPTY, catchError } from 'rxjs';
 
 import {
   BookingService,
@@ -46,7 +48,47 @@ export class PartnerDashboardComponent implements OnInit, OnDestroy {
   private readonly bookingService = inject(BookingService);
   private readonly toast = inject(ToastService);
   private readonly transloco = inject(TranslocoService);
+  private readonly destroyRef = inject(DestroyRef);
   private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  private readonly loadTrigger$ = new Subject<{
+    skip: number;
+    limit: number;
+    filters: HotelReservationsFilters;
+    isRefresh: boolean;
+  }>();
+
+  constructor() {
+    this.loadTrigger$
+      .pipe(
+        switchMap((params) => {
+          this.loading = !params.isRefresh;
+          this.refreshing = params.isRefresh;
+          this.loadError = false;
+          return this.bookingService
+            .getHotelReservations(params.skip, params.limit, params.filters)
+            .pipe(
+              catchError(() => {
+                this.loading = false;
+                this.refreshing = false;
+                this.loadError = true;
+                this.toast.danger(
+                  this.transloco.translate('partner.dashboard.reservations.loadError')
+                );
+                return EMPTY;
+              })
+            );
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((response) => {
+        this.reservations = response.reservas;
+        this.totalReservations = response.total;
+        this.habitaciones = response.habitaciones;
+        this.loading = false;
+        this.refreshing = false;
+      });
+  }
 
   ngOnInit(): void {
     this.loadReservations();
@@ -304,10 +346,6 @@ export class PartnerDashboardComponent implements OnInit, OnDestroy {
   }
 
   private loadReservations(isRefresh = false): void {
-    this.loading = !isRefresh;
-    this.refreshing = isRefresh;
-    this.loadError = false;
-
     const filters: HotelReservationsFilters = {};
     const validNumHuespedes =
       this.selectedNumHuespedes !== null &&
@@ -323,23 +361,7 @@ export class PartnerDashboardComponent implements OnInit, OnDestroy {
     if (this.fechaFin) filters.fecha_fin = this.fechaFin;
     if (validNumHuespedes !== null) filters.num_huespedes = validNumHuespedes;
 
-    this.bookingService.getHotelReservations(this.skip, this.limit, filters).subscribe({
-      next: (response) => {
-        this.reservations = response.reservas;
-        this.totalReservations = response.total;
-        this.habitaciones = response.habitaciones;
-        this.loading = false;
-        this.refreshing = false;
-      },
-      error: () => {
-        this.loading = false;
-        this.refreshing = false;
-        this.loadError = true;
-        this.toast.danger(
-          this.transloco.translate('partner.dashboard.reservations.loadError')
-        );
-      },
-    });
+    this.loadTrigger$.next({ skip: this.skip, limit: this.limit, filters, isRefresh });
   }
 
   private clearActionState(): void {
