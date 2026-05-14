@@ -212,7 +212,7 @@ async def confirmar_reserva(
     reserva_id: uuid.UUID,
     request: Request,
     db: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(RoleChecker([RoleEnum.MANAGER])),
+    _current_user: User = Depends(RoleChecker([RoleEnum.MANAGER, RoleEnum.USER])),
 ):
     authorization_header = request.headers.get("Authorization")
     habitaciones = await obtener_habitaciones_hotel(authorization_header)
@@ -230,7 +230,7 @@ async def rechazar_reserva(
     reserva_id: uuid.UUID,
     request: Request,
     db: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(RoleChecker([RoleEnum.MANAGER])),
+    _current_user: User = Depends(RoleChecker([RoleEnum.MANAGER, RoleEnum.USER])),
 ):
     authorization_header = request.headers.get("Authorization")
     habitaciones = await obtener_habitaciones_hotel(authorization_header)
