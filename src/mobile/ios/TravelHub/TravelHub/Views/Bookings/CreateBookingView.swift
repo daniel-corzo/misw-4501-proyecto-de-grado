@@ -222,6 +222,7 @@ private struct CreateBookingPaymentDestination: View {
 
     @Environment(\.bookingService) private var bookingService
     @Environment(\.toastManager) private var toastManager
+    @Environment(\.bookingPoller) private var bookingPoller
     @Environment(Router.self) private var router
 
     @State private var isCreatingReservation = false

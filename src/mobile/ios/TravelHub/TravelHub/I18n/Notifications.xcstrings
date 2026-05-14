@@ -34,6 +34,40 @@
           }
         }
       }
+    },
+    "notificationRejectedTitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reservation rejected"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reserva rechazada"
+          }
+        }
+      }
+    },
+    "notificationRejectedBody %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your reservation at %@ could not be confirmed."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu reserva en %@ no pudo ser confirmada."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
