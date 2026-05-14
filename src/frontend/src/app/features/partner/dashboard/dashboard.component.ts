@@ -128,7 +128,7 @@ export class PartnerDashboardComponent implements OnInit, OnDestroy {
 
   hasActiveFilters(): boolean {
     return !!(
-      this.searchGuest ||
+      this.searchGuest.trim() ||
       this.selectedHabitacion ||
       this.fechaInicio ||
       this.fechaFin ||
