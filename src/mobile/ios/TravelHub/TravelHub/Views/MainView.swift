@@ -10,6 +10,8 @@ import SwiftUI
 struct MainView: View {
 
     @Environment(Router.self) private var router
+    @Environment(\.bookingService) private var bookingService
+    @Environment(\.bookingPoller) private var poller
 
     @Binding var isLoggedIn: Bool
 
@@ -52,6 +54,9 @@ struct MainView: View {
                         HotelDetailView(hotelId: id)
                 }
             }
+        }
+        .task {
+            await poller.start(bookingService: bookingService)
         }
     }
 

@@ -38,6 +38,10 @@ struct PaymentServiceKey: EnvironmentKey {
     }
 }
 
+struct BookingPollerKey: EnvironmentKey {
+    static let defaultValue = BookingPollerService()
+}
+
 // MARK: - Environment Values
 extension EnvironmentValues {
     // MARK: Toast Manager
@@ -74,5 +78,11 @@ extension EnvironmentValues {
     var paymentService: PaymentService {
         get { self[PaymentServiceKey.self] }
         set { self[PaymentServiceKey.self] = newValue }
+    }
+
+    // MARK: Booking Poller
+    var bookingPoller: BookingPollerService {
+        get { self[BookingPollerKey.self] }
+        set { self[BookingPollerKey.self] = newValue }
     }
 }

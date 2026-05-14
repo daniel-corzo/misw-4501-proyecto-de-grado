@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import UserNotifications
 
 struct ProfileView: View {
 
@@ -91,6 +92,36 @@ struct ProfileView: View {
                             )
                         }
                         .listRowBackground(Color.clear)
+                    }
+
+                    // MARK: - Debug
+                    Section("Debug") {
+                        Button("Test notification (3s)") {
+                            let content = UNMutableNotificationContent()
+                            content.title = "Reservation confirmed"
+                            content.body = "Your reservation at Hotel Test has been confirmed."
+                            content.sound = .default
+                            UNUserNotificationCenter.current().add(
+                                UNNotificationRequest(
+                                    identifier: UUID().uuidString,
+                                    content: content,
+                                    trigger: UNTimeIntervalNotificationTrigger(timeInterval: 3, repeats: false)
+                                )
+                            )
+                        }
+                        Button("Test notification (1s — foreground)") {
+                            let content = UNMutableNotificationContent()
+                            content.title = "Reservation confirmed"
+                            content.body = "Your reservation at Hotel Test has been confirmed."
+                            content.sound = .default
+                            UNUserNotificationCenter.current().add(
+                                UNNotificationRequest(
+                                    identifier: UUID().uuidString,
+                                    content: content,
+                                    trigger: UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+                                )
+                            )
+                        }
                     }
 
                     // MARK: - Footer
