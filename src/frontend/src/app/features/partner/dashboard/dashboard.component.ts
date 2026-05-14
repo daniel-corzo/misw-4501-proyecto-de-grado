@@ -309,12 +309,19 @@ export class PartnerDashboardComponent implements OnInit, OnDestroy {
     this.loadError = false;
 
     const filters: HotelReservationsFilters = {};
+    const validNumHuespedes =
+      this.selectedNumHuespedes !== null &&
+      Number.isInteger(this.selectedNumHuespedes) &&
+      this.selectedNumHuespedes >= 1
+        ? this.selectedNumHuespedes
+        : null;
+
     if (this.searchGuest.trim()) filters.nombre_viajero = this.searchGuest.trim();
     if (this.selectedHabitacion) filters.tipo_habitacion = this.selectedHabitacion;
     if (this.selectedEstado) filters.estado = this.selectedEstado;
     if (this.fechaInicio) filters.fecha_inicio = this.fechaInicio;
     if (this.fechaFin) filters.fecha_fin = this.fechaFin;
-    if (this.selectedNumHuespedes !== null) filters.num_huespedes = this.selectedNumHuespedes;
+    if (validNumHuespedes !== null) filters.num_huespedes = validNumHuespedes;
 
     this.bookingService.getHotelReservations(this.skip, this.limit, filters).subscribe({
       next: (response) => {
