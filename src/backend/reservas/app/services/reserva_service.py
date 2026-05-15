@@ -1,3 +1,4 @@
+import json
 import uuid
 from datetime import UTC, date, datetime, time, timedelta, timezone
 
@@ -9,6 +10,7 @@ from travelhub_common.security import User, RoleEnum
 from app.models.reserva import Reserva
 from app.schemas.reserva import (
     CrearReservaRequest,
+    EstadoPagoDetalle,
     EstadoReserva,
     EstadoPagoFiltro,
     EstadoPagoReserva,
@@ -16,12 +18,15 @@ from app.schemas.reserva import (
     HabitacionReservaDetalleResponse,
     ListaReservasHotelResponse,
     ModificarReservaRequest,
+    PagoReservaDetalleResponse,
     ReservaDetalleResponse,
     ReservaHabitacionDetalleCompletoResponse,
+    ReservaHotelDetalleCompletoResponse,
     ReservaHotelResponse,
     ReservaHotelDetalleResponse,
     ReservaResponse,
     ListaReservasResponse,
+    ViajeroReservaDetalleResponse,
 )
 from app.services.hotel_service import (
     obtener_detalles_habitaciones_por_ids,
@@ -33,6 +38,73 @@ from app.services.usuario_service import obtener_usuarios_resumen_por_ids
 
 def _fecha_to_utc_start(d: date) -> datetime:
     return datetime.combine(d, time.min, tzinfo=timezone.utc)
+
+
+def _codigo_reserva(reserva: Reserva) -> str:
+    return f"TH-{str(reserva.id).split('-')[0].upper()}"
+
+
+def _calcular_total_noches(reserva: Reserva) -> int:
+    return max((reserva.check_out.date() - reserva.check_in.date()).days, 0)
+
+
+def _calcular_monto_total(
+    reserva: Reserva,
+    detalle_habitacion: HabitacionReservaDetalleResponse | None,
+) -> int | None:
+    if detalle_habitacion is None or detalle_habitacion.monto_habitacion is None:
+        return None
+
+    return _calcular_total_noches(reserva) * (
+        detalle_habitacion.monto_habitacion
+        + (detalle_habitacion.impuestos_habitacion or 0)
+    )
+
+
+def _build_qr_checkin_payload(
+    reserva: Reserva,
+    detalle_habitacion: HabitacionReservaDetalleResponse,
+) -> str:
+    habitacion_id = reserva.habitaciones_ids[0] if reserva.habitaciones_ids else None
+    if habitacion_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Reserva sin habitaciones asociadas",
+        )
+
+    payload = {
+        "codigo_reserva": _codigo_reserva(reserva),
+        "fecha_entrada": reserva.check_in.date().isoformat(),
+        "fecha_salida": reserva.check_out.date().isoformat(),
+        "habitacion_id": str(habitacion_id),
+        "habitacion_nombre": detalle_habitacion.nombre_habitacion,
+        "hotel_id": str(detalle_habitacion.hotel_id)
+        if detalle_habitacion.hotel_id
+        else None,
+        "hotel_nombre": detalle_habitacion.nombre_hotel,
+        "numero_habitacion": detalle_habitacion.numero_habitacion,
+        "reserva_id": str(reserva.id),
+    }
+    return json.dumps(
+        payload,
+        ensure_ascii=True,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+
+
+def _build_pago_detalle_response(pago) -> PagoReservaDetalleResponse:
+    if pago is None:
+        return PagoReservaDetalleResponse(estado=EstadoPagoDetalle.pending)
+
+    return PagoReservaDetalleResponse(
+        id=pago.id,
+        estado=EstadoPagoDetalle(pago.estado),
+        monto=getattr(pago, "monto", None),
+        medio_de_pago=getattr(pago, "medio_de_pago", None),
+        created_at=getattr(pago, "created_at", None),
+        tarjeta_ultimos_4=getattr(pago, "tarjeta_ultimos_4", None),
+    )
 
 
 def reserva_to_response(
@@ -87,15 +159,36 @@ def reserva_to_hotel_response(
         ciudad_hotel=ciudad_hotel,
         pais_hotel=pais_hotel,
     )
-    total_noches = max((reserva.check_out.date() - reserva.check_in.date()).days, 0)
     return ReservaHotelResponse(
         **base_response.model_dump(),
         nombre_viajero=nombre_viajero,
         email_viajero=email_viajero,
         numero_habitacion=numero_habitacion,
-        total_noches=total_noches,
+        total_noches=_calcular_total_noches(reserva),
         monto_total=monto_total,
         estado_pago=EstadoPagoReserva(estado_pago) if estado_pago else None,
+    )
+
+
+def reserva_to_hotel_detalle_response(
+    reserva: Reserva,
+    detalle_habitacion: HabitacionReservaDetalleResponse,
+    viajero,
+    pago,
+) -> ReservaHotelDetalleCompletoResponse:
+    base_response = reserva_to_detalle_response(reserva, detalle_habitacion)
+
+    return ReservaHotelDetalleCompletoResponse(
+        **base_response.model_dump(),
+        viajero=ViajeroReservaDetalleResponse(
+            id=reserva.viajero_id,
+            nombre=getattr(viajero, "nombre", None),
+            email=getattr(viajero, "email", None),
+        ),
+        pago=_build_pago_detalle_response(pago),
+        total_noches=_calcular_total_noches(reserva),
+        monto_total=_calcular_monto_total(reserva, detalle_habitacion),
+        qr_checkin_payload=_build_qr_checkin_payload(reserva, detalle_habitacion),
     )
 
 
@@ -138,17 +231,6 @@ async def construir_reservas_hotel_response(
         viajero = viajeros_por_id.get(reserva.viajero_id)
         pago = pagos_por_id.get(reserva.pago_id) if reserva.pago_id else None
 
-        monto_total = None
-        if detalle_habitacion and detalle_habitacion.monto_habitacion is not None:
-            total_noches = max(
-                (reserva.check_out.date() - reserva.check_in.date()).days,
-                0,
-            )
-            monto_total = total_noches * (
-                detalle_habitacion.monto_habitacion
-                + (detalle_habitacion.impuestos_habitacion or 0)
-            )
-
         reservas.append(
             reserva_to_hotel_response(
                 reserva,
@@ -172,7 +254,7 @@ async def construir_reservas_hotel_response(
                 numero_habitacion=(
                     detalle_habitacion.numero_habitacion if detalle_habitacion else None
                 ),
-                monto_total=monto_total,
+                monto_total=_calcular_monto_total(reserva, detalle_habitacion),
                 estado_pago=pago.estado if pago else None,
             )
         )
@@ -314,7 +396,7 @@ def reserva_to_detalle_response(
 
     return ReservaDetalleResponse(
         id=reserva.id,
-        codigo_reserva=f"TH-{str(reserva.id).split('-')[0].upper()}",
+        codigo_reserva=_codigo_reserva(reserva),
         estado=EstadoReserva(reserva.estado),
         fecha_entrada=reserva.check_in.date(),
         fecha_salida=reserva.check_out.date(),
@@ -346,6 +428,60 @@ def reserva_to_detalle_response(
             impuestos=detalle_habitacion.impuestos_habitacion,
         ),
         amenidades_hotel=detalle_habitacion.amenidades_hotel,
+    )
+
+
+async def obtener_reserva_hotel_detalle_service(
+    db: AsyncSession,
+    authorization_header: str | None,
+    reserva_id: uuid.UUID,
+    habitacion_ids_hotel: list[uuid.UUID],
+) -> ReservaHotelDetalleCompletoResponse:
+    result = await db.execute(select(Reserva).where(Reserva.id == reserva_id))
+    reserva = result.scalar_one_or_none()
+
+    if reserva is None or not set(reserva.habitaciones_ids or []).intersection(
+        habitacion_ids_hotel
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Reserva no encontrada",
+        )
+
+    habitacion_id = reserva.habitaciones_ids[0] if reserva.habitaciones_ids else None
+    if habitacion_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Reserva sin habitaciones asociadas",
+        )
+
+    detalles_por_habitacion = await obtener_detalles_habitaciones_por_ids(
+        authorization_header,
+        [habitacion_id],
+    )
+    detalle_habitacion = detalles_por_habitacion.get(habitacion_id)
+    if detalle_habitacion is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No fue posible obtener el detalle de la habitación asociada",
+        )
+
+    viajeros_por_id = await obtener_usuarios_resumen_por_ids(
+        authorization_header,
+        [reserva.viajero_id],
+    )
+    pagos_por_id = await obtener_pagos_por_ids(
+        authorization_header,
+        [reserva.pago_id] if reserva.pago_id is not None else [],
+    )
+
+    viajero = viajeros_por_id.get(reserva.viajero_id)
+    pago = pagos_por_id.get(reserva.pago_id) if reserva.pago_id else None
+    return reserva_to_hotel_detalle_response(
+        reserva,
+        detalle_habitacion,
+        viajero,
+        pago,
     )
 
 

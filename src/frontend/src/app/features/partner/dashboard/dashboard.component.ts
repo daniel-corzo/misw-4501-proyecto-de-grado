@@ -12,6 +12,7 @@ import {
   HotelReservationsFilters,
   PaymentStatus,
 } from '../../../core/services/booking.service';
+import { ReservationDetailModalComponent } from '../components/reservation-detail-modal/reservation-detail-modal.component';
 import type { HabitacionDetalle } from '../../../core/services/hotel.service';
 import { ToastService } from '../../../core/services/toast.service';
 
@@ -27,7 +28,7 @@ interface LoadReservationsParams {
 @Component({
   selector: 'app-partner-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslocoPipe],
+  imports: [CommonModule, FormsModule, TranslocoPipe, ReservationDetailModalComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
@@ -40,6 +41,7 @@ export class PartnerDashboardComponent implements OnInit, OnDestroy {
   loading = false;
   loadError = false;
   refreshing = false;
+  selectedReservation: HotelBookingResponse | null = null;
   actionReservationId: string | null = null;
   actionType: ReservationAction | null = null;
 
@@ -180,49 +182,90 @@ export class PartnerDashboardComponent implements OnInit, OnDestroy {
     this.loadReservations();
   }
 
-  confirmReservation(reservation: HotelBookingResponse): void {
-    if (!this.canConfirm(reservation) || this.actionReservationId !== null) {
+  openReservationDetail(reservation: HotelBookingResponse): void {
+    if (this.actionReservationId !== null) {
       return;
     }
 
-    this.actionReservationId = reservation.id;
-    this.actionType = 'confirm';
-    this.bookingService.confirmHotelReservation(reservation.id).subscribe({
-      next: () => {
-        this.toast.success(
-          this.transloco.translate('partner.dashboard.reservations.toastConfirmSuccess')
-        );
-        this.clearActionState();
-        this.loadReservations();
-      },
-      error: () => {
-        this.toast.danger(
-          this.transloco.translate('partner.dashboard.reservations.toastConfirmError')
-        );
-        this.clearActionState();
-      },
-    });
+    this.selectedReservation = reservation;
   }
 
-  rejectReservation(reservation: HotelBookingResponse): void {
-    if (!this.canReject(reservation) || this.actionReservationId !== null) {
+  closeReservationDetail(): void {
+    this.selectedReservation = null;
+  }
+
+  onReservationRowKeydown(event: KeyboardEvent, reservation: HotelBookingResponse): void {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+
+    event.preventDefault();
+    this.openReservationDetail(reservation);
+  }
+
+  confirmReservation(reservation: HotelBookingResponse, event?: Event): void {
+    event?.stopPropagation();
+    this.executeReservationAction(reservation, 'confirm');
+  }
+
+  rejectReservation(reservation: HotelBookingResponse, event?: Event): void {
+    event?.stopPropagation();
+    this.executeReservationAction(reservation, 'reject');
+  }
+
+  confirmSelectedReservation(): void {
+    if (!this.selectedReservation) {
+      return;
+    }
+
+    this.executeReservationAction(this.selectedReservation, 'confirm', true);
+  }
+
+  rejectSelectedReservation(): void {
+    if (!this.selectedReservation) {
+      return;
+    }
+
+    this.executeReservationAction(this.selectedReservation, 'reject', true);
+  }
+
+  private executeReservationAction(
+    reservation: HotelBookingResponse,
+    action: ReservationAction,
+    closeDetailOnSuccess = false,
+  ): void {
+    const canPerform = action === 'confirm'
+      ? this.canConfirm(reservation)
+      : this.canReject(reservation);
+
+    if (!canPerform || this.actionReservationId !== null) {
       return;
     }
 
     this.actionReservationId = reservation.id;
-    this.actionType = 'reject';
-    this.bookingService.rejectHotelReservation(reservation.id).subscribe({
+    this.actionType = action;
+
+    const request$ = action === 'confirm'
+      ? this.bookingService.confirmHotelReservation(reservation.id)
+      : this.bookingService.rejectHotelReservation(reservation.id);
+    const successKey = action === 'confirm'
+      ? 'partner.dashboard.reservations.toastConfirmSuccess'
+      : 'partner.dashboard.reservations.toastRejectSuccess';
+    const errorKey = action === 'confirm'
+      ? 'partner.dashboard.reservations.toastConfirmError'
+      : 'partner.dashboard.reservations.toastRejectError';
+
+    request$.subscribe({
       next: () => {
-        this.toast.success(
-          this.transloco.translate('partner.dashboard.reservations.toastRejectSuccess')
-        );
+        this.toast.success(this.transloco.translate(successKey));
         this.clearActionState();
+        if (closeDetailOnSuccess) {
+          this.closeReservationDetail();
+        }
         this.loadReservations();
       },
       error: () => {
-        this.toast.danger(
-          this.transloco.translate('partner.dashboard.reservations.toastRejectError')
-        );
+        this.toast.danger(this.transloco.translate(errorKey));
         this.clearActionState();
       },
     });
