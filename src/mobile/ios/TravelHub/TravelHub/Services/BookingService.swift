@@ -8,7 +8,10 @@
 import Foundation
 
 protocol BookingService {
-    func create(booking: NewBooking) async throws
+    @discardableResult
+    func create(booking: NewBooking) async throws -> CreateBookingResponse
+
+    func linkPayment(bookingId: UUID, paymentId: UUID) async throws
 
     func fetchBookings(estado: String) async throws
         -> ListBookingsResponse
@@ -17,6 +20,8 @@ protocol BookingService {
 
     @discardableResult
     func cancelBooking(id: UUID) async throws -> BookingListItemDTO
+
+    func deleteBooking(id: UUID) async throws
 
     func modifyBooking(booking: ModifyBooking) async throws
         -> ModifyBookingResponse
@@ -34,7 +39,8 @@ final class BookingServiceImpl: BookingService {
         self.tokenStore = tokenStore
     }
 
-    func create(booking: NewBooking) async throws {
+    @discardableResult
+    func create(booking: NewBooking) async throws -> CreateBookingResponse {
         let body = CreateBookingRequest(
             habitacionID: booking.habitacionID,
             fechaEntrada: booking.fechaEntrada.ISO8601Format(
@@ -48,10 +54,21 @@ final class BookingServiceImpl: BookingService {
         )
         let token = try tokenStore.readToken() ?? ""
 
-        let _: CreateBookingResponse = try await httpService.post(
+        return try await httpService.post(
             url: HttpRoutes.reservas().url,
             body: body,
             token: token
+        )
+    }
+
+    func linkPayment(bookingId: UUID, paymentId: UUID) async throws {
+        let token = try tokenStore.readToken() ?? ""
+        let url = HttpRoutes.reservas(id: bookingId).url
+        let body = LinkPaymentRequest(pagoId: paymentId)
+        let _: ModifyBookingResponse = try await httpService.patch(
+            url: url,
+            token: token,
+            body: body
         )
     }
 
@@ -84,6 +101,12 @@ final class BookingServiceImpl: BookingService {
             .appendingPathComponent(id.uuidString)
             .appendingPathComponent("cancelar")
         return try await httpService.patch(url: url, token: token)
+    }
+
+    func deleteBooking(id: UUID) async throws {
+        let token = try tokenStore.readToken() ?? ""
+        let url = HttpRoutes.reservas(id: id).url
+        try await httpService.delete(url: url, token: token)
     }
 
     func modifyBooking(booking: ModifyBooking) async throws

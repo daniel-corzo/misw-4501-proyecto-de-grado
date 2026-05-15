@@ -585,11 +585,44 @@ async def modificar_reserva_service(
     reserva.habitaciones_ids = [habitacion_id]
     if body.num_huespedes is not None:
         reserva.personas = body.num_huespedes
+    if body.pago_id is not None:
+        reserva.pago_id = body.pago_id
 
     await db.flush()
     await db.commit()
     await db.refresh(reserva)
     return reserva
+
+
+async def eliminar_reserva_service(
+    db: AsyncSession,
+    reserva_id: uuid.UUID,
+    current_user: User,
+) -> None:
+    stmt = select(Reserva).where(
+        Reserva.id == reserva_id,
+        Reserva.viajero_id == current_user.id,
+    )
+    result = await db.execute(stmt)
+    reserva = result.scalar_one_or_none()
+
+    if reserva is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Reserva no encontrada",
+        )
+
+    if reserva.estado not in (
+        EstadoReserva.pendiente.value,
+        EstadoReserva.cancelada.value,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Solo se pueden eliminar reservas pendientes o canceladas",
+        )
+
+    await db.delete(reserva)
+    await db.commit()
 
 
 async def listar_reservas_usuario_service(

@@ -4,6 +4,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { Observable, Subject } from 'rxjs';
 
 import { BookingService } from '../../../core/services/booking.service';
 import { PaymentService } from '../../../core/services/payment.service';
@@ -11,6 +12,7 @@ import { ToastService } from '../../../core/services/toast.service';
 import { PLACEHOLDER_IMAGE } from '../../../shared/constants/images';
 
 export interface CheckoutState {
+  bookingId: string;
   hotelId: string;
   hotelNombre: string;
   hotelImagen: string | null;
@@ -51,6 +53,10 @@ export class CheckoutComponent implements OnInit {
   expirationTouched = false;
 
   submitting = false;
+  paymentCompleted = false;
+  showLeaveDialog = false;
+  isLeaveCancelling = false;
+  private leaveSubject: Subject<boolean> | null = null;
 
   readonly placeholderImage = PLACEHOLDER_IMAGE;
 
@@ -69,6 +75,7 @@ export class CheckoutComponent implements OnInit {
   private isValidCheckoutState(s: Partial<CheckoutState> | null): s is CheckoutState {
     return (
       !!s &&
+      !!s.bookingId &&
       !!s.hotelId &&
       !!s.habitacionId &&
       !!s.fechaEntrada &&
@@ -212,40 +219,64 @@ export class CheckoutComponent implements OnInit {
       })
       .subscribe({
         next: (payment) => {
-          this.createReservation(payment.id);
+          this.linkPayment(payment.id);
         },
         error: (err: unknown) => {
           this.submitting = false;
           console.error('[Checkout] Payment error:', err);
+          this.cancelBookingAndNotify();
           this.toast.danger(this.t.translate('checkout.toastPaymentError'));
         },
       });
   }
 
-  private createReservation(pagoId: string): void {
+  private linkPayment(pagoId: string): void {
     const s = this.state!;
     this.bookingService
-      .createReservation({
-        habitacion_id: s.habitacionId,
-        fecha_entrada: s.fechaEntrada,
-        fecha_salida: s.fechaSalida,
-        num_huespedes: s.numHuespedes,
-        pago_id: pagoId,
-      })
+      .updateReservation(s.bookingId, { pago_id: pagoId })
       .subscribe({
-        next: (res) => {
+        next: () => {
           this.submitting = false;
-          this.router.navigate(['/bookings', res.id]);
+          this.paymentCompleted = true;
+          this.router.navigate(['/bookings', s.bookingId]);
         },
         error: (err: HttpErrorResponse) => {
           this.submitting = false;
-          if (err.status === 409) {
-            this.toast.warning(this.t.translate('checkout.toastConflict'));
-          } else {
-            this.toast.danger(this.t.translate('checkout.toastBookingError'));
-          }
+          console.error('[Checkout] Link payment error:', err);
+          this.cancelBookingAndNotify();
+          this.toast.danger(this.t.translate('checkout.toastBookingError'));
         },
       });
+  }
+
+  private cancelBookingAndNotify(): void {
+    const bookingId = this.state?.bookingId;
+    if (!bookingId) return;
+    this.bookingService.deleteReservation(bookingId).subscribe({
+      error: (err: unknown) =>
+        console.error('[Checkout] Failed to delete booking after error:', err),
+    });
+  }
+
+  canDeactivate(): Observable<boolean> | boolean {
+    if (!this.state?.bookingId || this.paymentCompleted) return true;
+    this.showLeaveDialog = true;
+    this.leaveSubject = new Subject<boolean>();
+    return this.leaveSubject.asObservable();
+  }
+
+  confirmLeave(): void {
+    this.isLeaveCancelling = true;
+    this.cancelBookingAndNotify();
+    this.leaveSubject?.next(true);
+    this.leaveSubject?.complete();
+    this.showLeaveDialog = false;
+  }
+
+  cancelLeave(): void {
+    this.leaveSubject?.next(false);
+    this.leaveSubject?.complete();
+    this.showLeaveDialog = false;
   }
 
   // ── Helpers ─────────────────────────────────────────────────────────────

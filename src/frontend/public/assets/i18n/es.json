@@ -271,7 +271,11 @@
     "toastBookingError": "El pago fue exitoso pero no se pudo crear la reserva. Contacta a soporte.",
     "toastConflict": "La habitación ya no está disponible para esas fechas.",
     "missingData": "Faltan datos de la reserva. Por favor comienza de nuevo.",
-    "proceedToPayment": "Continuar al pago"
+    "proceedToPayment": "Continuar al pago",
+    "leaveTitle": "¿Cancelar transacción?",
+    "leaveMessage": "Volver cancelará tu transacción pendiente.",
+    "leaveConfirm": "Cancelar transacción",
+    "leaveCancel": "Continuar"
   },
   "createReservation": {
     "breadcrumbHome": "Inicio",

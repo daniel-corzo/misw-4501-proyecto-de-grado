@@ -22,7 +22,7 @@ extension CreateBookingView {
             fechaEntrada: Date,
             fechaSalida: Date,
             numHuespedes: Int
-        ) async -> Bool {
+        ) async -> UUID? {
             isLoading = true
             defer { isLoading = false }
 
@@ -35,24 +35,13 @@ extension CreateBookingView {
             )
 
             do {
-                try await bookingService.create(booking: newBooking)
-
-                toastManager.success(
-                    String(
-                        localized: .CreateBooking
-                            .reservationCreatedDescription
-                    ),
-                    title: String(
-                        localized: .CreateBooking.reservationCreatedTitle
-                    )
-                )
-
-                return true
+                let response = try await bookingService.create(booking: newBooking)
+                return response.id
             } catch is CancellationError {
-                return false
+                return nil
             } catch {
                 toastManager.error(error.localizedDescription)
-                return false
+                return nil
             }
         }
 

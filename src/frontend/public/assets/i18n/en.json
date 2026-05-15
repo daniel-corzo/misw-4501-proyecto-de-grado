@@ -271,7 +271,11 @@
     "toastBookingError": "Payment succeeded but reservation could not be created. Please contact support.",
     "toastConflict": "The room is no longer available for those dates.",
     "missingData": "Booking details are missing. Please start over.",
-    "proceedToPayment": "Proceed to payment"
+    "proceedToPayment": "Proceed to payment",
+    "leaveTitle": "Cancel transaction?",
+    "leaveMessage": "Going back will cancel your pending transaction.",
+    "leaveConfirm": "Cancel transaction",
+    "leaveCancel": "Continue"
   },
   "createReservation": {
     "breadcrumbHome": "Home",

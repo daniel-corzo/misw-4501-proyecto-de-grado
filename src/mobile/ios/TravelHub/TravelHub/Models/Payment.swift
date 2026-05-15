@@ -12,6 +12,14 @@ enum PaymentState: String, Codable {
     case failed = "failed"
 }
 
+enum PaymentError: LocalizedError {
+    case paymentFailed
+
+    var errorDescription: String? {
+        String(localized: "paymentFailedDescription", table: "Payment")
+    }
+}
+
 struct Payment {
     var id: UUID
     var monto: Int

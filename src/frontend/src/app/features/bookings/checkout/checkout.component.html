@@ -265,3 +265,27 @@
     </div>
   </div>
 }
+
+@if (showLeaveDialog) {
+  <div class="leave-dialog-backdrop">
+    <div class="leave-dialog" role="alertdialog" aria-modal="true">
+      <h3 class="leave-dialog__title">{{ "checkout.leaveTitle" | transloco }}</h3>
+      <p class="leave-dialog__message">{{ "checkout.leaveMessage" | transloco }}</p>
+      <div class="leave-dialog__actions">
+        <button
+          class="leave-dialog__btn leave-dialog__btn--danger"
+          (click)="confirmLeave()"
+          [disabled]="isLeaveCancelling"
+        >
+          {{ "checkout.leaveConfirm" | transloco }}
+        </button>
+        <button
+          class="leave-dialog__btn leave-dialog__btn--secondary"
+          (click)="cancelLeave()"
+        >
+          {{ "checkout.leaveCancel" | transloco }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

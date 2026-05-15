@@ -9,6 +9,12 @@
             "state" : "translated",
             "value" : "Cardholder name"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nombre del titular"
+          }
         }
       }
     },
@@ -19,6 +25,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Card number"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Número de tarjeta"
           }
         }
       }
@@ -31,6 +43,12 @@
             "state" : "translated",
             "value" : "Checkout"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pago"
+          }
         }
       }
     },
@@ -42,6 +60,12 @@
             "state" : "translated",
             "value" : "Confirm Payment %1$(totalAmount)@"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirmar pago %1$(totalAmount)@"
+          }
         }
       }
     },
@@ -49,6 +73,12 @@
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CVV"
+          }
+        },
+        "es" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "CVV"
@@ -64,6 +94,12 @@
             "state" : "translated",
             "value" : "Your payment is secured with 256-bit SSL encryption"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu pago está protegido con cifrado SSL de 256 bits"
+          }
         }
       }
     },
@@ -74,6 +110,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Expiration Date"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fecha de vencimiento"
           }
         }
       }
@@ -86,6 +128,12 @@
             "state" : "translated",
             "value" : "The date is not valid"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La fecha no es válida"
+          }
         }
       }
     },
@@ -96,6 +144,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "MM/YY"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MM/AA"
           }
         }
       }
@@ -120,6 +174,58 @@
               }
             }
           }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$(numNights)lld noche"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%1$(numNights)lld noches"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "paymentFailedDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your payment could not be processed. Please check your card details and try again."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu pago no pudo ser procesado. Verifica los datos de tu tarjeta e intenta de nuevo."
+          }
+        }
+      }
+    },
+    "paymentFailedTitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Payment Failed"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pago fallido"
+          }
         }
       }
     },
@@ -130,6 +236,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The payment was completed successfully!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡El pago se completó exitosamente!"
           }
         }
       }
@@ -142,6 +254,12 @@
             "state" : "translated",
             "value" : "Payment Successful!"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡Pago exitoso!"
+          }
         }
       }
     },
@@ -152,6 +270,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pay with card"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pagar con tarjeta"
           }
         }
       }
@@ -164,6 +288,12 @@
             "state" : "translated",
             "value" : "Service fee & taxes"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tarifa de servicio e impuestos"
+          }
         }
       }
     },
@@ -175,6 +305,12 @@
             "state" : "translated",
             "value" : "Summary"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resumen"
+          }
         }
       }
     },
@@ -185,6 +321,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Total Amount"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Total a pagar"
           }
         }
       }

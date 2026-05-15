@@ -3,6 +3,7 @@ import { MainLayoutComponent } from './layout/main-layout/main-layout.component'
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
 import { typeGuard } from './core/guards/type.guard';
+import { checkoutDeactivateGuard } from './features/bookings/checkout/checkout-deactivate.guard';
 
 export const routes: Routes = [
   // ── Authenticated shell (navbar + footer) ───────────────────────
@@ -93,6 +94,7 @@ export const routes: Routes = [
       {
         path: 'hotels/:id/checkout',
         canActivate: [authGuard],
+        canDeactivate: [checkoutDeactivateGuard],
         loadComponent: () =>
           import('./features/bookings/checkout/checkout.component').then(
             (m) => m.CheckoutComponent
