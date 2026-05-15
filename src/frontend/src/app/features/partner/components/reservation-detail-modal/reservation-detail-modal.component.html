@@ -1,0 +1,259 @@
+<app-modal [wide]="true" [title]="modalTitle" (closed)="closed.emit()">
+  <section class="reservation-detail-modal">
+    @if (loading) {
+      <div class="detail-state detail-state--loading">
+        <div class="skeleton skeleton--hero"></div>
+        <div class="skeleton skeleton--panel"></div>
+      </div>
+    } @else if (loadError) {
+      <div class="detail-state detail-state--error">
+        <p>{{ 'partner.dashboard.reservations.detailLoadError' | transloco }}</p>
+        <button class="btn-secondary detail-state__button" type="button" (click)="reloadDetail()">
+          {{ 'partner.dashboard.reservations.detailRetry' | transloco }}
+        </button>
+      </div>
+    } @else if (detail) {
+      <div class="hero-card">
+        <img
+          class="hero-card__image"
+          [src]="coverImage"
+          [alt]="detail.hotel.nombre"
+          loading="eager"
+          (error)="onImageError($event)"
+        >
+
+        <div class="hero-card__content">
+          <div class="hero-card__topline">
+            <span class="status-pill" [ngClass]="getReservationStatusClass(detail.estado)">
+              {{ getReservationStatusLabel(detail.estado) }}
+            </span>
+            <span class="meta-chip">
+              {{ 'partner.dashboard.reservations.detailCreatedAt' | transloco }}
+              {{ formatDateTime(detail.created_at) }}
+            </span>
+          </div>
+
+          <h3>{{ detail.hotel.nombre || ('partner.dashboard.reservations.detailNotAvailable' | transloco) }}</h3>
+          <p class="hero-card__subtitle">
+            {{ detail.habitacion.nombre || ('partner.dashboard.reservations.noRoom' | transloco) }}
+            <span class="dot">•</span>
+            {{ hotelLocation }}
+          </p>
+
+          <div class="hero-card__chips">
+            <span class="meta-chip">
+              {{ 'partner.dashboard.reservations.detailReservationCode' | transloco }}
+              {{ detail.codigo_reserva }}
+            </span>
+            <span class="meta-chip meta-chip--id">
+              {{ 'partner.dashboard.reservations.detailReservationId' | transloco }}
+              {{ detail.id }}
+            </span>
+          </div>
+
+          <div class="summary-grid">
+            <div class="summary-card">
+              <span class="summary-card__label">{{ 'bookingDetail.checkIn' | transloco }}</span>
+              <strong>{{ formatDisplayDate(detail.fecha_entrada) }}</strong>
+              <span>{{ formatHotelTime(detail.hotel.check_in, 'bookingDetail.defaultCheckInHint') }}</span>
+            </div>
+
+            <div class="summary-card">
+              <span class="summary-card__label">{{ 'bookingDetail.checkOut' | transloco }}</span>
+              <strong>{{ formatDisplayDate(detail.fecha_salida) }}</strong>
+              <span>{{ formatHotelTime(detail.hotel.check_out, 'bookingDetail.defaultCheckOutHint') }}</span>
+            </div>
+
+            <div class="summary-card">
+              <span class="summary-card__label">{{ 'bookingDetail.totalStay' | transloco }}</span>
+              <strong>{{ formatNightCount(detail.total_noches) }}</strong>
+              <span>{{ formatGuestCount(detail.num_huespedes) }}</span>
+            </div>
+
+            <div class="summary-card">
+              <span class="summary-card__label">{{ 'partner.dashboard.reservations.totalAmount' | transloco }}</span>
+              <strong>{{ formatAmount(detail.monto_total) }}</strong>
+              <span>{{ getPaymentStatusLabel(detail.pago.estado) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-layout">
+        <div class="detail-main">
+          <article class="detail-card">
+            <div class="detail-card__header">
+              <h3>{{ 'partner.dashboard.reservations.detailTravelerTitle' | transloco }}</h3>
+            </div>
+
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-item__label">{{ 'partner.dashboard.reservations.detailTravelerName' | transloco }}</span>
+                <strong>{{ detail.viajero.nombre || ('partner.dashboard.reservations.noGuest' | transloco) }}</strong>
+              </div>
+
+              <div class="info-item">
+                <span class="info-item__label">{{ 'partner.dashboard.reservations.detailTravelerEmail' | transloco }}</span>
+                <strong>{{ detail.viajero.email || ('partner.dashboard.reservations.noEmail' | transloco) }}</strong>
+              </div>
+
+              <div class="info-item">
+                <span class="info-item__label">{{ 'partner.dashboard.reservations.filterGuests' | transloco }}</span>
+                <strong>{{ formatGuestCount(detail.num_huespedes) }}</strong>
+              </div>
+
+              <div class="info-item">
+                <span class="info-item__label">{{ 'partner.dashboard.reservations.reservationStatus' | transloco }}</span>
+                <strong>{{ getReservationStatusLabel(detail.estado) }}</strong>
+              </div>
+            </div>
+          </article>
+
+          <article class="detail-card">
+            <div class="detail-card__header">
+              <h3>{{ 'partner.dashboard.reservations.detailStayTitle' | transloco }}</h3>
+            </div>
+
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-item__label">{{ 'partner.dashboard.reservations.detailRoomNumber' | transloco }}</span>
+                <strong>{{ detail.habitacion.numero || ('partner.dashboard.reservations.detailNotAvailable' | transloco) }}</strong>
+              </div>
+
+              <div class="info-item">
+                <span class="info-item__label">{{ 'partner.dashboard.reservations.detailRoomCapacity' | transloco }}</span>
+                <strong>
+                  {{ detail.habitacion.capacidad !== null
+                    ? formatGuestCount(detail.habitacion.capacidad)
+                    : ('partner.dashboard.reservations.detailNotAvailable' | transloco) }}
+                </strong>
+              </div>
+
+              <div class="info-item info-item--full">
+                <span class="info-item__label">{{ 'partner.dashboard.reservations.detailRoomDescription' | transloco }}</span>
+                <strong>{{ detail.habitacion.descripcion || ('partner.dashboard.reservations.detailNotAvailable' | transloco) }}</strong>
+              </div>
+
+              <div class="info-item info-item--full">
+                <span class="info-item__label">{{ 'partner.dashboard.reservations.detailHotelContact' | transloco }}</span>
+                <strong>{{ detail.hotel.contacto_celular || ('bookingDetail.noPhone' | transloco) }}</strong>
+                <span>{{ detail.hotel.contacto_email || ('bookingDetail.noEmail' | transloco) }}</span>
+              </div>
+            </div>
+
+            @if (detail.amenidades_hotel.length > 0) {
+              <div class="amenities-block">
+                <span class="info-item__label">{{ 'partner.dashboard.reservations.detailAmenities' | transloco }}</span>
+                <div class="amenities-list">
+                  @for (amenity of detail.amenidades_hotel; track amenity) {
+                    <span class="amenity-chip">{{ formatAmenityLabel(amenity) }}</span>
+                  }
+                </div>
+              </div>
+            }
+          </article>
+
+          <article class="detail-card">
+            <div class="detail-card__header">
+              <h3>{{ 'partner.dashboard.reservations.detailPaymentTitle' | transloco }}</h3>
+              <span class="payment-pill" [ngClass]="getPaymentStatusClass(detail.pago.estado)">
+                {{ getPaymentStatusLabel(detail.pago.estado) }}
+              </span>
+            </div>
+
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-item__label">{{ 'partner.dashboard.reservations.detailStayAmount' | transloco }}</span>
+                <strong>{{ formatAmount(detail.monto_total) }}</strong>
+              </div>
+
+              <div class="info-item">
+                <span class="info-item__label">{{ 'partner.dashboard.reservations.detailChargedAmount' | transloco }}</span>
+                <strong>{{ formatAmount(detail.pago.monto) }}</strong>
+              </div>
+
+              <div class="info-item">
+                <span class="info-item__label">{{ 'partner.dashboard.reservations.detailPaymentMethod' | transloco }}</span>
+                <strong>{{ detail.pago.medio_de_pago || ('partner.dashboard.reservations.detailNotAvailable' | transloco) }}</strong>
+              </div>
+
+              <div class="info-item">
+                <span class="info-item__label">{{ 'partner.dashboard.reservations.detailPaymentCard' | transloco }}</span>
+                <strong>
+                  {{ detail.pago.tarjeta_ultimos_4
+                    ? ('**** ' + detail.pago.tarjeta_ultimos_4)
+                    : ('partner.dashboard.reservations.detailNotAvailable' | transloco) }}
+                </strong>
+              </div>
+
+              <div class="info-item info-item--full">
+                <span class="info-item__label">{{ 'partner.dashboard.reservations.detailPaymentDate' | transloco }}</span>
+                <strong>{{ formatDateTime(detail.pago.created_at) }}</strong>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <aside class="detail-side">
+          <article class="detail-card qr-card">
+            <div class="detail-card__header">
+              <h3>{{ 'partner.dashboard.reservations.detailCheckinQrTitle' | transloco }}</h3>
+            </div>
+
+            <p>{{ 'partner.dashboard.reservations.detailCheckinQrDescription' | transloco }}</p>
+            <div class="qr-surface" [class.qr-surface--fallback]="!qrDataUrl">
+              @if (qrDataUrl) {
+                <img
+                  class="qr-image"
+                  [src]="qrDataUrl"
+                  [alt]="'partner.dashboard.reservations.detailCheckinQrTitle' | transloco"
+                  width="192"
+                  height="192"
+                >
+              } @else {
+                <span class="qr-fallback-code">{{ detail.codigo_reserva }}</span>
+              }
+            </div>
+            <span class="qr-code">{{ detail.codigo_reserva }}</span>
+          </article>
+
+          <article class="detail-card action-card">
+            <div class="detail-card__header">
+              <h3>{{ 'partner.dashboard.reservations.detailActionsTitle' | transloco }}</h3>
+            </div>
+
+            @if (canReject()) {
+              <button
+                class="btn-reject"
+                type="button"
+                (click)="requestReject()"
+                [disabled]="actionsLocked()"
+              >
+                {{ isProcessing('reject')
+                  ? ('partner.dashboard.reservations.rejecting' | transloco)
+                  : ('partner.dashboard.reservations.reject' | transloco) }}
+              </button>
+            }
+
+            @if (canConfirm()) {
+              <button
+                class="btn-confirm"
+                type="button"
+                (click)="requestConfirm()"
+                [disabled]="actionsLocked()"
+              >
+                {{ isProcessing('confirm')
+                  ? ('partner.dashboard.reservations.confirming' | transloco)
+                  : ('partner.dashboard.reservations.confirm' | transloco) }}
+              </button>
+            }
+
+            @if (!canReject() && !canConfirm()) {
+              <p class="action-card__empty">{{ 'partner.dashboard.reservations.detailNoActions' | transloco }}</p>
+            }
+          </article>
+        </aside>
+      </div>
+    }
+  </section>
+</app-modal>

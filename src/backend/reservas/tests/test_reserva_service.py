@@ -1,3 +1,4 @@
+import json
 import uuid
 from datetime import date, datetime, timedelta, UTC
 from types import SimpleNamespace
@@ -10,6 +11,7 @@ from fastapi import HTTPException
 from app.models.reserva import Reserva
 from app.schemas.reserva import (
     CrearReservaRequest,
+    EstadoPagoDetalle,
     EstadoPagoFiltro,
     EstadoReserva,
     HabitacionHotelResponse,
@@ -25,6 +27,7 @@ from app.services.reserva_service import (
     listar_reservas_usuario_service,
     listar_reservas_hotel_service,
     modificar_reserva_service,
+    obtener_reserva_hotel_detalle_service,
     rechazar_reserva_service,
 )
 from travelhub_common.security import RoleEnum, User
@@ -347,6 +350,148 @@ async def test_construir_reservas_hotel_response_enriches_data():
     assert hotel_reserva.estado_pago.value == "successful"
     assert hotel_reserva.monto_total == 550
     assert hotel_reserva.total_noches == 5
+
+
+@pytest.mark.asyncio
+async def test_obtener_reserva_hotel_detalle_service_enriches_booking_traveler_and_payment(mock_db):
+    check_in = datetime(2026, 6, 1, tzinfo=UTC)
+    check_out = datetime(2026, 6, 3, tzinfo=UTC)
+    pago_id = uuid.uuid4()
+    reserva = _reserva_modificable(
+        estado="confirmada",
+        check_in=check_in,
+        check_out=check_out,
+    )
+    reserva.pago_id = pago_id
+    mock_db.execute = AsyncMock(return_value=_execute_result_with_reserva(reserva))
+
+    detalle_habitacion = HabitacionReservaDetalleResponse(
+        id=HAB_ID,
+        nombre_habitacion="Deluxe King Suite",
+        nombre_hotel="Grand Palace",
+        imagenes_hotel=["https://cdn.example.com/hotel.jpg"],
+        hotel_id=uuid.uuid4(),
+        direccion_hotel="Main street 123",
+        ciudad_hotel="Bogota",
+        pais_hotel="Colombia",
+        contacto_email_hotel="hotel@example.com",
+        contacto_celular_hotel="+57 3000000000",
+        amenidades_hotel=["WIFI"],
+        capacidad_habitacion=2,
+        numero_habitacion="101",
+        descripcion_habitacion="Large room",
+        imagenes_habitacion=["https://cdn.example.com/room.jpg"],
+        monto_habitacion=100,
+        impuestos_habitacion=10,
+    )
+
+    paid_at = datetime(2026, 5, 25, tzinfo=UTC)
+    with patch(
+        "app.services.reserva_service.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value={HAB_ID: detalle_habitacion}),
+    ), patch(
+        "app.services.reserva_service.obtener_usuarios_resumen_por_ids",
+        new=AsyncMock(
+            return_value={
+                USER_ID: SimpleNamespace(
+                    id=USER_ID,
+                    nombre="Alice Montgomery",
+                    email="alice@example.com",
+                )
+            }
+        ),
+    ), patch(
+        "app.services.reserva_service.obtener_pagos_por_ids",
+        new=AsyncMock(
+            return_value={
+                pago_id: SimpleNamespace(
+                    id=pago_id,
+                    estado="successful",
+                    monto=220,
+                    medio_de_pago="VISA",
+                    created_at=paid_at,
+                    tarjeta_ultimos_4="4242",
+                )
+            }
+        ),
+    ):
+        response = await obtener_reserva_hotel_detalle_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+            reserva_id=reserva.id,
+            habitacion_ids_hotel=[HAB_ID],
+        )
+
+    assert response.id == reserva.id
+    assert response.codigo_reserva.startswith("TH-")
+    assert response.hotel.nombre == "Grand Palace"
+    assert response.habitacion.numero == "101"
+    assert response.viajero.nombre == "Alice Montgomery"
+    assert response.viajero.email == "alice@example.com"
+    assert response.pago.estado == EstadoPagoDetalle.successful
+    assert response.pago.monto == 220
+    assert response.pago.medio_de_pago == "VISA"
+    assert response.pago.tarjeta_ultimos_4 == "4242"
+    assert response.total_noches == 2
+    assert response.monto_total == 220
+    qr_payload = json.loads(response.qr_checkin_payload)
+    assert qr_payload["reserva_id"] == str(reserva.id)
+    assert qr_payload["codigo_reserva"] == response.codigo_reserva
+
+
+@pytest.mark.asyncio
+async def test_obtener_reserva_hotel_detalle_service_marks_payment_as_pending_when_missing(mock_db):
+    reserva = _reserva_modificable(estado="pendiente")
+    mock_db.execute = AsyncMock(return_value=_execute_result_with_reserva(reserva))
+
+    detalle_habitacion = HabitacionReservaDetalleResponse(
+        id=HAB_ID,
+        nombre_habitacion="Standard Room",
+        nombre_hotel="Hotel Demo",
+        hotel_id=uuid.uuid4(),
+        numero_habitacion="202",
+        monto_habitacion=80,
+        impuestos_habitacion=20,
+    )
+
+    with patch(
+        "app.services.reserva_service.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value={HAB_ID: detalle_habitacion}),
+    ), patch(
+        "app.services.reserva_service.obtener_usuarios_resumen_por_ids",
+        new=AsyncMock(return_value={USER_ID: SimpleNamespace(id=USER_ID, nombre="Alice")}),
+    ), patch(
+        "app.services.reserva_service.obtener_pagos_por_ids",
+        new=AsyncMock(return_value={}),
+    ):
+        response = await obtener_reserva_hotel_detalle_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+            reserva_id=reserva.id,
+            habitacion_ids_hotel=[HAB_ID],
+        )
+
+    assert response.pago.id is None
+    assert response.pago.estado == EstadoPagoDetalle.pending
+    assert response.pago.monto is None
+    assert response.monto_total == 500
+
+
+@pytest.mark.asyncio
+async def test_obtener_reserva_hotel_detalle_service_404_if_room_not_owned(mock_db):
+    reserva = _reserva_modificable(habitaciones_ids=[uuid.uuid4()])
+    mock_db.execute = AsyncMock(return_value=_execute_result_with_reserva(reserva))
+
+    with pytest.raises(HTTPException) as exc:
+        await obtener_reserva_hotel_detalle_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+            reserva_id=reserva.id,
+            habitacion_ids_hotel=[HAB_ID],
+        )
+
+    assert exc.value.status_code == 404
+    assert exc.value.detail == "Reserva no encontrada"
 
 
 @pytest.mark.asyncio

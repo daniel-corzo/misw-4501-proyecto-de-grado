@@ -18,6 +18,12 @@ class EstadoPagoReserva(str, Enum):
     failed = "failed"
 
 
+class EstadoPagoDetalle(str, Enum):
+    successful = "successful"
+    failed = "failed"
+    pending = "pending"
+
+
 class EstadoPagoFiltro(str, Enum):
     successful = "successful"
     failed = "failed"
@@ -89,6 +95,21 @@ class ReservaHotelResponse(ReservaResponse):
     estado_pago: Optional[EstadoPagoReserva] = None
 
 
+class ViajeroReservaDetalleResponse(BaseModel):
+    id: UUID
+    nombre: Optional[str] = None
+    email: Optional[str] = None
+
+
+class PagoReservaDetalleResponse(BaseModel):
+    id: Optional[UUID] = None
+    estado: EstadoPagoDetalle = EstadoPagoDetalle.pending
+    monto: Optional[int] = None
+    medio_de_pago: Optional[str] = None
+    created_at: Optional[datetime] = None
+    tarjeta_ultimos_4: Optional[str] = None
+
+
 class ReservaHotelDetalleResponse(BaseModel):
     id: Optional[UUID] = None
     nombre: str
@@ -127,6 +148,14 @@ class ReservaDetalleResponse(BaseModel):
     hotel: ReservaHotelDetalleResponse
     habitacion: ReservaHabitacionDetalleCompletoResponse
     amenidades_hotel: List[str] = Field(default_factory=list)
+
+
+class ReservaHotelDetalleCompletoResponse(ReservaDetalleResponse):
+    viajero: ViajeroReservaDetalleResponse
+    pago: PagoReservaDetalleResponse
+    total_noches: int = Field(default=0, ge=0)
+    monto_total: Optional[int] = None
+    qr_checkin_payload: str
 
 
 class ListaReservasResponse(BaseModel):

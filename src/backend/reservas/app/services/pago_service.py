@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 from uuid import UUID
 
 import httpx
@@ -11,6 +12,10 @@ from app.config import get_settings
 class PagoResumenResponse(BaseModel):
     id: UUID
     estado: str
+    monto: int | None = None
+    medio_de_pago: str | None = None
+    created_at: datetime | None = None
+    tarjeta_ultimos_4: str | None = None
 
 
 async def obtener_pagos_por_ids(

@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 from unittest.mock import patch
 
 import pytest
+from fastapi import HTTPException
 from httpx import ASGITransport, AsyncClient
 
 from app.database import get_db
@@ -13,7 +14,12 @@ from app.schemas.reserva import (
     HabitacionHotelResponse,
     HabitacionReservaDetalleResponse,
     ListaReservasHotelResponse,
+    PagoReservaDetalleResponse,
+    ReservaHabitacionDetalleCompletoResponse,
+    ReservaHotelDetalleCompletoResponse,
+    ReservaHotelDetalleResponse,
     ReservaHotelResponse,
+    ViajeroReservaDetalleResponse,
 )
 from travelhub_common.security import RoleEnum, User, get_current_user
 from app.models.reserva import Reserva
@@ -564,6 +570,144 @@ async def test_get_reservas_hotel_401_missing_authorization(mock_db_session):
     try:
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get("/reservas/hoteles")
+
+        assert response.status_code == 401
+    finally:
+        app.dependency_overrides.clear()
+
+
+@pytest.mark.asyncio
+async def test_get_reserva_hotel_detalle_returns_200(override_manager_client, mock_db_session):
+    now = datetime.now(UTC)
+    reserva_id = uuid.uuid4()
+    habitaciones = [
+        HabitacionHotelResponse(
+            id=HABITACION_ID,
+            capacidad=2,
+            numero="101",
+            descripcion="Vista al mar",
+            imagenes=[],
+            monto=100,
+            impuestos=10,
+            disponible=True,
+        )
+    ]
+    service_response = ReservaHotelDetalleCompletoResponse(
+        id=reserva_id,
+        codigo_reserva="TH-ABC123",
+        estado="confirmada",
+        fecha_entrada=now.date(),
+        fecha_salida=(now + timedelta(days=2)).date(),
+        num_huespedes=2,
+        pago_id=PAGO_ID,
+        created_at=now,
+        hotel=ReservaHotelDetalleResponse(
+            id=uuid.uuid4(),
+            nombre="Grand Palace",
+            direccion="Main street 123",
+            ciudad="Bogota",
+            pais="Colombia",
+            imagenes=["https://cdn.example.com/hotel.jpg"],
+            contacto_celular="+57 3000000000",
+            contacto_email="hotel@example.com",
+        ),
+        habitacion=ReservaHabitacionDetalleCompletoResponse(
+            id=HABITACION_ID,
+            nombre="Deluxe King Suite",
+            descripcion="Large room",
+            numero="101",
+            capacidad=2,
+            imagenes=["https://cdn.example.com/room.jpg"],
+            monto=100,
+            impuestos=10,
+        ),
+        amenidades_hotel=["WIFI", "POOL"],
+        viajero=ViajeroReservaDetalleResponse(
+            id=OTHER_USER_ID,
+            nombre="Alice Montgomery",
+            email="alice@example.com",
+        ),
+        pago=PagoReservaDetalleResponse(
+            id=PAGO_ID,
+            estado="successful",
+            monto=220,
+            medio_de_pago="VISA",
+            created_at=now,
+            tarjeta_ultimos_4="4242",
+        ),
+        total_noches=2,
+        monto_total=220,
+        qr_checkin_payload='{"codigo_reserva":"TH-ABC123"}',
+    )
+
+    mock_service = AsyncMock(return_value=service_response)
+    with patch(
+        "app.routers.reservas.obtener_habitaciones_hotel",
+        new=AsyncMock(return_value=habitaciones),
+    ), patch(
+        "app.routers.reservas.obtener_reserva_hotel_detalle_service",
+        new=mock_service,
+    ):
+        response = await override_manager_client.get(f"/reservas/hoteles/{reserva_id}")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == str(reserva_id)
+    assert data["hotel"]["nombre"] == "Grand Palace"
+    assert data["habitacion"]["nombre"] == "Deluxe King Suite"
+    assert data["viajero"]["email"] == "alice@example.com"
+    assert data["pago"]["estado"] == "successful"
+    assert data["pago"]["tarjeta_ultimos_4"] == "4242"
+    assert data["total_noches"] == 2
+    assert data["qr_checkin_payload"] == '{"codigo_reserva":"TH-ABC123"}'
+    assert mock_service.await_args.kwargs["db"] is mock_db_session
+    assert mock_service.await_args.kwargs["authorization_header"] is None
+    assert mock_service.await_args.kwargs["habitacion_ids_hotel"] == [HABITACION_ID]
+
+
+@pytest.mark.asyncio
+async def test_get_reserva_hotel_detalle_404_when_not_found(override_manager_client):
+    habitaciones = [
+        HabitacionHotelResponse(
+            id=HABITACION_ID,
+            capacidad=2,
+            numero="101",
+            descripcion="Vista al mar",
+            imagenes=[],
+            monto=100,
+            impuestos=10,
+            disponible=True,
+        )
+    ]
+
+    with patch(
+        "app.routers.reservas.obtener_habitaciones_hotel",
+        new=AsyncMock(return_value=habitaciones),
+    ), patch(
+        "app.routers.reservas.obtener_reserva_hotel_detalle_service",
+        new=AsyncMock(
+            side_effect=HTTPException(
+                status_code=404,
+                detail="Reserva no encontrada",
+            )
+        ),
+    ):
+        response = await override_manager_client.get(f"/reservas/hoteles/{uuid.uuid4()}")
+
+    assert response.status_code == 404
+    assert response.json()["error"] == "not_found"
+
+
+@pytest.mark.asyncio
+async def test_get_reserva_hotel_detalle_401_missing_authorization(mock_db_session):
+    async def override_get_db():
+        yield mock_db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    try:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.get(f"/reservas/hoteles/{uuid.uuid4()}")
 
         assert response.status_code == 401
     finally:

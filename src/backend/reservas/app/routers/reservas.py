@@ -18,6 +18,7 @@ from app.schemas.reserva import (
     ListaReservasHotelResponse,
     ListaReservasResponse,
     ReservaDetalleResponse,
+    ReservaHotelDetalleCompletoResponse,
     ReservaHotelResponse,
 )
 from app.services.hotel_service import obtener_habitaciones_hotel
@@ -33,6 +34,7 @@ from app.services.reserva_service import (
     reserva_to_response,
     modificar_reserva_service,
     listar_reservas_usuario_service,
+    obtener_reserva_hotel_detalle_service,
 )
 from travelhub_common.security import RoleChecker, RoleEnum, User, get_current_user
 
@@ -143,6 +145,27 @@ async def listar_reservas_hotel(
         fecha_fin=fecha_fin,
         estado_pago=estado_pago,
         num_huespedes=num_huespedes,
+    )
+
+
+@router.get(
+    "/hoteles/{reserva_id}",
+    response_model=ReservaHotelDetalleCompletoResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def obtener_reserva_hotel(
+    reserva_id: uuid.UUID,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    _current_user: User = Depends(RoleChecker([RoleEnum.MANAGER, RoleEnum.USER])),
+):
+    authorization_header = request.headers.get("Authorization")
+    habitaciones = await obtener_habitaciones_hotel(authorization_header)
+    return await obtener_reserva_hotel_detalle_service(
+        db=db,
+        authorization_header=authorization_header,
+        reserva_id=reserva_id,
+        habitacion_ids_hotel=[habitacion.id for habitacion in habitaciones],
     )
 
 

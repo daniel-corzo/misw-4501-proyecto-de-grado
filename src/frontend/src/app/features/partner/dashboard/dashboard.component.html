@@ -193,7 +193,13 @@
           </thead>
           <tbody>
             @for (reservation of reservations; track trackByReservationId($index, reservation)) {
-              <tr>
+              <tr
+                class="reservation-row"
+                tabindex="0"
+                role="button"
+                (click)="openReservationDetail(reservation)"
+                (keydown)="onReservationRowKeydown($event, reservation)"
+              >
                 <td>
                   <div class="guest-info">
                     <div class="avatar" [ngClass]="getAvatarClass($index)">
@@ -230,7 +236,7 @@
                     <button
                       class="btn-reject"
                       type="button"
-                      (click)="rejectReservation(reservation)"
+                      (click)="rejectReservation(reservation, $event)"
                       [disabled]="actionReservationId !== null"
                     >
                       {{ isProcessing(reservation.id, 'reject')
@@ -242,7 +248,7 @@
                     <button
                       class="btn-confirm"
                       type="button"
-                      (click)="confirmReservation(reservation)"
+                      (click)="confirmReservation(reservation, $event)"
                       [disabled]="actionReservationId !== null"
                     >
                       {{ isProcessing(reservation.id, 'confirm')
@@ -276,4 +282,15 @@
       </div>
     }
   </div>
+
+  @if (selectedReservation) {
+    <app-reservation-detail-modal
+      [reservationId]="selectedReservation.id"
+      [actionsLocked]="actionReservationId !== null"
+      [processingAction]="actionReservationId === selectedReservation.id ? actionType : null"
+      (closed)="closeReservationDetail()"
+      (confirmRequested)="confirmSelectedReservation()"
+      (rejectRequested)="rejectSelectedReservation()"
+    />
+  }
 </div>

@@ -84,6 +84,29 @@ export interface BookingDetailResponse {
   amenidades_hotel: string[];
 }
 
+export interface HotelBookingTravelerDetail {
+  id: string;
+  nombre: string | null;
+  email: string | null;
+}
+
+export interface HotelBookingPaymentDetail {
+  id: string | null;
+  estado: PaymentStatusFilter;
+  monto: number | null;
+  medio_de_pago: string | null;
+  created_at: string | null;
+  tarjeta_ultimos_4: string | null;
+}
+
+export interface HotelBookingDetailResponse extends BookingDetailResponse {
+  viajero: HotelBookingTravelerDetail;
+  pago: HotelBookingPaymentDetail;
+  total_noches: number;
+  monto_total: number | null;
+  qr_checkin_payload: string;
+}
+
 export interface CreateBookingRequest {
   habitacion_id: string;
   fecha_entrada: string;
@@ -151,6 +174,10 @@ export class BookingService {
 
   getBookingById(bookingId: string): Observable<BookingDetailResponse> {
     return this.api.get<BookingDetailResponse>(`/reservas/${bookingId}`);
+  }
+
+  getHotelBookingById(bookingId: string): Observable<HotelBookingDetailResponse> {
+    return this.api.get<HotelBookingDetailResponse>(`/reservas/hoteles/${bookingId}`);
   }
 
   cancelReservation(bookingId: string): Observable<BookingResponse> {
