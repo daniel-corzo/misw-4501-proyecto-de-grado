@@ -199,6 +199,10 @@ export class PartnerDashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+
     event.preventDefault();
     this.openReservationDetail(reservation);
   }
