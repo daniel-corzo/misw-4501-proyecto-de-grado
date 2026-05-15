@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Component, DestroyRef, effect, inject, input, output } from '@angular/core';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { EMPTY, Subject, catchError, from, map, of, switchMap } from 'rxjs';
 import * as QRCode from 'qrcode';
@@ -34,7 +33,7 @@ export class ReservationDetailModalComponent {
   rejectRequested = output<void>();
 
   detail: HotelBookingDetailResponse | null = null;
-  qrMarkup: SafeHtml | null = null;
+  qrDataUrl: string | null = null;
   loading = false;
   loadError = false;
 
@@ -42,7 +41,6 @@ export class ReservationDetailModalComponent {
 
   private readonly bookingService = inject(BookingService);
   private readonly transloco = inject(TranslocoService);
-  private readonly sanitizer = inject(DomSanitizer);
   private readonly destroyRef = inject(DestroyRef);
   private readonly detailTrigger$ = new Subject<string>();
 
@@ -53,13 +51,12 @@ export class ReservationDetailModalComponent {
           this.loading = true;
           this.loadError = false;
           this.detail = null;
-          this.qrMarkup = null;
+          this.qrDataUrl = null;
 
           return this.bookingService.getHotelBookingById(reservationId).pipe(
             switchMap((detail) =>
               from(
-                QRCode.toString(detail.qr_checkin_payload, {
-                  type: 'svg',
+                QRCode.toDataURL(detail.qr_checkin_payload, {
                   margin: 1,
                   width: 192,
                   color: {
@@ -68,11 +65,11 @@ export class ReservationDetailModalComponent {
                   },
                 })
               ).pipe(
-                map((svg) => ({
+                map((qrDataUrl) => ({
                   detail,
-                  qrMarkup: this.sanitizer.bypassSecurityTrustHtml(svg),
+                  qrDataUrl,
                 })),
-                catchError(() => of({ detail, qrMarkup: null }))
+                catchError(() => of({ detail, qrDataUrl: null }))
               )
             ),
             catchError(() => {
@@ -84,9 +81,9 @@ export class ReservationDetailModalComponent {
         }),
         takeUntilDestroyed(this.destroyRef)
       )
-      .subscribe(({ detail, qrMarkup }) => {
+      .subscribe(({ detail, qrDataUrl }) => {
         this.detail = detail;
-        this.qrMarkup = qrMarkup;
+        this.qrDataUrl = qrDataUrl;
         this.loading = false;
       });
 

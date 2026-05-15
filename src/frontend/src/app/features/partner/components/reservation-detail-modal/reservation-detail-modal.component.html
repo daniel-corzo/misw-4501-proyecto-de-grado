@@ -201,9 +201,15 @@
             </div>
 
             <p>{{ 'partner.dashboard.reservations.detailCheckinQrDescription' | transloco }}</p>
-            <div class="qr-surface" [class.qr-surface--fallback]="!qrMarkup">
-              @if (qrMarkup) {
-                <div class="qr-markup" [innerHTML]="qrMarkup"></div>
+            <div class="qr-surface" [class.qr-surface--fallback]="!qrDataUrl">
+              @if (qrDataUrl) {
+                <img
+                  class="qr-image"
+                  [src]="qrDataUrl"
+                  [alt]="'partner.dashboard.reservations.detailCheckinQrTitle' | transloco"
+                  width="192"
+                  height="192"
+                >
               } @else {
                 <span class="qr-fallback-code">{{ detail.codigo_reserva }}</span>
               }

@@ -300,13 +300,7 @@
   border: 1px dashed var(--color-border);
 }
 
-.qr-markup {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
-
-.qr-markup :deep(svg) {
+.qr-image {
   width: 100%;
   max-width: 192px;
   height: auto;
