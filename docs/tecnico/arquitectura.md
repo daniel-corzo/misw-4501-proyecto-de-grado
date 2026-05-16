@@ -31,7 +31,6 @@ graph TB
         subgraph Storage
             RDS[(RDS PostgreSQL 15\ndb.t3.micro)]
             REDIS[(ElastiCache Redis)]
-            SQS[SQS Queue\ntravelhub-queue]
             SM[Secrets Manager\nJWT · RSA · DB URL]
         end
     end
@@ -48,15 +47,13 @@ graph TB
     ALB -->|/api/pagos/*| SVC_PAG
     SVC_USR & SVC_BSQ & SVC_HOT & SVC_RES & SVC_NOT & SVC_PAG --> RDS
     SVC_BSQ --> REDIS
-    SVC_RES --> SQS
-    SQS --> SVC_NOT
 ```
 
 ## Decisiones de arquitectura
 
 ### Microservicios independientes
 
-Cada servicio tiene su propia base de datos lógica (mismo servidor RDS, distinto schema/tablas) y se despliega de forma independiente. Esto permite escalar y desplegar `busquedas` sin tocar `pagos`.
+Cada servicio tiene su propia base de datos lógica (mismo servidor RDS, distinto schema/tablas) y se despliega de forma independiente. Esto permite escalar y desplegar `busquedas` sin tocar `reservas`.
 
 ### Routing por path en el ALB
 
@@ -75,11 +72,9 @@ En desarrollo local, nginx en el puerto `8080` replica este comportamiento.
 
 ### Comunicación entre servicios
 
-Aunque el diseño busca desacoplamiento, actualmente sí existen llamadas síncronas entre microservicios:
+Los servicios se comunican de forma síncrona vía HTTP cuando necesitan datos de otro servicio:
 
 - `reservas` consulta a `hoteles` vía HTTP (`/hoteles/habitaciones` y `/hoteles/habitaciones/resumen`) para validar y enriquecer la información de habitaciones.
-
-Adicionalmente, la arquitectura contempla comunicación asíncrona vía SQS para eventos de reservas y notificaciones.
 
 ### Caché
 
@@ -106,7 +101,6 @@ Adicionalmente, la arquitectura contempla comunicación asíncrona vía SQS para
 | Backend | FastAPI + Python | 3.12 |
 | Base de datos | PostgreSQL | 15 |
 | Caché | Redis | 7 |
-| Mensajería | AWS SQS | — |
 | Cloud | AWS (ECS Fargate, ALB, RDS Aurora, CloudFront) | — |
 | IaC | Terraform | — |
 | CI/CD | GitHub Actions + AWS CodePipeline/CodeBuild/CodeDeploy | — |

@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service: [usuarios, busquedas, hoteles, reservas, notificaciones]
+        service: [usuarios, busquedas, hoteles, reservas, notificaciones, pagos]
 
     steps:
       - uses: actions/checkout@v4

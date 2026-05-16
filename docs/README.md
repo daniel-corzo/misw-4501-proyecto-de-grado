@@ -32,6 +32,6 @@ Para usuarios finales (viajeros y socios hoteleros).
 
 ## Sobre el proyecto
 
-TravelHub conecta viajeros con más de 1.200 propiedades hoteleras en 6 países: Colombia, Perú, Ecuador, México, Chile y Argentina. Permite buscar alojamiento, reservar, pagar en moneda local y gestionar reservas desde web o móvil.
+TravelHub conecta viajeros con propiedades hoteleras en diferentes países. Permite buscar alojamiento, reservar, pagar y gestionar reservas desde web o móvil.
 
 **Stack:** Angular 19 · SwiftUI (iOS) · FastAPI (Python 3.12) · PostgreSQL · Redis · AWS (ECS Fargate, ALB, SQS, RDS Aurora)
