@@ -44,7 +44,7 @@ Cliente → POST /api/auth/refresh con { refresh_token }
 | `roleGuard` | Verifica el rol del usuario (viajero vs. hotelero) |
 | `typeGuard` | Verifica el tipo de cuenta (e.g., solo tipo `hotel` puede acceder al panel de partner) |
 
-El `auth.interceptor.ts` adjunta automáticamente el Bearer token a todas las peticiones salientes; ante 401 limpia la sesión local y redirige a login.
+El `auth.interceptor.ts` adjunta automáticamente el Bearer token a todas las peticiones salientes. El `error.interceptor.ts` limpia la sesión local y redirige a login ante errores 401.
 
 ## Cifrado de datos de pago — RSA-OAEP
 
