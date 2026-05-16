@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from uuid import UUID
@@ -133,11 +134,10 @@ async def _enviar_correo_pago_exitoso(
             card_last4=pago.tarjeta_ultimos_4,
             total_amount=pago.monto,
         )
-        send_booking_email(payload, settings)
+        await asyncio.to_thread(send_booking_email, payload, settings)
     except Exception:
         logger.exception(
             "No fue posible enviar el comprobante de pago %s para la reserva %s",
             pago.id,
             body.reserva_id,
         )
-
