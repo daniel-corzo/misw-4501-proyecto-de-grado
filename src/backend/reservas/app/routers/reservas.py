@@ -4,6 +4,7 @@ from datetime import UTC, date, datetime
 from typing import Optional
 
 from fastapi import APIRouter, status, Depends, Request, HTTPException, Query
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -368,7 +369,18 @@ async def cancelar_reserva(
                     room_name=detalle.nombre_habitacion,
                     room_number=detalle.numero_habitacion,
                 )
-        except Exception:
+        except HTTPException as exc:
+            if exc.status_code in (
+                status.HTTP_502_BAD_GATEWAY,
+                status.HTTP_503_SERVICE_UNAVAILABLE,
+            ):
+                logger.exception(
+                    "No fue posible preparar el correo de cancelación para la reserva %s",
+                    reserva.id,
+                )
+            else:
+                raise
+        except ValidationError:
             logger.exception(
                 "No fue posible preparar el correo de cancelación para la reserva %s",
                 reserva.id,

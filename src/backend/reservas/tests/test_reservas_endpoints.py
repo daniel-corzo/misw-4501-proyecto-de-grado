@@ -1081,6 +1081,30 @@ async def test_patch_reserva_cancelar_409_when_already_cancelada(override_client
 
 
 @pytest.mark.asyncio
+async def test_patch_reserva_cancelar_propagates_auth_error_from_room_lookup(
+    override_client, mock_db_session
+):
+    now = datetime.now(UTC)
+    reserva = _build_reserva(
+        estado="confirmada",
+        check_out=now + timedelta(days=2),
+        created_at=now,
+    )
+    mock_db_session.execute = AsyncMock(return_value=_execute_result_with_reserva(reserva))
+
+    with patch(
+        "app.routers.reservas.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(
+            side_effect=HTTPException(status_code=401, detail="No autorizado")
+        ),
+    ), patch("app.routers.reservas.enviar_correo_estado_reserva") as mock_email:
+        response = await override_client.patch(f"/reservas/{reserva.id}/cancelar")
+
+    assert response.status_code == 401
+    mock_email.assert_not_called()
+
+
+@pytest.mark.asyncio
 async def test_patch_reserva_200(override_client, mock_db_session):
     rid = uuid.uuid4()
     now = datetime.now(UTC)
