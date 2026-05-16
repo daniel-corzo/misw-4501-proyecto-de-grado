@@ -65,5 +65,5 @@ async def obtener_reserva_detalle_para_pago(
         ) from exc
     except ValidationError as exc:
         raise ReservaDetallePagoError(
-            "Respuesta invalida al consultar el detalle de la reserva"
+            "Respuesta inválida al consultar el detalle de la reserva"
         ) from exc
