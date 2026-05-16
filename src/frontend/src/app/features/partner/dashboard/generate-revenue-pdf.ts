@@ -114,8 +114,6 @@ export function generateRevenuePdf(data: ReporteIngresosResponse, lang: string):
   const rowH = 8;
   const cellPad = 3;
 
-  let currentPage = 1;
-
   const drawTableHeader = (): void => {
     doc.setFillColor(...TABLE_HEADER_BG);
     doc.rect(margin, y, contentWidth, rowH, 'F');
@@ -136,9 +134,7 @@ export function generateRevenuePdf(data: ReporteIngresosResponse, lang: string):
 
   for (let i = 0; i < data.ingresos_por_mes.length; i++) {
     if (y + rowH > usableBottom) {
-      drawFooter(currentPage, 1);
       doc.addPage();
-      currentPage++;
       y = margin;
       drawTableHeader();
     }
@@ -172,9 +168,7 @@ export function generateRevenuePdf(data: ReporteIngresosResponse, lang: string):
 
   // ── Total row ────────────────────────────────────────────────────────────
   if (y + rowH > usableBottom) {
-    drawFooter(currentPage, 1);
     doc.addPage();
-    currentPage++;
     y = margin;
   }
   doc.setFillColor(...TOTAL_ROW_BG);
@@ -182,7 +176,14 @@ export function generateRevenuePdf(data: ReporteIngresosResponse, lang: string):
   doc.setFontSize(9);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...DARK);
-  doc.text(isEs ? 'Total General' : 'Grand Total', margin + contentWidth / 2, y + 5.5, { align: 'center' });
+  // Label spans first two columns (Año + Mes); values fill columns 3 and 4
+  const labelWidth = colWidths[0] + colWidths[1];
+  doc.text(
+    isEs ? 'Total General' : 'Grand Total',
+    margin + labelWidth / 2,
+    y + 5.5,
+    { align: 'center' },
+  );
   const totalCells = ['', '', String(data.total_pagos), formatCurrency(data.total_general)];
   let cx = margin;
   for (let j = 0; j < totalCells.length; j++) {
