@@ -10,9 +10,9 @@
 
 | Método | Ruta | Descripción | Auth requerida |
 |---|---|---|---|
-| `POST` | `/api/usuarios/auth/login` | Iniciar sesión, devuelve access + refresh token | No |
-| `POST` | `/api/usuarios/auth/refresh` | Renovar access token usando refresh token | No |
-| `POST` | `/api/usuarios/auth/logout` | Cerrar sesión (invalida tokens) | Sí |
+| `POST` | `/api/auth/login` | Iniciar sesión, devuelve access token | No |
+| `POST` | `/api/auth/refresh` | Renovar access token usando refresh token (pendiente, responde 501) | No |
+| `POST` | `/api/auth/logout` | Cerrar sesión (invalida token actual) | Sí |
 
 ### Usuarios
 
@@ -27,11 +27,11 @@
 ## Flujo de autenticación
 
 ```
-POST /login → verifica credenciales → genera JWT (RS256)
-            → devuelve { access_token, refresh_token, expires_in }
+POST /api/auth/login → verifica credenciales → genera JWT (RS256)
+                     → devuelve { access_token, token_type, expires_in }
 
-POST /refresh → valida refresh_token → emite nuevo par de tokens
-POST /logout  → invalida sesión en servidor
+POST /api/auth/refresh → endpoint definido, implementación pendiente (501)
+POST /api/auth/logout  → invalida token actual en servidor
 ```
 
 ## Tipos de usuario
@@ -49,7 +49,7 @@ El tipo se establece en el registro y determina qué rutas están disponibles (v
 
 - Algoritmo: RS256 (firma con clave privada, verificación con clave pública)
 - `access_token`: vida corta, adjuntado en el header `Authorization: Bearer`
-- `refresh_token`: vida larga, usado solo en `/refresh`
+- `refresh_token`: esquema definido para `/api/auth/refresh` (pendiente de implementación)
 - La clave privada solo existe en este servicio; la pública se comparte con los demás servicios para verificación
 
 ## Dependencias
