@@ -19,22 +19,22 @@ El secreto nunca sale del servidor. Los servicios solo necesitan la clave públi
 ### Flujo de autenticación
 
 ```
-Cliente → POST /api/usuarios/auth/login
-       ← { access_token, refresh_token }
+Cliente → POST /api/auth/login
+       ← { access_token, token_type, expires_in }
 
 Cliente → GET /api/... con header: Authorization: Bearer <access_token>
        ← respuesta normal
 
-# Cuando el access_token expira:
-Cliente → POST /api/usuarios/auth/refresh con { refresh_token }
-       ← { access_token nuevo, refresh_token nuevo }
+# Endpoint de refresh definido (actualmente sin implementación):
+Cliente → POST /api/auth/refresh con { refresh_token }
+       ← 501 Not Implemented
 ```
 
 ### Tokens y sesión
 
 - `access_token`: vida corta (minutos), usado en cada petición.
-- `refresh_token`: vida larga, usado solo para renovar el access_token.
-- `POST /api/usuarios/auth/logout` invalida la sesión en el servidor.
+- `refresh_token`: previsto para renovar el `access_token` cuando se implemente `POST /api/auth/refresh`.
+- `POST /api/auth/logout` invalida la sesión en el servidor.
 
 ### Guards en el frontend Angular
 
@@ -44,7 +44,7 @@ Cliente → POST /api/usuarios/auth/refresh con { refresh_token }
 | `roleGuard` | Verifica el rol del usuario (viajero vs. hotelero) |
 | `typeGuard` | Verifica el tipo de cuenta (e.g., solo tipo `hotel` puede acceder al panel de partner) |
 
-El `auth.interceptor.ts` adjunta automáticamente el Bearer token a todas las peticiones salientes y maneja la renovación transparente del access_token.
+El `auth.interceptor.ts` adjunta automáticamente el Bearer token a todas las peticiones salientes; ante 401 limpia la sesión local y redirige a login.
 
 ## Cifrado de datos de pago — RSA-OAEP
 
