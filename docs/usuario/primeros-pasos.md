@@ -37,7 +37,7 @@ Si olvidaste tu contraseña, usa la opción **¿Olvidaste tu contraseña?** en l
 2. Ingresa tu correo y contraseña en la pantalla de inicio.
 3. Toca **Iniciar sesión**.
 
-Tu sesión se mantendrá activa. La app renueva tu sesión automáticamente mientras la usas.
+Tu sesión permanecerá iniciada hasta que cierres sesión o la app te pida volver a autenticarte.
 
 ---
 
