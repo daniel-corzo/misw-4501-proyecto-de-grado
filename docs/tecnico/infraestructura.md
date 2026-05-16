@@ -1,0 +1,115 @@
+# Infraestructura AWS — TravelHub
+
+## Visión general
+
+TravelHub corre completamente en AWS sobre la región `us-east-1`. La infraestructura se gestiona con Terraform y los despliegues se automatizan con CodePipeline + CodeBuild + CodeDeploy.
+
+## Componentes principales
+
+### Frontend
+
+| Componente | Descripción |
+|---|---|
+| S3 Bucket | Almacena los archivos estáticos del build de Angular |
+| CloudFront | CDN global, HTTPS, caché de assets |
+
+El build de Angular (`ng build --configuration production`) se sube a S3 y CloudFront lo distribuye. CodePipeline invalida la caché de CloudFront al final de cada despliegue.
+
+### Cómputo (Backend)
+
+| Componente | Descripción |
+|---|---|
+| ECS Fargate | Cluster serverless — no se gestionan EC2s |
+| ALB | Application Load Balancer con routing por path |
+| Target Groups | Blue y Green por cada microservicio (para Blue/Green deployments) |
+| ECR | Registro Docker privado, un repositorio por microservicio |
+
+Hay 5 servicios ECS (el servicio `pagos` comparte despliegue con `reservas` en la configuración actual). Cada tarea Fargate corre la imagen Docker del microservicio correspondiente.
+
+### Red (VPC)
+
+- VPC dedicada en `us-east-1`
+- 2 Availability Zones con subnets públicas
+- El ALB está en las subnets públicas
+- Las tareas ECS tienen IPs dentro de la VPC
+
+### Base de datos y caché
+
+| Componente | Descripción |
+|---|---|
+| RDS Aurora PostgreSQL 15 | `db.t3.micro`, Multi-AZ |
+| ElastiCache Redis | Para caché de búsquedas |
+| Secrets Manager | JWT keys, RSA keys, DB URL |
+
+### Mensajería
+
+| Componente | Descripción |
+|---|---|
+| SQS Standard Queue | `travelhub-queue` — eventos de reservas hacia notificaciones |
+
+## CI/CD
+
+### Pipelines
+
+Hay pipelines de CodePipeline independientes:
+
+- **1 pipeline** para el frontend (Angular)
+- **5 pipelines** para los microservicios backend (uno por servicio)
+
+Cada pipeline tiene las fases: `Source → Build → Deploy`.
+
+### Frontend pipeline
+
+```
+GitHub (main) → CodePipeline → CodeBuild (ng build) → S3 sync → CloudFront invalidation
+```
+
+### Backend pipeline (por microservicio)
+
+```
+GitHub (main) → CodePipeline → CodeBuild (docker build + ECR push) → CodeDeploy (Blue/Green en ECS)
+```
+
+### Blue/Green deployment
+
+Cada microservicio tiene dos Target Groups: `-blue` (producción) y `-green` (nueva versión). CodeDeploy despliega en el grupo green, corre health checks, y cambia el tráfico del ALB de blue a green sin downtime.
+
+## Terraform
+
+La infraestructura está organizada en módulos y stacks:
+
+```
+src/infrastructure/terraform/
+├── environments/     ← variables por entorno (dev, prod)
+├── modules/          ← módulos reutilizables (ecs, rds, alb, etc.)
+├── scripts/          ← scripts de apply y destroy
+└── stacks/           ← composición de módulos por contexto
+```
+
+### Aplicar infraestructura
+
+```bash
+# Configurar el perfil AWS (debe llamarse 'travelhub')
+aws configure --profile travelhub
+
+# Aplicar toda la infraestructura (desde la raíz del repo)
+./src/infrastructure/terraform/scripts/apply.sh
+
+# Destruir toda la infraestructura
+./src/infrastructure/terraform/scripts/destroy.sh
+```
+
+Los scripts aplican/destruyen los stacks en el orden correcto de dependencia (primero red, luego RDS, luego ECS, etc.).
+
+## Costos estimados
+
+| Componente | Tipo | Costo aprox. (MVP) |
+|---|---|---|
+| ECS Fargate | 5 servicios, tamaño mínimo | ~$20-40/mes |
+| RDS Aurora | db.t3.micro | ~$30/mes |
+| ALB | 1 load balancer | ~$20/mes |
+| CloudFront + S3 | Tráfico bajo | ~$5/mes |
+| ECR | 5 repositorios | ~$1/mes |
+| SQS | Volumen bajo | < $1/mes |
+
+> Costos reales dependen del tráfico y configuración final.
