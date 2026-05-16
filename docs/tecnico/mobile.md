@@ -19,7 +19,7 @@ src/mobile/ios/TravelHub/TravelHub/
 ├── Models/                     ← modelos de dominio (structs/enums)
 ├── DTOs/                       ← objetos de transferencia de datos (codables)
 ├── Services/                   ← capa de red (URLSession, llamadas a API)
-├── ViewModels/                 ← lógica de presentación, @Published state
+├── ViewModels/                 ← lógica de presentación con Swift Observation (@Observable)
 ├── Views/                      ← vistas SwiftUI por pantalla/feature
 ├── Components/                 ← componentes reutilizables de UI
 ├── Utility/                    ← helpers, extensiones, formatters
@@ -30,11 +30,11 @@ src/mobile/ios/TravelHub/TravelHub/
 ## Arquitectura MVVM
 
 ```
-View (SwiftUI) ←→ ViewModel (@ObservableObject) → Service (URLSession) → API REST
+View (SwiftUI) ←→ ViewModel (@Observable + @State en la vista) → Service (URLSession) → API REST
 ```
 
 - **Views**: solo renderizan UI y delegan acciones al ViewModel.
-- **ViewModels**: manejan estado con `@Published`, llaman a Services, transforman DTOs en modelos de presentación.
+- **ViewModels**: manejan estado con `@Observable`, se instancian/guardan desde las vistas con `@State`, llaman a Services y transforman DTOs en modelos de presentación.
 - **Services**: encapsulan las llamadas HTTP, manejan autenticación (token) y deserialización JSON.
 - **DTOs**: structs `Codable` que mapean exactamente la estructura JSON de la API.
 - **Models**: structs de dominio, independientes de la capa de red.
