@@ -490,6 +490,7 @@ def reserva_to_detalle_response(
 
     return ReservaDetalleResponse(
         id=reserva.id,
+        viajero_id=reserva.viajero_id,
         codigo_reserva=_codigo_reserva(reserva),
         estado=EstadoReserva(reserva.estado),
         fecha_entrada=reserva.check_in.date(),

@@ -140,6 +140,7 @@ class ReservaHabitacionDetalleCompletoResponse(BaseModel):
 
 class ReservaDetalleResponse(BaseModel):
     id: UUID
+    viajero_id: UUID
     codigo_reserva: str
     estado: EstadoReserva
     fecha_entrada: date

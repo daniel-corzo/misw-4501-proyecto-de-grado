@@ -368,11 +368,19 @@ async def cancelar_reserva(
                     room_name=detalle.nombre_habitacion,
                     room_number=detalle.numero_habitacion,
                 )
-        except Exception:
-            logger.exception(
-                "No fue posible preparar el correo de cancelación para la reserva %s",
-                reserva.id,
-            )
+        except HTTPException as exc:
+            if exc.status_code in (
+                status.HTTP_502_BAD_GATEWAY,
+                status.HTTP_503_SERVICE_UNAVAILABLE,
+            ):
+                logger.exception(
+                    "No fue posible preparar el correo de cancelación para la reserva %s (status=%s, detail=%s)",
+                    reserva.id,
+                    exc.status_code,
+                    exc.detail,
+                )
+            else:
+                raise
     return reserva
 
 

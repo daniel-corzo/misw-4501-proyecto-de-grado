@@ -2,10 +2,14 @@ from datetime import date
 from uuid import UUID
 
 import httpx
-from fastapi import HTTPException, status
-from pydantic import BaseModel
+from fastapi import status
+from pydantic import BaseModel, ValidationError
 
 from app.config import get_settings
+
+
+class ReservaDetallePagoError(Exception):
+    pass
 
 
 class ReservaHotelPagoResponse(BaseModel):
@@ -19,6 +23,7 @@ class ReservaHabitacionPagoResponse(BaseModel):
 
 class ReservaDetallePagoResponse(BaseModel):
     id: UUID
+    viajero_id: UUID
     codigo_reserva: str
     fecha_entrada: date
     fecha_salida: date
@@ -32,10 +37,7 @@ async def obtener_reserva_detalle_para_pago(
     reserva_id: UUID,
 ) -> ReservaDetallePagoResponse:
     if not authorization_header:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No autorizado",
-        )
+        raise ReservaDetallePagoError("No autorizado")
 
     settings = get_settings()
     headers = {"Authorization": authorization_header}
@@ -48,19 +50,20 @@ async def obtener_reserva_detalle_para_pago(
             )
 
         if response.status_code == status.HTTP_404_NOT_FOUND:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Reserva no encontrada para generar el comprobante de pago",
+            raise ReservaDetallePagoError(
+                "Reserva no encontrada para generar el comprobante de pago"
             )
         if response.status_code != status.HTTP_200_OK:
-            raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                detail="No fue posible obtener el detalle de la reserva para el comprobante de pago",
+            raise ReservaDetallePagoError(
+                "No fue posible obtener el detalle de la reserva para el comprobante de pago"
             )
 
         return ReservaDetallePagoResponse(**response.json())
     except httpx.RequestError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="No fue posible consultar el servicio de reservas",
+        raise ReservaDetallePagoError(
+            "No fue posible consultar el servicio de reservas"
+        ) from exc
+    except ValidationError as exc:
+        raise ReservaDetallePagoError(
+            "Respuesta inválida al consultar el detalle de la reserva"
         ) from exc

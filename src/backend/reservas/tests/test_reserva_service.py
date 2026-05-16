@@ -266,6 +266,21 @@ def test_enviar_correo_estado_reserva_no_propagates_delivery_errors():
         )
 
 
+def test_enviar_correo_estado_reserva_skips_when_hotel_name_missing(caplog):
+    reserva = _reserva_modificable(estado="cancelada")
+
+    with patch("app.services.reserva_service.send_booking_email") as mock_send:
+        enviar_correo_estado_reserva(
+            event=BookingEmailEvent.cancelled,
+            reserva=reserva,
+            recipient_email="alice@example.com",
+            hotel_name=None,
+        )
+
+    mock_send.assert_not_called()
+    assert "Omitiendo correo de reserva" in caplog.text
+
+
 @pytest.mark.asyncio
 async def test_modificar_reserva_service_success(mock_db):
     reserva = _reserva_modificable()
