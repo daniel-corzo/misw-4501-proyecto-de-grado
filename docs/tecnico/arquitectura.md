@@ -75,10 +75,11 @@ En desarrollo local, nginx en el puerto `8080` replica este comportamiento.
 
 ### Comunicación entre servicios
 
-Los servicios **no** se llaman entre sí directamente. La comunicación asíncrona se hace vía SQS:
+Aunque el diseño busca desacoplamiento, actualmente sí existen llamadas síncronas entre microservicios:
 
-- `reservas` publica eventos en la cola al crear/confirmar/cancelar una reserva.
-- `notificaciones` consume esa cola y envía alertas al usuario.
+- `reservas` consulta a `hoteles` vía HTTP (`/hoteles/habitaciones` y `/hoteles/habitaciones/resumen`) para validar y enriquecer la información de habitaciones.
+
+Adicionalmente, la arquitectura contempla comunicación asíncrona vía SQS para eventos de reservas y notificaciones.
 
 ### Caché
 

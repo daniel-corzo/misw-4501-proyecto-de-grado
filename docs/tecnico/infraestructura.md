@@ -2,7 +2,7 @@
 
 ## Visión general
 
-TravelHub corre completamente en AWS sobre la región `us-east-1`. La infraestructura se gestiona con Terraform y los despliegues se automatizan con CodePipeline + CodeBuild + CodeDeploy.
+TravelHub corre completamente en AWS sobre la región `us-east-1`. La infraestructura se gestiona con Terraform. En CI/CD, frontend usa CodePipeline/CodeBuild y backend usa GitHub Actions para build/push y disparar despliegues Blue/Green con CodeDeploy.
 
 ## Componentes principales
 
@@ -51,12 +51,10 @@ Hay 5 servicios ECS (el servicio `pagos` comparte despliegue con `reservas` en l
 
 ### Pipelines
 
-Hay pipelines de CodePipeline independientes:
+Hay dos flujos de CI/CD:
 
-- **1 pipeline** para el frontend (Angular)
-- **5 pipelines** para los microservicios backend (uno por servicio)
-
-Cada pipeline tiene las fases: `Source → Build → Deploy`.
+- **Frontend**: 1 pipeline de CodePipeline (con CodeBuild) para compilar Angular, publicar en S3 e invalidar CloudFront.
+- **Backend**: workflow de GitHub Actions (`backend-build.yml`) con matriz de servicios que compila imágenes, publica en ECR y crea despliegues en CodeDeploy.
 
 ### Frontend pipeline
 
@@ -64,10 +62,10 @@ Cada pipeline tiene las fases: `Source → Build → Deploy`.
 GitHub (main) → CodePipeline → CodeBuild (ng build) → S3 sync → CloudFront invalidation
 ```
 
-### Backend pipeline (por microservicio)
+### Backend workflow (por microservicio)
 
 ```
-GitHub (main) → CodePipeline → CodeBuild (docker build + ECR push) → CodeDeploy (Blue/Green en ECS)
+GitHub (main) → GitHub Actions (docker build + ECR push + nueva task definition ECS) → CodeDeploy (Blue/Green en ECS)
 ```
 
 ### Blue/Green deployment

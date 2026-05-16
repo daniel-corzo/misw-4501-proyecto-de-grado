@@ -60,9 +60,9 @@ El flujo es el mismo que en la web:
 ## Funciones exclusivas de la app móvil
 
 - **Acceso rápido al QR de check-in** — disponible offline una vez que fue cargado.
-- **Notificaciones push** — recibe alertas en tiempo real cuando el hotel confirme o rechace tu reserva (si las notificaciones están habilitadas en tu iPhone).
+- **Notificaciones locales del dispositivo** — la app puede mostrar alertas locales cuando detecta cambios de estado en tus reservas (si las notificaciones están habilitadas en tu iPhone).
 
-Para activar las notificaciones push:
+Para activar estas notificaciones:
 1. Ve a **Configuración** de tu iPhone.
 2. Busca **TravelHub**.
 3. Activa **Notificaciones**.
