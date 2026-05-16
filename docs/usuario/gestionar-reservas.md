@@ -35,14 +35,7 @@ Puedes filtrar tu listado por:
    - Fechas de entrada y salida
    - Número de huéspedes
    - Estado de la reserva
-   - Información del pago (últimos 4 dígitos de la tarjeta usada)
-   - **Código QR** de check-in (solo en reservas confirmadas)
-
-### Código QR de check-in
-
-El QR aparece en el detalle de tu reserva una vez que el hotel la confirma. Muéstralo en recepción al llegar al hotel.
-
-Puedes encontrarlo en cualquier momento en el detalle de la reserva desde la app o la web.
+   - Resumen de precio (noches, impuestos, total)
 
 ---
 
@@ -53,8 +46,6 @@ Puedes encontrarlo en cualquier momento en el detalle de la reserva desde la app
 3. Confirma la cancelación en el diálogo que aparece.
 
 La reserva pasará al estado **Cancelada** y recibirás una notificación de confirmación.
-
-> Verifica la política de cancelación del hotel antes de cancelar, ya que puede haber condiciones según el tiempo de antelación.
 
 ---
 
@@ -73,17 +64,3 @@ Si tienes una cuenta de tipo **Socio hotelero**:
 
 Puedes filtrar las reservas de tu hotel por estado (pendientes, confirmadas, canceladas, completadas) para gestionar tu ocupación fácilmente.
 
----
-
-## Notificaciones
-
-TravelHub te notifica automáticamente en estos momentos:
-
-| Evento | Notificación |
-|---|---|
-| Haces una reserva | "Tu reserva está pendiente de confirmación" |
-| El hotel confirma | "Tu reserva ha sido confirmada" |
-| El hotel rechaza | "El hotel no pudo confirmar tu reserva" |
-| Cancelas una reserva | "Tu reserva ha sido cancelada" |
-
-Las notificaciones aparecen dentro de la plataforma (web y app).

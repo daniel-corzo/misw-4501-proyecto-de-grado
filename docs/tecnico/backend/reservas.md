@@ -63,11 +63,6 @@ Al llamar `GET /api/reservas/` se puede filtrar por:
 - `fecha_salida` debe ser posterior a `fecha_entrada` (validado con Pydantic).
 - `pago_id` es opcional en el momento de crear; el pago puede procesarse antes o después.
 
-## Eventos SQS
-
-Al crear, confirmar o cancelar una reserva, este servicio publica un evento en la cola SQS `travelhub-queue`. El microservicio `notificaciones` consume esa cola y envía la alerta correspondiente al usuario.
-
 ## Dependencias
 
 - PostgreSQL: persistencia de reservas
-- SQS: publicación de eventos hacia `notificaciones`

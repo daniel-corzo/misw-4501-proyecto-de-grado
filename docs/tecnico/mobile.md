@@ -41,7 +41,7 @@ View (SwiftUI) ←→ ViewModel (@Observable + @State en la vista) → Service (
 
 ## Autenticación
 
-La app guarda los tokens JWT en **Keychain** (no en UserDefaults) para seguridad. El Service layer adjunta el `Authorization: Bearer <token>` en cada petición autenticada. Cuando el access_token expira, el Service llama al endpoint de refresh y reintenta la petición original.
+La app guarda los tokens JWT en **Keychain** (no en UserDefaults) para seguridad. El Service layer adjunta el `Authorization: Bearer <token>` en cada petición autenticada. Cuando el access_token expira, el usuario debe volver a iniciar sesión.
 
 ## Flujos principales
 
@@ -56,7 +56,7 @@ Pantalla de búsqueda
   → Selección de habitación
   → Formulario de reserva
   → Pantalla de pago (cifra tarjeta con RSA-OAEP)
-  → Confirmación con código QR
+  → Confirmación, redirige a pestaña Reservas
 ```
 
 ### Gestión de reservas
@@ -64,13 +64,8 @@ Pantalla de búsqueda
 ```
 Mis reservas (activas / canceladas / pasadas)
   → Detalle de reserva
-  → QR de check-in
   → Cancelar reserva
 ```
-
-### Panel de hotelero (socio)
-
-Si el usuario tiene tipo de cuenta `hotel`, la app muestra el panel de partner con las reservas de su propiedad y la opción de confirmar o rechazar.
 
 ## Cifrado de pagos en el cliente
 
@@ -87,7 +82,3 @@ El proyecto tiene dos configuraciones de Xcode:
 
 Para cambiar el entorno, seleccionar el esquema correspondiente en Xcode antes de compilar.
 
-## Testing
-
-- `TravelHubTests/` — unit tests de ViewModels y Services con XCTest
-- `TravelHubUITests/` — pruebas de UI con XCUITest

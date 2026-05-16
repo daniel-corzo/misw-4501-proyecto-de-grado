@@ -24,7 +24,7 @@ El build de Angular (`ng build --configuration production`) se sube a S3 y Cloud
 | Target Groups | Blue y Green por cada microservicio (para Blue/Green deployments) |
 | ECR | Registro Docker privado, un repositorio por microservicio |
 
-Hay 5 servicios ECS (el servicio `pagos` comparte despliegue con `reservas` en la configuración actual). Cada tarea Fargate corre la imagen Docker del microservicio correspondiente.
+Hay 6 servicios ECS, uno por microservicio: `usuarios`, `busquedas`, `hoteles`, `reservas`, `notificaciones` y `pagos`. Cada tarea Fargate corre la imagen Docker del microservicio correspondiente.
 
 ### Red (VPC)
 
@@ -40,12 +40,6 @@ Hay 5 servicios ECS (el servicio `pagos` comparte despliegue con `reservas` en l
 | RDS Aurora PostgreSQL 15 | `db.t3.micro`, Multi-AZ |
 | ElastiCache Redis | Para caché de búsquedas |
 | Secrets Manager | JWT keys, RSA keys, DB URL |
-
-### Mensajería
-
-| Componente | Descripción |
-|---|---|
-| SQS Standard Queue | `travelhub-queue` — eventos de reservas hacia notificaciones |
 
 ## CI/CD
 
@@ -103,11 +97,8 @@ Los scripts aplican/destruyen los stacks en el orden correcto de dependencia (pr
 
 | Componente | Tipo | Costo aprox. (MVP) |
 |---|---|---|
-| ECS Fargate | 5 servicios, tamaño mínimo | ~$20-40/mes |
+| ECS Fargate | 6 servicios, tamaño mínimo | ~$20-40/mes |
 | RDS Aurora | db.t3.micro | ~$30/mes |
 | ALB | 1 load balancer | ~$20/mes |
 | CloudFront + S3 | Tráfico bajo | ~$5/mes |
-| ECR | 5 repositorios | ~$1/mes |
-| SQS | Volumen bajo | < $1/mes |
-
-> Costos reales dependen del tráfico y configuración final.
+| ECR | 6 repositorios | ~$1/mes |

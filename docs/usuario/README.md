@@ -22,7 +22,3 @@ Bienvenido a TravelHub, la plataforma para encontrar y reservar alojamiento en C
 ## ¿Eres socio hotelero?
 
 Si tienes una propiedad hotelera y quieres listarla en TravelHub, consulta la sección **Panel de hotelero** dentro de cada guía — encontrarás instrucciones específicas para gestionar tu propiedad y las reservas de tus huéspedes.
-
-## Soporte
-
-Si tienes preguntas o problemas, contacta a nuestro equipo a través de los canales de soporte disponibles en la plataforma.

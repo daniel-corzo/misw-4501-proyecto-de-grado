@@ -50,7 +50,6 @@ PAGO_RSA_PRIVATE_KEY_PEM="-----BEGIN RSA PRIVATE KEY-----
 ...contenido...
 -----END RSA PRIVATE KEY-----"
 
-# AWS / LocalStack (simulado en local)
 AWS_REGION=us-east-1
 REDIS_URL=redis://redis:6379
 SQS_ENDPOINT=http://localstack:4566
@@ -69,7 +68,7 @@ Esto levanta:
 - Los 6 microservicios FastAPI
 - PostgreSQL
 - Redis
-- LocalStack (emulación de SQS y otros servicios AWS)
+- LocalStack
 - nginx como API gateway en el puerto 8080
 
 ### Verificar que todo está corriendo
@@ -137,10 +136,6 @@ docker-compose down -v
 # Ejecutar tests de un microservicio
 docker-compose exec usuarios pytest
 
-# Ver el estado de la cola SQS en LocalStack
-aws --endpoint-url=http://localhost:4566 sqs get-queue-attributes \
-  --queue-url http://localstack:4566/000000000000/travelhub-queue \
-  --attribute-names All
 ```
 
 ## Solución de problemas comunes
@@ -150,5 +145,4 @@ aws --endpoint-url=http://localhost:4566 sqs get-queue-attributes \
 | `JWT decode error` | Claves JWT mal formateadas en `.env` | Verificar que los saltos de línea del PEM están correctos |
 | `Pago RSA error` | Clave de pagos no configurada | Revisar `PAGO_RSA_PRIVATE_KEY_PEM` en `.env` |
 | Servicio no inicia | Puerto ya en uso | `lsof -i :<puerto>` y matar el proceso |
-| SQS no disponible | LocalStack no levantó | `docker-compose restart localstack` |
 | Frontend no conecta | CORS o URL incorrecta | Verificar `environment.ts` en el frontend |

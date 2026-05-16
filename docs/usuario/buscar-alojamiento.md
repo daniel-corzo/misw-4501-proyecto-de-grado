@@ -29,8 +29,6 @@ Los resultados muestran todos los hoteles disponibles para tu búsqueda:
 - **Habitaciones disponibles** para tus fechas
 - Imagen representativa
 
-Los hoteles sin disponibilidad para las fechas seleccionadas no aparecen en los resultados.
-
 ---
 
 ## Ver el detalle de un hotel
@@ -59,21 +57,4 @@ Esto te llevará al flujo de reserva. Consulta [Hacer una reserva](hacer-reserva
 
 ---
 
-## Países disponibles
 
-Puedes buscar alojamiento en:
-
-- Colombia
-- Perú
-- Ecuador
-- México
-- Chile
-- Argentina
-
----
-
-## Consejos
-
-- Busca con fechas flexibles si el destino no tiene disponibilidad en las fechas exactas que necesitas.
-- El precio mostrado es por noche; el total se calcula en el paso de reserva según el número de noches.
-- La disponibilidad se actualiza en tiempo real — si ves una habitación disponible, está libre para esas fechas.

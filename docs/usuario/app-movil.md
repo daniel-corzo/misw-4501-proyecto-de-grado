@@ -7,7 +7,7 @@
 
 ## Instalación
 
-La app está disponible para instalación directa desde Xcode (entorno de desarrollo) o mediante distribución interna. Consulta con el equipo de TravelHub para obtener acceso a la versión de distribución.
+La app está disponible para instalación directa desde Xcode (entorno de desarrollo) o mediante distribución interna.
 
 ---
 
@@ -36,15 +36,13 @@ La app tiene una barra de navegación en la parte inferior con las secciones pri
 
 ## Buscar y reservar desde la app
 
-El flujo es el mismo que en la web:
-
-1. En **Inicio**, ingresa ciudad, fechas y número de huéspedes.
-2. Toca **Buscar** para ver los hoteles disponibles.
-3. Selecciona un hotel para ver su detalle y habitaciones.
-4. Toca **Reservar** en la habitación que prefieras.
-5. Confirma los datos y continúa al pago.
+1. En la pestaña **Explorar**, navega o busca un hotel por nombre o ciudad.
+2. Toca un hotel para ver su detalle: descripción, amenidades y habitaciones.
+3. Toca **Reservar ahora**.
+4. En el formulario de reserva selecciona las fechas, el número de huéspedes y la habitación.
+5. Toca **Crear reserva** para continuar al pago.
 6. Ingresa los datos de tu tarjeta — se cifran en el dispositivo antes de enviarse.
-7. Guarda el código QR de confirmación.
+7. Al completar el pago, la app te redirige a la pestaña **Reservas** con tu nueva reserva.
 
 ---
 
@@ -59,23 +57,12 @@ El flujo es el mismo que en la web:
 
 ## Funciones exclusivas de la app móvil
 
-- **Acceso rápido al QR de check-in** — disponible offline una vez que fue cargado.
-- **Notificaciones locales del dispositivo** — la app puede mostrar alertas locales cuando detecta cambios de estado en tus reservas (si las notificaciones están habilitadas en tu iPhone).
+- **Notificaciones locales** — la app revisa el estado de tus reservas en segundo plano y te alerta cuando el hotel confirma o rechaza una reserva, sin necesidad de tener la app abierta (requiere que las notificaciones estén habilitadas en tu iPhone).
 
-Para activar estas notificaciones:
+Para activar las notificaciones:
 1. Ve a **Configuración** de tu iPhone.
 2. Busca **TravelHub**.
 3. Activa **Notificaciones**.
-
----
-
-## Panel de hotelero en la app
-
-Si tu cuenta es de tipo **Socio hotelero**, la app muestra una sección adicional con:
-
-- Reservas entrantes de tu propiedad
-- Opción de confirmar o rechazar cada reserva
-- Detalle de huéspedes y fechas
 
 ---
 
@@ -85,13 +72,3 @@ Si tu cuenta es de tipo **Socio hotelero**, la app muestra una sección adiciona
 2. Desplázate hasta el final de la pantalla.
 3. Toca **Cerrar sesión** y confirma.
 
----
-
-## Problemas comunes
-
-| Problema | Solución |
-|---|---|
-| La app no carga los resultados | Verifica tu conexión a internet |
-| No recibo notificaciones | Revisa los permisos de notificación en Configuración > TravelHub |
-| Olvidé mi contraseña | Usa la opción "¿Olvidaste tu contraseña?" en la pantalla de login |
-| El pago no se procesa | Verifica los datos de la tarjeta y que esté habilitada para compras online |

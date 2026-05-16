@@ -34,13 +34,7 @@ TravelHub acepta pagos con tarjeta de crédito o débito.
    - Nombre del titular
 2. Haz clic en **Pagar**.
 
-> **Tu seguridad es nuestra prioridad.** Los datos de tu tarjeta se cifran en tu dispositivo antes de enviarse. Nunca viajan ni se almacenan en texto plano en nuestros servidores.
-
-### ¿Qué pasa si el pago falla?
-
-- Verifica que los datos de la tarjeta sean correctos (número, fecha, CVV).
-- Asegúrate de que tu tarjeta tenga fondos suficientes y esté habilitada para compras en línea.
-- Intenta de nuevo o usa otra tarjeta.
+> Los datos de tu tarjeta se cifran en tu celular o computador antes de salir. Nosotros nunca vemos el número completo.
 
 ---
 
@@ -50,7 +44,7 @@ Si el pago es exitoso, verás la pantalla de confirmación con:
 
 - **Código de reserva** (ID único)
 - Resumen de la reserva (hotel, habitación, fechas, total)
-- **Código QR** de check-in — guárdalo o tómale una captura de pantalla
+- **Código QR** de check-in
 
 También recibirás una notificación en la plataforma con el estado de tu reserva.
 
