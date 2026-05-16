@@ -596,6 +596,7 @@ async def test_get_reserva_hotel_detalle_returns_200(override_manager_client, mo
     ]
     service_response = ReservaHotelDetalleCompletoResponse(
         id=reserva_id,
+        viajero_id=OTHER_USER_ID,
         codigo_reserva="TH-ABC123",
         estado="confirmada",
         fecha_entrada=now.date(),

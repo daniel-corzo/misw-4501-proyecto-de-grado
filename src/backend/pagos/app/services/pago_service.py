@@ -19,7 +19,10 @@ from app.config import Settings
 from app.models.pago import EstadoPago, Pago
 from app.schemas.pago import PagarRequest, PayloadTarjetaInterno, PagoResponse
 from app.services.crypto_pago import DescifradoTarjetaError, descifrar_payload_rsa_base64, ultimos_cuatro_digitos
-from app.services.reserva_service import obtener_reserva_detalle_para_pago
+from app.services.reserva_service import (
+    ReservaDetallePagoError,
+    obtener_reserva_detalle_para_pago,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -117,6 +120,13 @@ async def _enviar_correo_pago_exitoso(
             authorization_header,
             body.reserva_id,
         )
+        if reserva.viajero_id != current_user.id:
+            logger.warning(
+                "La reserva %s no pertenece al usuario autenticado %s; se omite comprobante de pago",
+                reserva.id,
+                current_user.id,
+            )
+            return
         payload = BookingEmailPayload(
             event=BookingEmailEvent.payment_receipt,
             recipient_email=current_user.email,
@@ -135,6 +145,12 @@ async def _enviar_correo_pago_exitoso(
             total_amount=pago.monto,
         )
         await asyncio.to_thread(send_booking_email, payload, settings)
+    except ReservaDetallePagoError:
+        logger.warning(
+            "No fue posible obtener detalle valido de la reserva %s para el comprobante del pago %s",
+            body.reserva_id,
+            pago.id,
+        )
     except Exception:
         logger.exception(
             "No fue posible enviar el comprobante de pago %s para la reserva %s",

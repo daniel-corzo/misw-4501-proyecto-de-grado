@@ -158,6 +158,7 @@ async def test_post_pagar_201_successful(client_pagos, mock_db_session, rsa_keys
     reserva_id = UUID("11111111-2222-4333-8444-555555555555")
     reserva_detalle = MagicMock()
     reserva_detalle.id = reserva_id
+    reserva_detalle.viajero_id = USER_ID
     reserva_detalle.codigo_reserva = "TH-11111111"
     reserva_detalle.fecha_entrada = datetime(2026, 7, 10, tzinfo=UTC).date()
     reserva_detalle.fecha_salida = datetime(2026, 7, 15, tzinfo=UTC).date()
@@ -194,6 +195,44 @@ async def test_post_pagar_201_successful(client_pagos, mock_db_session, rsa_keys
     assert payload.hotel_name == "Hotel Aurora"
     assert payload.room_name == "Suite Premium"
     assert payload.recipient_email == "u@test.com"
+
+
+@pytest.mark.asyncio
+async def test_post_pagar_201_successful_omite_correo_si_reserva_no_pertenece_usuario(
+    client_pagos, rsa_keys
+):
+    _, pub = rsa_keys
+    inner = _synthetic_tarjeta_inner()
+    payload_b64 = _encrypt_inner_json(pub, inner)
+
+    reserva_id = UUID("11111111-2222-4333-8444-555555555555")
+    reserva_detalle = MagicMock()
+    reserva_detalle.id = reserva_id
+    reserva_detalle.viajero_id = UUID("ffffffff-eeee-dddd-cccc-bbbbbbbbbbbb")
+    reserva_detalle.codigo_reserva = "TH-11111111"
+    reserva_detalle.fecha_entrada = datetime(2026, 7, 10, tzinfo=UTC).date()
+    reserva_detalle.fecha_salida = datetime(2026, 7, 15, tzinfo=UTC).date()
+    reserva_detalle.num_huespedes = 2
+    reserva_detalle.hotel = MagicMock(nombre="Hotel Aurora")
+    reserva_detalle.habitacion = MagicMock(nombre="Suite Premium", numero="808")
+
+    with patch(
+        "app.services.pago_service.obtener_reserva_detalle_para_pago",
+        new=AsyncMock(return_value=reserva_detalle),
+    ), patch("app.services.pago_service.send_booking_email") as mock_send_email:
+        response = await client_pagos.post(
+            "/pagos/pagar",
+            json={
+                "monto": 1000,
+                "medio_de_pago": "tarjeta_credito",
+                "reserva_id": str(reserva_id),
+                "debe_fallar": False,
+                "payload_cifrado": payload_b64,
+            },
+        )
+
+    assert response.status_code == 201, response.text
+    mock_send_email.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -300,4 +339,3 @@ async def test_get_pago_404(client_pagos, mock_db_session):
     assert response.status_code == 404
     body = response.json()
     assert body.get("error") == "not_found"
-
