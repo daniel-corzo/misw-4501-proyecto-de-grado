@@ -1,9 +1,20 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, OnDestroy, DestroyRef, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, DestroyRef, inject, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subject, switchMap, EMPTY, catchError } from 'rxjs';
+import { generateRevenuePdf } from './generate-revenue-pdf';
+import {
+  Chart,
+  BarController,
+  BarElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+} from 'chart.js';
+
+Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip);
 
 import {
   BookingService,
@@ -11,6 +22,7 @@ import {
   HotelBookingResponse,
   HotelReservationsFilters,
   PaymentStatus,
+  ReporteIngresosResponse,
 } from '../../../core/services/booking.service';
 import { ReservationDetailModalComponent } from '../components/reservation-detail-modal/reservation-detail-modal.component';
 import type { HabitacionDetalle } from '../../../core/services/hotel.service';
@@ -32,7 +44,8 @@ interface LoadReservationsParams {
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
-export class PartnerDashboardComponent implements OnInit, OnDestroy {
+export class PartnerDashboardComponent implements OnInit, OnDestroy, AfterViewInit {
+  @ViewChild('revenueChart') revenueChartRef!: ElementRef<HTMLCanvasElement>;
   reservations: HotelBookingResponse[] = [];
   habitaciones: HabitacionDetalle[] = [];
   totalReservations = 0;
@@ -44,6 +57,10 @@ export class PartnerDashboardComponent implements OnInit, OnDestroy {
   selectedReservation: HotelBookingResponse | null = null;
   actionReservationId: string | null = null;
   actionType: ReservationAction | null = null;
+
+  isDownloadingReport = false;
+  revenueReport: ReporteIngresosResponse | null = null;
+  private revenueChartInstance: Chart | null = null;
 
   // Filter state
   searchGuest = '';
@@ -92,14 +109,35 @@ export class PartnerDashboardComponent implements OnInit, OnDestroy {
       });
   }
 
+  get currentMonthRevenue(): number {
+    if (!this.revenueReport) return 0;
+    const now = new Date();
+    const entry = this.revenueReport.ingresos_por_mes.find(
+      (m) => m.anio === now.getFullYear() && m.mes === now.getMonth() + 1
+    );
+    return entry?.ingresos_totales ?? 0;
+  }
+
   ngOnInit(): void {
     this.loadReservations();
+    this.loadRevenueReport();
+
+    this.transloco.langChanges$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.renderRevenueChart());
+  }
+
+  ngAfterViewInit(): void {
+    if (this.revenueReport) {
+      this.renderRevenueChart();
+    }
   }
 
   ngOnDestroy(): void {
     if (this.searchDebounceTimer) {
       clearTimeout(this.searchDebounceTimer);
     }
+    this.revenueChartInstance?.destroy();
   }
 
   onSearchGuestChange(): void {
@@ -390,6 +428,122 @@ export class PartnerDashboardComponent implements OnInit, OnDestroy {
 
   getReservationStatusClass(status: BookingStatus): string {
     return `is-${status}`;
+  }
+
+  private loadRevenueReport(): void {
+    this.bookingService.getHotelRevenueReport().subscribe({
+      next: (data) => {
+        this.revenueReport = data;
+        this.renderRevenueChart();
+      },
+      error: () => {
+        // Degrade gracefully — chart stays empty, total shows $0
+      },
+    });
+  }
+
+  private renderRevenueChart(): void {
+    if (!this.revenueChartRef?.nativeElement) {
+      return;
+    }
+
+    const lang = this.transloco.getActiveLang();
+    const isEs = lang === 'es';
+    const monthNames = isEs
+      ? ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
+      : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1; // 1-based
+
+    // Build a lookup from existing data: key = "year-month"
+    const dataByMonth = new Map<string, number>();
+    for (const entry of (this.revenueReport?.ingresos_por_mes ?? [])) {
+      dataByMonth.set(`${entry.anio}-${entry.mes}`, entry.ingresos_totales);
+    }
+
+    // All 12 months of the current year, up to today
+    const labels: string[] = [];
+    const values: number[] = [];
+    for (let m = 1; m <= 12; m++) {
+      labels.push(monthNames[m - 1]);
+      const amount = dataByMonth.get(`${currentYear}-${m}`) ?? 0;
+      values.push(amount);
+    }
+
+    this.revenueChartInstance?.destroy();
+    this.revenueChartInstance = new Chart(this.revenueChartRef.nativeElement, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            data: values,
+            backgroundColor: (ctx) => {
+              const isCurrent = ctx.dataIndex === currentMonth - 1;
+              return isCurrent ? 'rgb(30, 80, 180)' : 'rgba(30, 80, 180, 0.25)';
+            },
+            borderRadius: 3,
+            borderSkipped: false,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 600 },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const val = ctx.parsed.y as number;
+                return ' ' + this.formatAmount(val);
+              },
+              title: (items) => items[0].label,
+            },
+          },
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            border: { display: false },
+            ticks: {
+              font: { size: 9 },
+              color: '#9ca3af',
+              maxRotation: 0,
+            },
+          },
+          y: {
+            display: false,
+            beginAtZero: true,
+          },
+        },
+      },
+    });
+  }
+
+  downloadReport(): void {
+    if (this.isDownloadingReport) {
+      return;
+    }
+    this.isDownloadingReport = true;
+    this.bookingService.getHotelRevenueReport().subscribe({
+      next: (data) => {
+        this.generatePdf(data);
+        this.isDownloadingReport = false;
+      },
+      error: () => {
+        this.toast.danger(
+          this.transloco.translate('partner.dashboard.stats.downloadError')
+        );
+        this.isDownloadingReport = false;
+      },
+    });
+  }
+
+  private generatePdf(data: ReporteIngresosResponse): void {
+    generateRevenuePdf(data, this.transloco.getActiveLang());
   }
 
   private loadReservations(isRefresh = false): void {

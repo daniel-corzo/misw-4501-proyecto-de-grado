@@ -25,6 +25,7 @@ from app.services.reserva_service import (
     confirmar_reserva_service,
     crear_reserva_service,
     eliminar_reserva_service,
+    generar_reporte_ingresos_service,
     listar_reservas_usuario_service,
     listar_reservas_hotel_service,
     modificar_reserva_service,
@@ -1341,3 +1342,240 @@ async def test_eliminar_reserva_service_409_active_reservation(mock_db, estado):
     assert "pendientes o canceladas" in exc.value.detail
     mock_db.delete.assert_not_called()
     mock_db.commit.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# generar_reporte_ingresos_service
+# ---------------------------------------------------------------------------
+
+def _pago_ns(pago_id, estado: str, monto: int, paid_at: datetime):
+    return SimpleNamespace(
+        id=pago_id,
+        estado=estado,
+        monto=monto,
+        medio_de_pago="credit_card",
+        created_at=paid_at,
+        tarjeta_ultimos_4="1234",
+    )
+
+
+def _detalle_ns(nombre_hotel: str):
+    return SimpleNamespace(
+        nombre_hotel=nombre_hotel,
+        nombre_habitacion="Suite",
+        imagenes_hotel=[],
+        hotel_id=uuid.uuid4(),
+        direccion_hotel=None,
+        ciudad_hotel=None,
+        pais_hotel=None,
+        estrellas_hotel=4,
+        ranking_hotel=4.5,
+        contacto_celular_hotel=None,
+        contacto_email_hotel=None,
+        check_in_hotel=None,
+        check_out_hotel=None,
+        amenidades_hotel=[],
+        capacidad_habitacion=2,
+        numero_habitacion="101",
+        descripcion_habitacion=None,
+        imagenes_habitacion=[],
+        monto_habitacion=200,
+        impuestos_habitacion=20,
+    )
+
+
+def _scalars_result(items):
+    r = MagicMock()
+    r.scalars.return_value.all.return_value = items
+    return r
+
+
+@pytest.mark.asyncio
+async def test_generar_reporte_ingresos_sin_habitaciones(mock_db):
+    """Returns an empty report when the hotel has no rooms."""
+    with patch(
+        "app.services.reserva_service.obtener_habitaciones_hotel",
+        new=AsyncMock(return_value=[]),
+    ):
+        result = await generar_reporte_ingresos_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+        )
+
+    assert result.ingresos_por_mes == []
+    assert result.total_general == 0
+    assert result.total_pagos == 0
+    assert result.nombre_hotel is None
+
+
+@pytest.mark.asyncio
+async def test_generar_reporte_ingresos_sin_pagos(mock_db):
+    """Returns an empty report when no reservations have payments."""
+    mock_db.execute = AsyncMock(return_value=_scalars_result([]))
+    with patch(
+        "app.services.reserva_service.obtener_habitaciones_hotel",
+        new=AsyncMock(return_value=_make_habitaciones()),
+    ), patch(
+        "app.services.reserva_service.obtener_pagos_por_ids",
+        new=AsyncMock(return_value={}),
+    ), patch(
+        "app.services.reserva_service.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value={HAB_ID: _detalle_ns("Hotel Test")}),
+    ):
+        result = await generar_reporte_ingresos_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+        )
+
+    assert result.ingresos_por_mes == []
+    assert result.total_general == 0
+    assert result.total_pagos == 0
+    assert result.nombre_hotel == "Hotel Test"
+
+
+@pytest.mark.asyncio
+async def test_generar_reporte_ingresos_happy_path(mock_db):
+    """Groups successful payments by month and sums amounts correctly."""
+    pago1_id = uuid.uuid4()
+    pago2_id = uuid.uuid4()
+    pago3_id = uuid.uuid4()
+
+    reserva1 = _build_reserva("confirmada")
+    reserva1.pago_id = pago1_id
+
+    reserva2 = _build_reserva("confirmada")
+    reserva2.pago_id = pago2_id
+
+    reserva3 = _build_reserva("confirmada")
+    reserva3.pago_id = pago3_id
+
+    jan = datetime(2026, 1, 15, tzinfo=UTC)
+    feb = datetime(2026, 2, 10, tzinfo=UTC)
+
+    pagos = {
+        pago1_id: _pago_ns(pago1_id, "successful", 300, jan),
+        pago2_id: _pago_ns(pago2_id, "successful", 200, jan),
+        pago3_id: _pago_ns(pago3_id, "successful", 500, feb),
+    }
+
+    mock_db.execute = AsyncMock(
+        return_value=_scalars_result([reserva1, reserva2, reserva3])
+    )
+
+    with patch(
+        "app.services.reserva_service.obtener_habitaciones_hotel",
+        new=AsyncMock(return_value=_make_habitaciones()),
+    ), patch(
+        "app.services.reserva_service.obtener_pagos_por_ids",
+        new=AsyncMock(return_value=pagos),
+    ), patch(
+        "app.services.reserva_service.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value={HAB_ID: _detalle_ns("Hotel Grand")}),
+    ):
+        result = await generar_reporte_ingresos_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+        )
+
+    assert result.nombre_hotel == "Hotel Grand"
+    assert len(result.ingresos_por_mes) == 2
+
+    enero = result.ingresos_por_mes[0]
+    assert enero.anio == 2026
+    assert enero.mes == 1
+    assert enero.total_pagos == 2
+    assert enero.ingresos_totales == 500
+
+    febrero = result.ingresos_por_mes[1]
+    assert febrero.anio == 2026
+    assert febrero.mes == 2
+    assert febrero.total_pagos == 1
+    assert febrero.ingresos_totales == 500
+
+    assert result.total_pagos == 3
+    assert result.total_general == 1000
+
+
+@pytest.mark.asyncio
+async def test_generar_reporte_ingresos_excluye_pagos_fallidos(mock_db):
+    """Failed payments are excluded from the income totals."""
+    pago_ok_id = uuid.uuid4()
+    pago_fail_id = uuid.uuid4()
+
+    reserva1 = _build_reserva("confirmada")
+    reserva1.pago_id = pago_ok_id
+
+    reserva2 = _build_reserva("confirmada")
+    reserva2.pago_id = pago_fail_id
+
+    paid_at = datetime(2026, 3, 5, tzinfo=UTC)
+    pagos = {
+        pago_ok_id: _pago_ns(pago_ok_id, "successful", 400, paid_at),
+        pago_fail_id: _pago_ns(pago_fail_id, "failed", 400, paid_at),
+    }
+
+    mock_db.execute = AsyncMock(
+        return_value=_scalars_result([reserva1, reserva2])
+    )
+
+    with patch(
+        "app.services.reserva_service.obtener_habitaciones_hotel",
+        new=AsyncMock(return_value=_make_habitaciones()),
+    ), patch(
+        "app.services.reserva_service.obtener_pagos_por_ids",
+        new=AsyncMock(return_value=pagos),
+    ), patch(
+        "app.services.reserva_service.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value={HAB_ID: _detalle_ns("Hotel Test")}),
+    ):
+        result = await generar_reporte_ingresos_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+        )
+
+    assert len(result.ingresos_por_mes) == 1
+    assert result.ingresos_por_mes[0].total_pagos == 1
+    assert result.ingresos_por_mes[0].ingresos_totales == 400
+    assert result.total_pagos == 1
+    assert result.total_general == 400
+
+
+@pytest.mark.asyncio
+async def test_generar_reporte_ingresos_orden_cronologico(mock_db):
+    """Months are sorted chronologically oldest-first."""
+    pago_mar_id = uuid.uuid4()
+    pago_ene_id = uuid.uuid4()
+
+    reserva1 = _build_reserva("confirmada")
+    reserva1.pago_id = pago_mar_id
+
+    reserva2 = _build_reserva("confirmada")
+    reserva2.pago_id = pago_ene_id
+
+    pagos = {
+        pago_mar_id: _pago_ns(pago_mar_id, "successful", 100, datetime(2026, 3, 1, tzinfo=UTC)),
+        pago_ene_id: _pago_ns(pago_ene_id, "successful", 100, datetime(2026, 1, 1, tzinfo=UTC)),
+    }
+
+    mock_db.execute = AsyncMock(
+        return_value=_scalars_result([reserva1, reserva2])
+    )
+
+    with patch(
+        "app.services.reserva_service.obtener_habitaciones_hotel",
+        new=AsyncMock(return_value=_make_habitaciones()),
+    ), patch(
+        "app.services.reserva_service.obtener_pagos_por_ids",
+        new=AsyncMock(return_value=pagos),
+    ), patch(
+        "app.services.reserva_service.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value={HAB_ID: _detalle_ns("Hotel Test")}),
+    ):
+        result = await generar_reporte_ingresos_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+        )
+
+    assert len(result.ingresos_por_mes) == 2
+    assert result.ingresos_por_mes[0].mes == 1
+    assert result.ingresos_por_mes[1].mes == 3

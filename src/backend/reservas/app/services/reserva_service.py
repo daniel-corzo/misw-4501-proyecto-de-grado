@@ -16,9 +16,11 @@ from app.schemas.reserva import (
     EstadoPagoReserva,
     HabitacionHotelResponse,
     HabitacionReservaDetalleResponse,
+    IngresoMensualResponse,
     ListaReservasHotelResponse,
     ModificarReservaRequest,
     PagoReservaDetalleResponse,
+    ReporteIngresosResponse,
     ReservaDetalleResponse,
     ReservaHabitacionDetalleCompletoResponse,
     ReservaHotelDetalleCompletoResponse,
@@ -769,6 +771,79 @@ async def eliminar_reserva_service(
 
     await db.delete(reserva)
     await db.commit()
+
+
+async def generar_reporte_ingresos_service(
+    db: AsyncSession,
+    authorization_header: str | None,
+) -> ReporteIngresosResponse:
+    habitaciones = await obtener_habitaciones_hotel(authorization_header)
+    habitacion_ids = [habitacion.id for habitacion in habitaciones]
+
+    if not habitacion_ids:
+        return ReporteIngresosResponse(
+            nombre_hotel=None,
+            ingresos_por_mes=[],
+            total_general=0,
+            total_pagos=0,
+        )
+
+    stmt = (
+        select(Reserva)
+        .where(
+            and_(
+                Reserva.habitaciones_ids.overlap(habitacion_ids),
+                Reserva.pago_id.isnot(None),
+            )
+        )
+    )
+    result = await db.execute(stmt)
+    reservas_db = list(result.scalars().all())
+
+    pago_ids = list({reserva.pago_id for reserva in reservas_db if reserva.pago_id is not None})
+    pagos_por_id = await obtener_pagos_por_ids(authorization_header, pago_ids)
+
+    nombre_hotel: str | None = None
+    if habitacion_ids:
+        detalles = await obtener_detalles_habitaciones_por_ids(authorization_header, [habitacion_ids[0]])
+        detalle = detalles.get(habitacion_ids[0])
+        if detalle:
+            nombre_hotel = detalle.nombre_hotel
+
+    ingresos_por_mes: dict[tuple[int, int], dict] = {}
+    for reserva in reservas_db:
+        if reserva.pago_id is None:
+            continue
+        pago = pagos_por_id.get(reserva.pago_id)
+        if pago is None or pago.estado != "successful":
+            continue
+        if pago.created_at is None or pago.monto is None:
+            continue
+        key = (pago.created_at.year, pago.created_at.month)
+        if key not in ingresos_por_mes:
+            ingresos_por_mes[key] = {"total_pagos": 0, "ingresos_totales": 0}
+        ingresos_por_mes[key]["total_pagos"] += 1
+        ingresos_por_mes[key]["ingresos_totales"] += pago.monto
+
+    ingresos_lista = [
+        IngresoMensualResponse(
+            anio=anio,
+            mes=mes,
+            total_pagos=datos["total_pagos"],
+            ingresos_totales=datos["ingresos_totales"],
+        )
+        for (anio, mes), datos in sorted(ingresos_por_mes.items())
+    ]
+
+    total_general = sum(i.ingresos_totales for i in ingresos_lista)
+    total_pagos = sum(i.total_pagos for i in ingresos_lista)
+
+    return ReporteIngresosResponse(
+        nombre_hotel=nombre_hotel,
+        ingresos_por_mes=ingresos_lista,
+        total_general=total_general,
+        total_pagos=total_pagos,
+    )
 
 
 async def listar_reservas_usuario_service(

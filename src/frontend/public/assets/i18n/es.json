@@ -415,6 +415,10 @@
         "monthlyRevenue": "Ingresos mensuales",
         "occupancyRate": "Tasa de ocupación",
         "download": "Descargar",
+        "downloading": "Generando...",
+        "downloadError": "No fue posible generar el reporte. Intenta de nuevo.",
+        "reportTitle": "Reporte de Ingresos",
+        "reportGeneratedOn": "Generado el",
         "monthlyAverage": "Promedio del mes actual"
       },
       "reservations": {
