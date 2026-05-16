@@ -4,7 +4,6 @@ from datetime import UTC, date, datetime
 from typing import Optional
 
 from fastapi import APIRouter, status, Depends, Request, HTTPException, Query
-from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -380,11 +379,6 @@ async def cancelar_reserva(
                 )
             else:
                 raise
-        except ValidationError:
-            logger.exception(
-                "No fue posible preparar el correo de cancelación para la reserva %s",
-                reserva.id,
-            )
     return reserva
 
 
