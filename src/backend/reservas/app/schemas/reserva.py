@@ -205,3 +205,17 @@ class ListaReservasHotelResponse(BaseModel):
     total: int
     reservas: List[ReservaHotelResponse]
     habitaciones: List[HabitacionHotelResponse]
+
+
+class IngresoMensualResponse(BaseModel):
+    anio: int
+    mes: int
+    total_pagos: int
+    ingresos_totales: int
+
+
+class ReporteIngresosResponse(BaseModel):
+    nombre_hotel: Optional[str]
+    ingresos_por_mes: List[IngresoMensualResponse]
+    total_general: int
+    total_pagos: int

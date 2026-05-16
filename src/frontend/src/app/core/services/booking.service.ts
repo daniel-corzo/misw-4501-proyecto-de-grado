@@ -134,6 +134,20 @@ export interface HotelReservationsFilters {
   num_huespedes?: number;
 }
 
+export interface IngresoMensual {
+  anio: number;
+  mes: number;
+  total_pagos: number;
+  ingresos_totales: number;
+}
+
+export interface ReporteIngresosResponse {
+  nombre_hotel: string | null;
+  ingresos_por_mes: IngresoMensual[];
+  total_general: number;
+  total_pagos: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class BookingService {
   private readonly api = inject(ApiService);
@@ -195,5 +209,9 @@ export class BookingService {
 
   rejectHotelReservation(bookingId: string): Observable<HotelBookingResponse> {
     return this.api.patch<HotelBookingResponse>(`/reservas/${bookingId}/rechazar`, {});
+  }
+
+  getHotelRevenueReport(): Observable<ReporteIngresosResponse> {
+    return this.api.get<ReporteIngresosResponse>('/reservas/hoteles/reporte-ingresos');
   }
 }

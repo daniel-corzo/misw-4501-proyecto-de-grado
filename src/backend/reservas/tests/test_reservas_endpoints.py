@@ -13,8 +13,10 @@ from app.main import app
 from app.schemas.reserva import (
     HabitacionHotelResponse,
     HabitacionReservaDetalleResponse,
+    IngresoMensualResponse,
     ListaReservasHotelResponse,
     PagoReservaDetalleResponse,
+    ReporteIngresosResponse,
     ReservaHabitacionDetalleCompletoResponse,
     ReservaHotelDetalleCompletoResponse,
     ReservaHotelDetalleResponse,
@@ -1509,6 +1511,76 @@ async def test_delete_reserva_401_missing_authorization(mock_db_session):
     try:
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.delete(f"/reservas/{uuid.uuid4()}")
+
+        assert response.status_code == 401
+    finally:
+        app.dependency_overrides.clear()
+
+
+# ---------------------------------------------------------------------------
+# GET /reservas/hoteles/reporte-ingresos
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_reporte_ingresos_200(override_manager_client, mock_db_session):
+    """Authenticated hotel manager receives a 200 with correct response shape."""
+    reporte = ReporteIngresosResponse(
+        nombre_hotel="Hotel Grand",
+        ingresos_por_mes=[
+            IngresoMensualResponse(anio=2026, mes=1, total_pagos=3, ingresos_totales=900),
+            IngresoMensualResponse(anio=2026, mes=2, total_pagos=1, ingresos_totales=300),
+        ],
+        total_general=1200,
+        total_pagos=4,
+    )
+    mock_service = AsyncMock(return_value=reporte)
+
+    with patch("app.routers.reservas.generar_reporte_ingresos_service", new=mock_service):
+        response = await override_manager_client.get("/reservas/hoteles/reporte-ingresos")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["nombre_hotel"] == "Hotel Grand"
+    assert body["total_general"] == 1200
+    assert body["total_pagos"] == 4
+    assert len(body["ingresos_por_mes"]) == 2
+    assert body["ingresos_por_mes"][0]["anio"] == 2026
+    assert body["ingresos_por_mes"][0]["mes"] == 1
+    assert body["ingresos_por_mes"][0]["total_pagos"] == 3
+    assert body["ingresos_por_mes"][0]["ingresos_totales"] == 900
+
+
+@pytest.mark.asyncio
+async def test_reporte_ingresos_vacio_200(override_manager_client, mock_db_session):
+    """Returns 200 with empty lists when the hotel has no payment history."""
+    reporte = ReporteIngresosResponse(
+        nombre_hotel=None,
+        ingresos_por_mes=[],
+        total_general=0,
+        total_pagos=0,
+    )
+    mock_service = AsyncMock(return_value=reporte)
+
+    with patch("app.routers.reservas.generar_reporte_ingresos_service", new=mock_service):
+        response = await override_manager_client.get("/reservas/hoteles/reporte-ingresos")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ingresos_por_mes"] == []
+    assert body["total_general"] == 0
+
+
+@pytest.mark.asyncio
+async def test_reporte_ingresos_401_sin_autenticacion(mock_db_session):
+    """Unauthenticated request to reporte-ingresos returns 401."""
+    async def override_get_db():
+        yield mock_db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    try:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.get("/reservas/hoteles/reporte-ingresos")
 
         assert response.status_code == 401
     finally:

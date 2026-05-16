@@ -415,6 +415,10 @@
         "monthlyRevenue": "Monthly Revenue",
         "occupancyRate": "Occupancy Rate",
         "download": "Download",
+        "downloading": "Generating...",
+        "downloadError": "Could not generate the report. Please try again.",
+        "reportTitle": "Income Report",
+        "reportGeneratedOn": "Generated on",
         "monthlyAverage": "Current Month Average"
       },
       "reservations": {

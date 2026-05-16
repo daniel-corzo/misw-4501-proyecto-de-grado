@@ -78,31 +78,12 @@
   color: var(--color-secondary-dk);
 }
 
-.stat-chart-bars {
+.revenue-chart-container {
   position: absolute;
   right: var(--space-lg);
   bottom: var(--space-lg);
   left: var(--space-lg);
-  display: flex;
-  align-items: flex-end;
-  gap: var(--space-xs);
   height: 80px;
-}
-
-.stat-chart-bars .bar {
-  flex: 1;
-  max-width: 80px;
-  background: #dbeafe;
-  border-radius: 4px 4px 0 0;
-}
-
-.stat-chart-bars .bar-1 { height: 20%; }
-.stat-chart-bars .bar-2 { height: 35%; }
-.stat-chart-bars .bar-3 { height: 25%; }
-.stat-chart-bars .bar-4 { height: 60%; }
-.stat-chart-bars .active {
-  height: 100%;
-  background: var(--color-primary);
 }
 
 .stat-chart-wave {

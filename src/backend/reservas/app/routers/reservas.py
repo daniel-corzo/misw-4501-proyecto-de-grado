@@ -14,6 +14,7 @@ from app.schemas.reserva import (
     EstadoPagoFiltro,
     FiltroReservasUsuario,
     ModificarReservaRequest,
+    ReporteIngresosResponse,
     ReservaResponse,
     ListaReservasHotelResponse,
     ListaReservasResponse,
@@ -29,6 +30,7 @@ from app.services.reserva_service import (
     confirmar_reserva_service,
     crear_reserva_service,
     eliminar_reserva_service,
+    generar_reporte_ingresos_service,
     listar_reservas_hotel_service,
     rechazar_reserva_service,
     reserva_to_detalle_response,
@@ -146,6 +148,22 @@ async def listar_reservas_hotel(
         fecha_fin=fecha_fin,
         estado_pago=estado_pago,
         num_huespedes=num_huespedes,
+    )
+
+
+@router.get(
+    "/hoteles/reporte-ingresos",
+    response_model=ReporteIngresosResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def generar_reporte_ingresos(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    _current_user: User = Depends(RoleChecker([RoleEnum.MANAGER, RoleEnum.USER])),
+):
+    return await generar_reporte_ingresos_service(
+        db=db,
+        authorization_header=request.headers.get("Authorization"),
     )
 
 
