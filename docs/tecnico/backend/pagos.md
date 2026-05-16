@@ -8,7 +8,7 @@
 
 | Método | Ruta | Descripción | Auth requerida |
 |---|---|---|---|
-| `POST` | `/api/pagos/` | Procesar un pago con tarjeta | Sí |
+| `POST` | `/api/pagos/pagar` | Procesar un pago con tarjeta | Sí |
 | `GET` | `/api/pagos/{pago_id}` | Obtener estado de un pago | Sí |
 
 ## Flujo de pago
@@ -16,7 +16,7 @@
 ```
 1. Cliente cifra el JSON de tarjeta con RSA-OAEP (clave pública del servidor)
 2. Cliente codifica el ciphertext en Base64
-3. POST /api/pagos/ con { payload_cifrado, reserva_id }
+3. POST /api/pagos/pagar con { payload_cifrado, reserva_id }
 4. El servicio descifra con la clave privada RSA (PAGO_RSA_PRIVATE_KEY_PEM)
 5. Valida los datos de tarjeta
 6. Registra el pago con los últimos 4 dígitos (nunca el número completo)
