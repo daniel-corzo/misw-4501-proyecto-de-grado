@@ -1,54 +1,54 @@
-# TravelHub Backend
+# Backend de TravelHub
 
-This is the backend for the TravelHub application, built using FastAPI microservices.
+Este es el backend de la aplicación TravelHub, construido con microservicios FastAPI.
 
-## Access and RBAC
+## Acceso y RBAC
 
-This project uses **JWT (RS256)** for authentication and decentralized validation across microservices.
+Este proyecto usa **JWT (RS256)** para la autenticación y la validación descentralizada entre microservicios.
 
-- **`usuarios`**: Registers users (`POST /usuarios`), stores credentials and profiles, issues JWTs signed with `JWT_PRIVATE_KEY`, and exposes session endpoints on the same service.
-- **Other microservices** validate JWTs using `JWT_PUBLIC_KEY` via the `travelhub_common` library and check revocation against the `revoked_tokens` table on their configured `DB_URL` where applicable.
+- **`usuarios`**: registra usuarios (`POST /usuarios`), guarda credenciales y perfiles, emite JWT firmados con `JWT_PRIVATE_KEY` y expone los endpoints de sesión en el mismo servicio.
+- **Los demás microservicios** validan JWT con `JWT_PUBLIC_KEY` mediante la librería `travelhub_common` y verifican la revocación contra la tabla `revoked_tokens` en su `DB_URL` configurado, cuando aplica.
 
-### Generate RSA Keys (Local Development)
+### Generar claves RSA (desarrollo local)
 
-To run these services locally, you will need a self-signed RSA key pair.
+Para ejecutar estos servicios localmente, necesitas un par de claves RSA autofirmadas.
 
 ```bash
-# Generate private key
+# Generar clave privada
 openssl genrsa -out private.pem 2048
 
-# Generate public key
+# Generar clave pública
 openssl rsa -in private.pem -outform PEM -pubout -out public.pem
 ```
 
-Then configure your `.env` variables stringified:
+Luego configura tus variables `.env` serializadas como texto:
 
 ```env
 JWT_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\nMIIE...\n-----END RSA PRIVATE KEY-----"
 JWT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\nMIIB...\n-----END PUBLIC KEY-----"
 ```
 
-### Making Authenticated API Requests
+### Hacer solicitudes autenticadas a la API
 
-Register with `POST /usuarios`, then obtain an `access_token` via the login endpoint on the **usuarios** service (or through the API gateway prefix your deployment uses).
+Regístrate con `POST /usuarios` y luego obtén un `access_token` mediante el endpoint de inicio de sesión del servicio **usuarios** (o a través del prefijo del API gateway que use tu despliegue).
 
-Include the token in requests to protected routes:
+Incluye el token en las solicitudes a rutas protegidas:
 
 ```
 Authorization: Bearer <your_access_token_here>
 ```
 
-### Registration
+### Registro
 
-Sign-up is a single step: `POST /usuarios` creates the user record (credentials, role, profile fields such as traveler data) in one transaction.
+El registro es un solo paso: `POST /usuarios` crea el registro del usuario (credenciales, rol y campos de perfil como los datos del viajero) en una sola transacción.
 
-## Booking Emails
+## Correos de reserva
 
-TravelHub sends traveler-facing emails from the backend when a reservation is confirmed, cancelled, or paid successfully.
+TravelHub envía correos para el viajero desde el backend cuando una reserva se confirma, se cancela o se paga con éxito.
 
-### SMTP Configuration
+### Configuración SMTP
 
-Configure the shared backend settings with the Amazon SES SMTP credentials generated for your SES SMTP user:
+Configura los ajustes compartidos del backend con las credenciales SMTP de Amazon SES generadas para tu usuario SMTP de SES:
 
 ```env
 SMTP_HOST=email-smtp.us-east-1.amazonaws.com
@@ -62,25 +62,25 @@ SMTP_TIMEOUT_SECONDS=30
 FRONTEND_BASE_URL=https://travel-hub.online
 ```
 
-Notes:
+Notas:
 
-- Emails are sent as a best-effort side effect after the reservation or payment has already been committed.
-- If SMTP delivery fails, the reservation confirmation/cancellation or the payment itself is not rolled back.
-- Payment receipt emails are triggered when `POST /pagos/pagar` receives a `reserva_id` that can be used to fetch the reservation details shown in the email.
+- Los correos se envían como un efecto secundario de mejor esfuerzo después de que la reserva o el pago ya se hayan confirmado.
+- Si falla la entrega SMTP, ni la confirmación/cancelación de la reserva ni el pago se revierten.
+- Los correos de recibo de pago se activan cuando `POST /pagos/pagar` recibe un `reserva_id` que puede usarse para obtener los detalles de la reserva mostrados en el correo.
 
-### Email Content
+### Contenido del correo
 
-The booking emails are generated in Spanish only and include:
+Los correos de reserva se generan solo en español e incluyen:
 
-- TravelHub branding and a link to `https://travel-hub.online`
-- A large visual status icon for confirmation, cancellation, or payment receipt
-- Reservation details such as ID, hotel, room, dates, and number of guests
-- Payment details in the receipt email when the payment is successful
+- Marca de TravelHub y un enlace a `https://travel-hub.online`
+- Un ícono visual grande de estado para confirmación, cancelación o recibo de pago
+- Detalles de la reserva como ID, hotel, habitación, fechas y número de huéspedes
+- Detalles del pago en el correo de recibo cuando el pago es exitoso
 
-### Future Internationalization
+### Internacionalización futura
 
-Internationalization is intentionally deferred for this feature. When localization is added later, prefer this approach:
+La internacionalización se pospone intencionalmente para esta funcionalidad. Cuando se agregue localización más adelante, se recomienda este enfoque:
 
-1. Move all visible subject/body strings into locale-specific dictionaries or templates keyed by notification type.
-2. Keep reservation and payment payload assembly language-neutral so the same data model can feed multiple locales.
-3. Select the locale from the traveler profile or request context and render the final subject/body from that locale-specific template set.
+1. Mover todas las cadenas visibles del asunto y del cuerpo a diccionarios o plantillas específicas por idioma, organizadas por tipo de notificación.
+2. Mantener el armado de los datos de reserva y pago independiente del idioma para que el mismo modelo de datos pueda alimentar varios idiomas.
+3. Seleccionar el idioma desde el perfil del viajero o el contexto de la solicitud y renderizar el asunto y el cuerpo finales desde ese conjunto de plantillas específico.
