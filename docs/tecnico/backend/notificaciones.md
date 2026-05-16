@@ -1,5 +1,7 @@
 # Microservicio: notificaciones
 
+> **⚠️ En implementación** — Este servicio está incompleto. Los endpoints existen pero devuelven respuestas vacías o simuladas. No está integrado con el resto de los microservicios.
+
 **Puerto:** 8007  
 **Swagger:** http://localhost:8007/docs  
 **Responsabilidad:** Envío de notificaciones/alertas a los usuarios y consulta del historial.

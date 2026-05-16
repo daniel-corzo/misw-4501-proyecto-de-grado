@@ -26,6 +26,23 @@ resource "aws_cloudfront_function" "strip_api_prefix" {
   EOT
 }
 
+resource "aws_cloudfront_function" "docs_rewrite" {
+  name    = "${var.project_name}-docs-rewrite"
+  runtime = "cloudfront-js-2.0"
+  comment = "Rewrites /docs to /docs.html so S3 serves the Swagger UI page"
+  publish = true
+
+  code = <<-EOT
+    function handler(event) {
+      var request = event.request;
+      if (request.uri === '/docs') {
+        request.uri = '/docs.html';
+      }
+      return request;
+    }
+  EOT
+}
+
 resource "aws_cloudfront_distribution" "this" {
   enabled             = true
   is_ipv6_enabled     = true
@@ -51,6 +68,32 @@ resource "aws_cloudfront_distribution" "this" {
       https_port             = 443
       origin_protocol_policy = "http-only"
       origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
+  # Behavior: /docs → S3 (reescribe a /docs.html para servir el Swagger UI)
+  ordered_cache_behavior {
+    path_pattern           = "/docs"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "S3-${var.bucket_id}"
+    viewer_protocol_policy = "redirect-to-https"
+    compress               = true
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 3600
+    max_ttl     = 86400
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.docs_rewrite.arn
     }
   }
 

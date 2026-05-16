@@ -63,6 +63,18 @@ Al llamar `GET /api/reservas/` se puede filtrar por:
 - `fecha_salida` debe ser posterior a `fecha_entrada` (validado con Pydantic).
 - `pago_id` es opcional en el momento de crear; el pago puede procesarse antes o después.
 
+## Correos de estado de reserva
+
+El servicio envía correos automáticamente al viajero en estos eventos:
+
+| Evento | Disparador |
+|---|---|
+| Reserva confirmada | Hotelero llama `PATCH /confirmar` |
+| Reserva cancelada | Viajero cancela o hotelero rechaza |
+
+Los correos incluyen el resumen de la reserva (hotel, habitación, fechas, huéspedes y total). Si falla el envío SMTP, el cambio de estado ya fue persistido — solo se registra el error en los logs.
+
 ## Dependencias
 
 - PostgreSQL: persistencia de reservas
+- SMTP: envío de correos de estado (variables `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM_EMAIL`)

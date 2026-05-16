@@ -45,7 +45,19 @@ Puedes filtrar tu listado por:
 2. Haz clic en **Cancelar reserva**.
 3. Confirma la cancelación en el diálogo que aparece.
 
-La reserva pasará al estado **Cancelada** y recibirás una notificación de confirmación.
+La reserva pasará al estado **Cancelada** y recibirás un correo de confirmación.
+
+---
+
+## Correos de estado
+
+TravelHub te envía un correo automáticamente cuando:
+
+| Evento | Correo que recibes |
+|---|---|
+| Pago exitoso | Comprobante de pago con resumen de la reserva |
+| Hotel confirma tu reserva | Confirmación con los datos del hospedaje |
+| Reserva cancelada | Resumen de la reserva cancelada |
 
 ---
 

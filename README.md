@@ -5,7 +5,7 @@
 
 ## Qué es TravelHub
 
-TravelHub conecta viajeros con más de 1,200 propiedades hoteleras en **6 países**: Colombia, Perú, Ecuador, México, Chile y Argentina. La plataforma permite buscar alojamiento, reservar, pagar en moneda local y gestionar reservas desde web o móvil.
+TravelHub conecta viajeros con propiedades hoteleras. La plataforma permite buscar alojamiento, reservar, pagar en moneda local y gestionar reservas desde web o móvil.
 
 Este repositorio contiene el MVP desarrollado como proyecto de grado.
 

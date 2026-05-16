@@ -43,5 +43,5 @@ Cada microservicio instala `common` como dependencia local.
 - **Async/await** en todos los endpoints y operaciones de base de datos (SQLAlchemy async + asyncpg)
 - **Pydantic v2** para validación de request/response
 - **Dependency injection** de FastAPI para base de datos y usuario autenticado
-- **Alembic** para migraciones de base de datos
-- Documentación automática con **Swagger UI** disponible en `/docs` de cada servicio
+- Esquema de base de datos creado automáticamente al arrancar con `Base.metadata.create_all` (SQLAlchemy)
+- Documentación automática con **Swagger UI** — disponible en `http://localhost:8080/docs` (local) y en `https://www.travel-hub.online/docs` (producción)
