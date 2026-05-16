@@ -24,6 +24,7 @@ from app.services.reserva_service import (
     construir_reservas_hotel_response,
     confirmar_reserva_service,
     crear_reserva_service,
+    eliminar_reserva_service,
     listar_reservas_usuario_service,
     listar_reservas_hotel_service,
     modificar_reserva_service,
@@ -1201,3 +1202,142 @@ async def test_listar_reservas_hotel_service_enriches_habitaciones(mock_db):
 
     assert len(response.habitaciones) == 1
     assert response.habitaciones[0].nombre_habitacion == "Deluxe King Suite"
+
+
+# ---------------------------------------------------------------------------
+# modificar_reserva_service — pago_id guards
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_modificar_reserva_service_link_pago_success(mock_db):
+    """Linking pago_id on a pendiente reservation with no prior payment succeeds."""
+    pago_id = uuid.uuid4()
+    reserva = _reserva_modificable(estado="pendiente")
+    load_result = MagicMock()
+    load_result.scalar_one_or_none.return_value = reserva
+    no_conflict = MagicMock()
+    no_conflict.scalar_one_or_none.return_value = None
+    mock_db.execute = AsyncMock(side_effect=[load_result, no_conflict])
+
+    current = User(id=USER_ID, email="viajero@test.com", role=RoleEnum.USER)
+    body = ModificarReservaRequest(pago_id=pago_id)
+
+    out = await modificar_reserva_service(
+        db=mock_db,
+        reserva_id=RESERVA_ID,
+        body=body,
+        current_user=current,
+    )
+
+    assert out.pago_id == pago_id
+    assert mock_db.flush.await_count == 1
+    assert mock_db.commit.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_modificar_reserva_service_409_pago_id_on_confirmada(mock_db):
+    """Setting pago_id on a confirmada reservation raises 409."""
+    reserva = _reserva_modificable(estado="confirmada")
+    load_result = MagicMock()
+    load_result.scalar_one_or_none.return_value = reserva
+    no_conflict = MagicMock()
+    no_conflict.scalar_one_or_none.return_value = None
+    mock_db.execute = AsyncMock(side_effect=[load_result, no_conflict])
+
+    current = User(id=USER_ID, email="viajero@test.com", role=RoleEnum.USER)
+    body = ModificarReservaRequest(pago_id=uuid.uuid4())
+
+    with pytest.raises(HTTPException) as exc:
+        await modificar_reserva_service(
+            db=mock_db,
+            reserva_id=RESERVA_ID,
+            body=body,
+            current_user=current,
+        )
+
+    assert exc.value.status_code == 409
+    assert exc.value.detail == "Solo se puede asociar un pago a una reserva pendiente"
+    mock_db.commit.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_modificar_reserva_service_409_pago_id_already_linked(mock_db):
+    """Setting pago_id when a payment is already linked raises 409."""
+    existing_pago_id = uuid.uuid4()
+    reserva = _reserva_modificable(estado="pendiente")
+    reserva.pago_id = existing_pago_id
+    load_result = MagicMock()
+    load_result.scalar_one_or_none.return_value = reserva
+    no_conflict = MagicMock()
+    no_conflict.scalar_one_or_none.return_value = None
+    mock_db.execute = AsyncMock(side_effect=[load_result, no_conflict])
+
+    current = User(id=USER_ID, email="viajero@test.com", role=RoleEnum.USER)
+    body = ModificarReservaRequest(pago_id=uuid.uuid4())
+
+    with pytest.raises(HTTPException) as exc:
+        await modificar_reserva_service(
+            db=mock_db,
+            reserva_id=RESERVA_ID,
+            body=body,
+            current_user=current,
+        )
+
+    assert exc.value.status_code == 409
+    assert exc.value.detail == "La reserva ya tiene un pago asociado"
+    assert reserva.pago_id == existing_pago_id
+    mock_db.commit.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# eliminar_reserva_service
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("estado", ["pendiente", "cancelada"])
+async def test_eliminar_reserva_service_success(mock_db, estado):
+    """Deleting a pendiente or cancelada reservation owned by the user succeeds."""
+    reserva = _build_reserva(estado)
+    mock_db.execute = AsyncMock(return_value=_execute_result_with_reserva(reserva))
+    mock_db.delete = AsyncMock()
+    current = User(id=USER_ID, email="viajero@test.com", role=RoleEnum.USER)
+
+    await eliminar_reserva_service(db=mock_db, reserva_id=reserva.id, current_user=current)
+
+    mock_db.delete.assert_awaited_once_with(reserva)
+    assert mock_db.commit.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_eliminar_reserva_service_404_not_found(mock_db):
+    """Deleting a non-existent reservation raises 404."""
+    mock_db.execute = AsyncMock(return_value=_execute_result_no_conflict())
+    current = User(id=USER_ID, email="viajero@test.com", role=RoleEnum.USER)
+
+    with pytest.raises(HTTPException) as exc:
+        await eliminar_reserva_service(
+            db=mock_db, reserva_id=uuid.uuid4(), current_user=current
+        )
+
+    assert exc.value.status_code == 404
+    mock_db.commit.assert_not_called()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("estado", ["confirmada"])
+async def test_eliminar_reserva_service_409_active_reservation(mock_db, estado):
+    """Deleting a confirmed reservation raises 409."""
+    reserva = _build_reserva(estado)
+    mock_db.execute = AsyncMock(return_value=_execute_result_with_reserva(reserva))
+    mock_db.delete = AsyncMock()
+    current = User(id=USER_ID, email="viajero@test.com", role=RoleEnum.USER)
+
+    with pytest.raises(HTTPException) as exc:
+        await eliminar_reserva_service(
+            db=mock_db, reserva_id=reserva.id, current_user=current
+        )
+
+    assert exc.value.status_code == 409
+    assert "pendientes o canceladas" in exc.value.detail
+    mock_db.delete.assert_not_called()
+    mock_db.commit.assert_not_called()

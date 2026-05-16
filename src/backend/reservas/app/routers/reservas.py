@@ -28,6 +28,7 @@ from app.services.reserva_service import (
     construir_reservas_hotel_response,
     confirmar_reserva_service,
     crear_reserva_service,
+    eliminar_reserva_service,
     listar_reservas_hotel_service,
     rechazar_reserva_service,
     reserva_to_detalle_response,
@@ -280,6 +281,16 @@ async def rechazar_reserva(
     )
     reservas = await construir_reservas_hotel_response(authorization_header, [reserva])
     return reservas[0]
+
+
+@router.delete("/{reserva_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def eliminar_reserva(
+    reserva_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Elimina permanentemente una reserva pendiente o cancelada del viajero."""
+    await eliminar_reserva_service(db=db, reserva_id=reserva_id, current_user=current_user)
 
 
 @router.patch("/{reserva_id}/cancelar", response_model=ReservaResponse, status_code=status.HTTP_200_OK)

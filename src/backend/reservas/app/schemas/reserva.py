@@ -55,6 +55,7 @@ class ModificarReservaRequest(BaseModel):
     fecha_salida: Optional[date] = None
     num_huespedes: Optional[int] = Field(default=None, ge=1)
     habitacion_id: Optional[UUID] = None
+    pago_id: Optional[UUID] = None
 
     @model_validator(mode="after")
     def al_menos_un_campo(self):
@@ -64,6 +65,7 @@ class ModificarReservaRequest(BaseModel):
                 self.fecha_salida is not None,
                 self.num_huespedes is not None,
                 self.habitacion_id is not None,
+                self.pago_id is not None,
             )
         ):
             raise ValueError("Debe indicar al menos un campo a modificar")

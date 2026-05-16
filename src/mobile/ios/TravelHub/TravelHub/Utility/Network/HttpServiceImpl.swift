@@ -129,4 +129,35 @@ final class HttpServiceImpl: HttpService {
 
         return try await self.makeRequest(request)
     }
+
+    func delete(url: URL, token: String) async throws {
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse else {
+                throw HttpError.unknown
+            }
+            switch http.statusCode {
+            case 200...299:
+                return
+            case 401:
+                throw HttpError.invalidCredentials
+            default:
+                if let message = try? JSONDecoder().decode(
+                    [String: String].self, from: data
+                )["detail"] {
+                    throw HttpError.server(message)
+                } else {
+                    throw HttpError.server("Error del servidor (\(http.statusCode)).")
+                }
+            }
+        } catch let error as HttpError {
+            throw error
+        } catch {
+            throw HttpError.unknown
+        }
+    }
 }

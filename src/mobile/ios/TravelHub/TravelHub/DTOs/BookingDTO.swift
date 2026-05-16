@@ -59,6 +59,14 @@ struct ModifyBookingRequest: Encodable {
     }
 }
 
+struct LinkPaymentRequest: Encodable {
+    var pagoId: UUID
+
+    enum CodingKeys: String, CodingKey {
+        case pagoId = "pago_id"
+    }
+}
+
 struct ModifyBookingResponse: Decodable {
     var id: UUID
     var habitacionId: UUID

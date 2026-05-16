@@ -51,6 +51,10 @@ final class PaymentServiceImpl: PaymentService {
             token: token
         )
 
+        guard response.estado == .successful else {
+            throw PaymentError.paymentFailed
+        }
+
         return Payment(
             id: response.id,
             monto: response.monto,

@@ -39,8 +39,8 @@ export class PaymentService {
           medio_de_pago: 'credit_card',
           debe_fallar: false,
           payload_cifrado: payloadCifrado,
-        })
-      )
+        }),
+      ),
     );
   }
 

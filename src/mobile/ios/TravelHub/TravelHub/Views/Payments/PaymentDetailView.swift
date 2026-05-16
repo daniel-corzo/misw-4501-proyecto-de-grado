@@ -19,6 +19,10 @@ struct PaymentDetailView: View {
     var onPaymentSuccess: ((Payment) async -> Void)? = nil
     /// When `true`, blocks pay interaction (e.g. while creating reservation after payment).
     var supplementalBlocking: Binding<Bool>? = nil
+    /// Reflects whether the payment network request is currently in-flight. The parent
+    /// view can observe this to disable navigation (e.g. a custom back button) while
+    /// the payment is being processed.
+    var paymentInFlight: Binding<Bool>? = nil
 
     @State private var viewModel = ViewModel()
     @State private var cardholderName: String = ""
@@ -195,6 +199,8 @@ struct PaymentDetailView: View {
 
             Button {
                 Task {
+                    paymentInFlight?.wrappedValue = true
+                    defer { paymentInFlight?.wrappedValue = false }
                     let showPaymentToast = onPaymentSuccess == nil
                     guard
                         let payment = await self.viewModel.pay(

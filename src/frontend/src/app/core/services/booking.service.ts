@@ -121,6 +121,7 @@ export interface UpdateBookingRequest {
   fecha_salida?: string;
   num_huespedes?: number;
   habitacion_id?: string;
+  pago_id?: string | null;
 }
 
 export interface HotelReservationsFilters {
@@ -182,6 +183,10 @@ export class BookingService {
 
   cancelReservation(bookingId: string): Observable<BookingResponse> {
     return this.api.patch<BookingResponse>(`/reservas/${bookingId}/cancelar`, {});
+  }
+
+  deleteReservation(bookingId: string): Observable<void> {
+    return this.api.delete<void>(`/reservas/${bookingId}`);
   }
 
   confirmHotelReservation(bookingId: string): Observable<HotelBookingResponse> {

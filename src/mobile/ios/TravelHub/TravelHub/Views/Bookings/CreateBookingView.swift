@@ -24,6 +24,7 @@ struct CreateBookingView: View {
     @State private var guests: Int = 1
     @State private var selectedHabitacion: Habitacion
     @State private var navigateToNewBookingPayment = false
+    @State private var createdBookingId: UUID? = nil
 
     private var isButtonDisabled: Bool {
         print("Date Range: \(self.dateRange.start == self.dateRange.end)")
@@ -155,7 +156,17 @@ struct CreateBookingView: View {
                         }
                     }
                 } else {
-                    navigateToNewBookingPayment = true
+                    Task {
+                        if let bookingId = await self.viewModel.create(
+                            habitacionId: self.selectedHabitacion.id,
+                            fechaEntrada: self.dateRange.start,
+                            fechaSalida: self.dateRange.end,
+                            numHuespedes: self.guests
+                        ) {
+                            createdBookingId = bookingId
+                            navigateToNewBookingPayment = true
+                        }
+                    }
                 }
             } label: {
                 HStack {
@@ -183,6 +194,9 @@ struct CreateBookingView: View {
             self.viewModel.bookingService = self.bookingService
             self.viewModel.toastManager = self.toastManager
         }
+        .onChange(of: navigateToNewBookingPayment) { _, isPresented in
+            if !isPresented { createdBookingId = nil }
+        }
         .onAppear {
             if let booking = self.booking {
                 self.dateRange = .init(
@@ -201,13 +215,16 @@ struct CreateBookingView: View {
             self.guests = min(newValue.capacidad, self.guests)
         }
         .navigationDestination(isPresented: $navigateToNewBookingPayment) {
-            CreateBookingPaymentDestination(
-                hotel: hotel,
-                habitacion: selectedHabitacion,
-                fechaEntrada: dateRange.start,
-                fechaSalida: dateRange.end,
-                numHuespedes: guests
-            )
+            if let bookingId = createdBookingId {
+                CreateBookingPaymentDestination(
+                    hotel: hotel,
+                    habitacion: selectedHabitacion,
+                    fechaEntrada: dateRange.start,
+                    fechaSalida: dateRange.end,
+                    numHuespedes: guests,
+                    bookingId: bookingId
+                )
+            }
         }
     }
 }
@@ -219,13 +236,19 @@ private struct CreateBookingPaymentDestination: View {
     let fechaEntrada: Date
     let fechaSalida: Date
     let numHuespedes: Int
+    let bookingId: UUID
 
     @Environment(\.bookingService) private var bookingService
     @Environment(\.toastManager) private var toastManager
     @Environment(\.bookingPoller) private var bookingPoller
     @Environment(Router.self) private var router
+    @Environment(\.dismiss) private var dismiss
 
-    @State private var isCreatingReservation = false
+    @State private var isLinkingPayment = false
+    @State private var isPaymentInFlight = false
+    @State private var showCancelAlert = false
+    @State private var isCancelling = false
+    @State private var wasCancelled = false
 
     private var nights: Int {
         Calendar.current.dateComponents(
@@ -252,28 +275,53 @@ private struct CreateBookingPaymentDestination: View {
             onPaymentSuccess: { payment in
                 await finalizeBooking(afterPayment: payment)
             },
-            supplementalBlocking: $isCreatingReservation
+            supplementalBlocking: $isLinkingPayment,
+            paymentInFlight: $isPaymentInFlight
         )
         .toolbar(.hidden, for: .tabBar)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    showCancelAlert = true
+                } label: {
+                    Image(systemName: "chevron.left")
+                }
+                .disabled(isLinkingPayment || isCancelling || isPaymentInFlight)
+            }
+        }
+        .alert(
+            String(localized: "cancelBookingConfirmTitle", table: "CreateBooking"),
+            isPresented: $showCancelAlert
+        ) {
+            Button(
+                String(localized: "cancelBookingConfirmButton", table: "CreateBooking"),
+                role: .destructive
+            ) {
+                Task { await cancelAndDismiss() }
+            }
+            Button(
+                String(localized: "cancelBookingContinueButton", table: "CreateBooking"),
+                role: .cancel
+            ) {}
+        } message: {
+            Text(String(localized: "cancelBookingConfirmMessage", table: "CreateBooking"))
+        }
     }
 
     @MainActor
     private func finalizeBooking(afterPayment payment: Payment) async {
-        isCreatingReservation = true
-        defer { isCreatingReservation = false }
-
-        let booking = NewBooking(
-            habitacionID: habitacion.id,
-            fechaEntrada: fechaEntrada,
-            fechaSalida: fechaSalida,
-            numHuespedes: numHuespedes,
-            pagoID: payment.id
-        )
+        guard !wasCancelled else { return }
+        isLinkingPayment = true
+        defer { isLinkingPayment = false }
 
         do {
-            try await bookingService.create(booking: booking)
+            try await bookingService.linkPayment(
+                bookingId: bookingId,
+                paymentId: payment.id
+            )
 
-            // Seed the new booking into the poller so it can detect status changes.
+            // Seed the booking into the poller so it can detect status changes.
             await bookingPoller.refreshNow(bookingService: bookingService)
 
             toastManager.success(
@@ -282,8 +330,18 @@ private struct CreateBookingPaymentDestination: View {
             )
             router.switchTab(to: .bookings)
         } catch {
+            try? await bookingService.deleteBooking(id: bookingId)
             toastManager.error(error.localizedDescription)
         }
+    }
+
+    @MainActor
+    private func cancelAndDismiss() async {
+        wasCancelled = true
+        isCancelling = true
+        defer { isCancelling = false }
+        try? await bookingService.deleteBooking(id: bookingId)
+        dismiss()
     }
 }
 

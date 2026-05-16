@@ -50,6 +50,12 @@ extension PaymentDetailView {
                 return payment
             } catch is CancellationError {
                 return nil
+            } catch is PaymentError {
+                self.toastManager.error(
+                    String(localized: "paymentFailedDescription", table: "Payment"),
+                    title: String(localized: "paymentFailedTitle", table: "Payment")
+                )
+                return nil
             } catch {
                 self.toastManager.error(error.localizedDescription)
                 return nil
