@@ -15,6 +15,15 @@ class BaseAppSettings(BaseSettings):
     aws_region: str = "us-east-1"
     redis_url: str = "redis://localhost:6379"
     sqs_endpoint: str = "http://localhost:4566"
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_pass: str = ""
+    smtp_from_email: str = ""
+    smtp_sender_name: str = "TravelHub"
+    smtp_use_tls: bool = True
+    smtp_timeout_seconds: int = 30
+    frontend_base_url: str = "https://travel-hub.online"
 
     # Ignore undeclared env vars (e.g. docker-compose postgres_*, stripe_key) so each
     # service can share a root .env without pydantic extra_forbidden at import time.

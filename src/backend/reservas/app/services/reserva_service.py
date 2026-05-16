@@ -1,12 +1,19 @@
 import json
+import logging
 import uuid
 from datetime import UTC, date, datetime, time, timedelta, timezone
 
 from fastapi import HTTPException, status
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from travelhub_common.booking_email import (
+    BookingEmailEvent,
+    BookingEmailPayload,
+    send_booking_email,
+)
 from travelhub_common.security import User, RoleEnum
 
+from app.config import get_settings
 from app.models.reserva import Reserva
 from app.schemas.reserva import (
     CrearReservaRequest,
@@ -38,6 +45,9 @@ from app.services.pago_service import obtener_pagos_por_ids
 from app.services.usuario_service import obtener_usuarios_resumen_por_ids
 
 
+logger = logging.getLogger(__name__)
+
+
 def _fecha_to_utc_start(d: date) -> datetime:
     return datetime.combine(d, time.min, tzinfo=timezone.utc)
 
@@ -48,6 +58,15 @@ def _codigo_reserva(reserva: Reserva) -> str:
 
 def _calcular_total_noches(reserva: Reserva) -> int:
     return max((reserva.check_out.date() - reserva.check_in.date()).days, 0)
+
+
+def _obtener_datos_base_reserva_email(
+    reserva: Reserva | ReservaResponse | ReservaHotelResponse,
+) -> tuple[date, date, int]:
+    if isinstance(reserva, Reserva):
+        return reserva.check_in.date(), reserva.check_out.date(), reserva.personas
+
+    return reserva.fecha_entrada, reserva.fecha_salida, reserva.num_huespedes
 
 
 def _calcular_monto_total(
@@ -107,6 +126,79 @@ def _build_pago_detalle_response(pago) -> PagoReservaDetalleResponse:
         created_at=getattr(pago, "created_at", None),
         tarjeta_ultimos_4=getattr(pago, "tarjeta_ultimos_4", None),
     )
+
+
+def build_reserva_email_payload(
+    event: BookingEmailEvent,
+    reserva: Reserva | ReservaResponse | ReservaHotelResponse,
+    recipient_email: str,
+    hotel_name: str,
+    room_name: str | None = None,
+    room_number: str | None = None,
+    traveler_name: str | None = None,
+    total_nights: int | None = None,
+    total_amount: int | None = None,
+) -> BookingEmailPayload:
+    check_in, check_out, guest_count = _obtener_datos_base_reserva_email(reserva)
+    return BookingEmailPayload(
+        event=event,
+        recipient_email=recipient_email,
+        hotel_name=hotel_name,
+        reservation_id=str(reserva.id),
+        reservation_code=_codigo_reserva(reserva),
+        room_name=room_name,
+        room_number=room_number,
+        check_in=check_in,
+        check_out=check_out,
+        guest_count=guest_count,
+        traveler_name=traveler_name,
+        total_nights=(
+            total_nights
+            if total_nights is not None
+            else max((check_out - check_in).days, 0)
+        ),
+        total_amount=total_amount,
+    )
+
+
+def enviar_correo_estado_reserva(
+    event: BookingEmailEvent,
+    reserva: Reserva | ReservaResponse | ReservaHotelResponse,
+    recipient_email: str | None,
+    hotel_name: str | None,
+    room_name: str | None = None,
+    room_number: str | None = None,
+    traveler_name: str | None = None,
+    total_nights: int | None = None,
+    total_amount: int | None = None,
+) -> None:
+    if not recipient_email or not hotel_name:
+        logger.warning(
+            "Omitiendo correo de reserva %s por falta de destinatario o nombre de hotel",
+            reserva.id,
+        )
+        return
+
+    payload = build_reserva_email_payload(
+        event=event,
+        reserva=reserva,
+        recipient_email=recipient_email,
+        hotel_name=hotel_name,
+        room_name=room_name,
+        room_number=room_number,
+        traveler_name=traveler_name,
+        total_nights=total_nights,
+        total_amount=total_amount,
+    )
+
+    try:
+        send_booking_email(payload, get_settings())
+    except Exception:
+        logger.exception(
+            "No fue posible enviar el correo de la reserva %s para el evento %s",
+            reserva.id,
+            event.value,
+        )
 
 
 def reserva_to_response(
@@ -398,6 +490,7 @@ def reserva_to_detalle_response(
 
     return ReservaDetalleResponse(
         id=reserva.id,
+        viajero_id=reserva.viajero_id,
         codigo_reserva=_codigo_reserva(reserva),
         estado=EstadoReserva(reserva.estado),
         fecha_entrada=reserva.check_in.date(),

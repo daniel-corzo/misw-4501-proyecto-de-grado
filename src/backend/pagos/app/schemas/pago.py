@@ -11,6 +11,7 @@ class PagarRequest(BaseModel):
 
     monto: int = Field(ge=1)
     medio_de_pago: str = Field(min_length=1)
+    reserva_id: UUID | None = None
     debe_fallar: bool = False
     payload_cifrado: str = Field(min_length=1)
 

@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,14 +20,21 @@ router = APIRouter(prefix="/pagos", tags=["pagos"])
 )
 async def pagar(
     body: PagarRequest,
+    request: Request,
     db: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     settings: Settings = Depends(get_settings),
 ):
     """
     Registrar un cobro por tarjeta. El PAN/CVV/exp van en payload_cifrado (RSA-OAEP).
     """
-    return await pago_service.registrar_pago_response(db, body, settings)
+    return await pago_service.registrar_pago_response(
+        db,
+        body,
+        settings,
+        authorization_header=request.headers.get("Authorization"),
+        current_user=current_user,
+    )
 
 
 @router.get(

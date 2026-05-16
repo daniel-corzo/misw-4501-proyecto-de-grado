@@ -596,6 +596,7 @@ async def test_get_reserva_hotel_detalle_returns_200(override_manager_client, mo
     ]
     service_response = ReservaHotelDetalleCompletoResponse(
         id=reserva_id,
+        viajero_id=OTHER_USER_ID,
         codigo_reserva="TH-ABC123",
         estado="confirmada",
         fecha_entrada=now.date(),
@@ -766,7 +767,7 @@ async def test_patch_reserva_confirmar_returns_200(override_manager_client, mock
     with patch("app.routers.reservas.obtener_habitaciones_hotel", new=AsyncMock(return_value=habitaciones)), patch(
         "app.routers.reservas.construir_reservas_hotel_response",
         new=AsyncMock(return_value=[hotel_reserva]),
-    ):
+    ), patch("app.routers.reservas.enviar_correo_estado_reserva") as mock_email:
         response = await override_manager_client.patch(f"/reservas/{reserva.id}/confirmar")
 
     assert response.status_code == 200
@@ -774,6 +775,7 @@ async def test_patch_reserva_confirmar_returns_200(override_manager_client, mock
     assert data["estado"] == "confirmada"
     assert data["nombre_viajero"] == "Alice Montgomery"
     assert mock_db_session.commit.await_count == 1
+    mock_email.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -800,11 +802,14 @@ async def test_patch_reserva_confirmar_404_when_room_not_owned(override_manager_
         )
     ]
 
-    with patch("app.routers.reservas.obtener_habitaciones_hotel", new=AsyncMock(return_value=habitaciones)):
+    with patch("app.routers.reservas.obtener_habitaciones_hotel", new=AsyncMock(return_value=habitaciones)), patch(
+        "app.routers.reservas.enviar_correo_estado_reserva"
+    ) as mock_email:
         response = await override_manager_client.patch(f"/reservas/{reserva.id}/confirmar")
 
     assert response.status_code == 404
     assert response.json()["error"] == "not_found"
+    mock_email.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -830,11 +835,14 @@ async def test_patch_reserva_confirmar_409_wrong_state(override_manager_client, 
         )
     ]
 
-    with patch("app.routers.reservas.obtener_habitaciones_hotel", new=AsyncMock(return_value=habitaciones)):
+    with patch("app.routers.reservas.obtener_habitaciones_hotel", new=AsyncMock(return_value=habitaciones)), patch(
+        "app.routers.reservas.enviar_correo_estado_reserva"
+    ) as mock_email:
         response = await override_manager_client.patch(f"/reservas/{reserva.id}/confirmar")
 
     assert response.status_code == 409
     assert response.json()["detail"] == "La reserva no puede ser confirmada en su estado actual"
+    mock_email.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -886,12 +894,13 @@ async def test_patch_reserva_rechazar_returns_200(override_manager_client, mock_
     with patch("app.routers.reservas.obtener_habitaciones_hotel", new=AsyncMock(return_value=habitaciones)), patch(
         "app.routers.reservas.construir_reservas_hotel_response",
         new=AsyncMock(return_value=[hotel_reserva]),
-    ):
+    ), patch("app.routers.reservas.enviar_correo_estado_reserva") as mock_email:
         response = await override_manager_client.patch(f"/reservas/{reserva.id}/rechazar")
 
     assert response.status_code == 200
     assert response.json()["estado"] == "cancelada"
     assert mock_db_session.commit.await_count == 1
+    mock_email.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -917,11 +926,14 @@ async def test_patch_reserva_rechazar_409_when_already_cancelada(override_manage
         )
     ]
 
-    with patch("app.routers.reservas.obtener_habitaciones_hotel", new=AsyncMock(return_value=habitaciones)):
+    with patch("app.routers.reservas.obtener_habitaciones_hotel", new=AsyncMock(return_value=habitaciones)), patch(
+        "app.routers.reservas.enviar_correo_estado_reserva"
+    ) as mock_email:
         response = await override_manager_client.patch(f"/reservas/{reserva.id}/rechazar")
 
     assert response.status_code == 409
     assert response.json()["detail"] == "La reserva ya está cancelada"
+    mock_email.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -1011,7 +1023,21 @@ async def test_patch_reserva_cancelar_returns_200(override_client, mock_db_sessi
     )
     mock_db_session.execute = AsyncMock(return_value=_execute_result_with_reserva(reserva))
 
-    response = await override_client.patch(f"/reservas/{reserva.id}/cancelar")
+    detalles = {
+        HABITACION_ID: HabitacionReservaDetalleResponse(
+            id=HABITACION_ID,
+            nombre_habitacion="Junior Suite",
+            nombre_hotel="Grand Palace",
+            imagenes_hotel=[],
+            numero_habitacion="101",
+        )
+    }
+
+    with patch(
+        "app.routers.reservas.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(return_value=detalles),
+    ), patch("app.routers.reservas.enviar_correo_estado_reserva") as mock_email:
+        response = await override_client.patch(f"/reservas/{reserva.id}/cancelar")
 
     assert response.status_code == 200
     data = response.json()
@@ -1019,17 +1045,20 @@ async def test_patch_reserva_cancelar_returns_200(override_client, mock_db_sessi
     assert data["estado"] == "cancelada"
     assert mock_db_session.commit.await_count == 1
     assert mock_db_session.refresh.await_count == 1
+    mock_email.assert_called_once()
 
 
 @pytest.mark.asyncio
 async def test_patch_reserva_cancelar_404_when_reserva_not_found(override_client, mock_db_session):
     mock_db_session.execute = AsyncMock(return_value=_execute_result_no_conflict())
 
-    response = await override_client.patch(f"/reservas/{uuid.uuid4()}/cancelar")
+    with patch("app.routers.reservas.enviar_correo_estado_reserva") as mock_email:
+        response = await override_client.patch(f"/reservas/{uuid.uuid4()}/cancelar")
 
     assert response.status_code == 404
     data = response.json()
     assert data["error"] == "not_found"
+    mock_email.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -1042,11 +1071,37 @@ async def test_patch_reserva_cancelar_409_when_already_cancelada(override_client
     )
     mock_db_session.execute = AsyncMock(return_value=_execute_result_with_reserva(reserva))
 
-    response = await override_client.patch(f"/reservas/{reserva.id}/cancelar")
+    with patch("app.routers.reservas.enviar_correo_estado_reserva") as mock_email:
+        response = await override_client.patch(f"/reservas/{reserva.id}/cancelar")
 
     assert response.status_code == 409
     data = response.json()
     assert data["detail"] == "La reserva ya está cancelada"
+    mock_email.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_patch_reserva_cancelar_propagates_auth_error_from_room_lookup(
+    override_client, mock_db_session
+):
+    now = datetime.now(UTC)
+    reserva = _build_reserva(
+        estado="confirmada",
+        check_out=now + timedelta(days=2),
+        created_at=now,
+    )
+    mock_db_session.execute = AsyncMock(return_value=_execute_result_with_reserva(reserva))
+
+    with patch(
+        "app.routers.reservas.obtener_detalles_habitaciones_por_ids",
+        new=AsyncMock(
+            side_effect=HTTPException(status_code=401, detail="No autorizado")
+        ),
+    ), patch("app.routers.reservas.enviar_correo_estado_reserva") as mock_email:
+        response = await override_client.patch(f"/reservas/{reserva.id}/cancelar")
+
+    assert response.status_code == 401
+    mock_email.assert_not_called()
 
 
 @pytest.mark.asyncio
