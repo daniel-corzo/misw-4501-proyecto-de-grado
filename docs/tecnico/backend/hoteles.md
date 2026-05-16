@@ -54,7 +54,7 @@
 
 ## Países soportados
 
-El endpoint `GET /api/hoteles/paises` devuelve los países actualmente disponibles en el catálogo: Colombia, Perú, Ecuador, México, Chile y Argentina.
+El endpoint `GET /api/hoteles/paises` devuelve los países actualmente disponibles en el catálogo.
 
 ## Dependencias
 

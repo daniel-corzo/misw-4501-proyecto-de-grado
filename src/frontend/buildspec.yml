@@ -18,6 +18,7 @@ phases:
     commands:
       - echo Compilando Angular...
       - npm run build -- --configuration production
+      - cp ../../nginx/swagger.html dist/travelhub-web/browser/docs.html
 
 artifacts:
   # Empaqueta solo los archivos compilados del browser para que CodePipeline

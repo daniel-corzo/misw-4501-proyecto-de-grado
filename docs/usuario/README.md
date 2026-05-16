@@ -1,6 +1,6 @@
 # TravelHub — Guía de Usuario
 
-Bienvenido a TravelHub, la plataforma para encontrar y reservar alojamiento en Colombia, Perú, Ecuador, México, Chile y Argentina.
+Bienvenido a TravelHub, la plataforma para encontrar y reservar alojamiento.
 
 ## ¿Qué puedes hacer en TravelHub?
 

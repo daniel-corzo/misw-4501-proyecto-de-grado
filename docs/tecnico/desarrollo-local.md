@@ -54,6 +54,17 @@ AWS_REGION=us-east-1
 REDIS_URL=redis://redis:6379
 SQS_ENDPOINT=http://localstack:4566
 SQS_QUEUE_URL=http://localstack:4566/000000000000/travelhub-queue
+
+# SMTP (correos de reserva y pago)
+# Dejar vacío para deshabilitar el envío de correos en local
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASS=
+SMTP_FROM_EMAIL=
+SMTP_SENDER_NAME=TravelHub
+SMTP_USE_TLS=true
+FRONTEND_BASE_URL=http://localhost:4200
 ```
 
 Los valores de las claves pueden ir en formato de una sola línea con `\n` escapados o en bloque multilínea como se muestra arriba.

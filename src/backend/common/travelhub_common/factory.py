@@ -2,6 +2,7 @@ from typing import List, Optional
 from fastapi import FastAPI, APIRouter, Depends
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
@@ -45,6 +46,13 @@ def create_app(
             openapi_url="openapi.json",
             title=f"TravelHub - {service_name} - Swagger UI",
         )
+
+    @app.get(f"/{service_name}/openapi.json", include_in_schema=False)
+    async def service_openapi_json():
+        # Exposes the schema at /{service_name}/openapi.json so swagger.html can
+        # fetch it via /api/{service_name}/openapi.json in production (after CloudFront
+        # strips the /api prefix and ALB routes to this service).
+        return JSONResponse(app.openapi())
 
     app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
     app.add_middleware(BaseHTTPMiddleware, dispatch=logging_middleware)

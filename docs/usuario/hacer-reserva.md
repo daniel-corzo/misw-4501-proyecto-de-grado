@@ -44,11 +44,10 @@ Si el pago es exitoso, verás la pantalla de confirmación con:
 
 - **Código de reserva** (ID único)
 - Resumen de la reserva (hotel, habitación, fechas, total)
-- **Código QR** de check-in
 
-También recibirás una notificación en la plataforma con el estado de tu reserva.
+También recibirás un **correo de comprobante de pago** con el resumen y los datos del cargo.
 
-> **Nota:** Tu reserva queda en estado **Pendiente** hasta que el hotel la confirme. Recibirás una notificación cuando el hotelero confirme o rechace tu reserva.
+> **Nota:** Tu reserva queda en estado **Pendiente** hasta que el hotel la confirme. Cuando el hotelero confirme o rechace tu reserva, recibirás otro correo con el resultado.
 
 ---
 

@@ -21,7 +21,22 @@
 5. Valida los datos de tarjeta
 6. Registra el pago con los últimos 4 dígitos (nunca el número completo)
 7. Devuelve { pago_id, estado, ultimos_cuatro }
+8. Si el pago es exitoso, envía un comprobante por correo al viajero
 ```
+
+## Correo de comprobante de pago
+
+Cuando el pago resulta exitoso, el servicio envía automáticamente un correo al viajero con:
+
+- Código de reserva
+- Hotel y habitación
+- Fechas de check-in y check-out
+- Número de huéspedes
+- Monto pagado y medio de pago
+- Últimos 4 dígitos de la tarjeta
+- Fecha y hora del pago
+
+El correo se envía de forma asíncrona (no bloquea la respuesta del endpoint). Si falla el envío por SMTP, el pago ya fue registrado y no se revierte — solo se registra el error en los logs.
 
 ## Body del request
 
@@ -72,3 +87,5 @@ Si esta variable no está configurada, el servicio devuelve `HTTP 500` al intent
 
 - PostgreSQL: registro de pagos
 - `PAGO_RSA_PRIVATE_KEY_PEM`: clave privada para descifrado (distinta a las claves JWT)
+- SMTP: envío del comprobante de pago (variables `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM_EMAIL`)
+- Microservicio `reservas`: para obtener los datos de la reserva antes de armar el correo
