@@ -68,7 +68,7 @@ src/frontend/src/app/
 
 ### `auth.interceptor.ts`
 
-Agrega el header `Authorization: Bearer <token>` a todas las peticiones salientes. Si la respuesta es `401`, intenta renovar el access token con el refresh token y reintenta la petición original.
+Agrega el header `Authorization: Bearer <token>` a todas las peticiones salientes. Si la respuesta es `401`, la sesión actual se invalida o se limpia; no se realiza renovación automática del access token ni reintento de la petición original.
 
 ### `error.interceptor.ts`
 
