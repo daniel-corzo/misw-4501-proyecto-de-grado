@@ -245,8 +245,10 @@ private struct CreateBookingPaymentDestination: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var isLinkingPayment = false
+    @State private var isPaymentInFlight = false
     @State private var showCancelAlert = false
     @State private var isCancelling = false
+    @State private var wasCancelled = false
 
     private var nights: Int {
         Calendar.current.dateComponents(
@@ -273,7 +275,8 @@ private struct CreateBookingPaymentDestination: View {
             onPaymentSuccess: { payment in
                 await finalizeBooking(afterPayment: payment)
             },
-            supplementalBlocking: $isLinkingPayment
+            supplementalBlocking: $isLinkingPayment,
+            paymentInFlight: $isPaymentInFlight
         )
         .toolbar(.hidden, for: .tabBar)
         .navigationBarBackButtonHidden(true)
@@ -284,7 +287,7 @@ private struct CreateBookingPaymentDestination: View {
                 } label: {
                     Image(systemName: "chevron.left")
                 }
-                .disabled(isLinkingPayment || isCancelling)
+                .disabled(isLinkingPayment || isCancelling || isPaymentInFlight)
             }
         }
         .alert(
@@ -308,6 +311,7 @@ private struct CreateBookingPaymentDestination: View {
 
     @MainActor
     private func finalizeBooking(afterPayment payment: Payment) async {
+        guard !wasCancelled else { return }
         isLinkingPayment = true
         defer { isLinkingPayment = false }
 
@@ -333,6 +337,7 @@ private struct CreateBookingPaymentDestination: View {
 
     @MainActor
     private func cancelAndDismiss() async {
+        wasCancelled = true
         isCancelling = true
         defer { isCancelling = false }
         try? await bookingService.deleteBooking(id: bookingId)

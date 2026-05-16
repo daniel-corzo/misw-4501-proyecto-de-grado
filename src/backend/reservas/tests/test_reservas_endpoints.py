@@ -1293,3 +1293,79 @@ async def test_get_reservas_hotel_filters_default_to_none(override_manager_clien
     assert kwargs["fecha_fin"] is None
     assert kwargs["estado_pago"] is None
     assert kwargs["num_huespedes"] is None
+
+
+# ---------------------------------------------------------------------------
+# DELETE /reservas/{reserva_id}
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("estado", ["pendiente", "cancelada"])
+async def test_delete_reserva_204(override_client, mock_db_session, estado):
+    """Owner can hard-delete a pendiente or cancelada reservation — returns 204."""
+    now = datetime.now(UTC)
+    reserva = _build_reserva(
+        estado=estado,
+        check_out=now + timedelta(days=2),
+        created_at=now,
+    )
+    mock_db_session.execute = AsyncMock(return_value=_execute_result_with_reserva(reserva))
+    mock_db_session.delete = AsyncMock()
+
+    response = await override_client.delete(f"/reservas/{reserva.id}")
+
+    assert response.status_code == 204
+    assert response.content == b""
+    mock_db_session.delete.assert_awaited_once_with(reserva)
+    assert mock_db_session.commit.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_delete_reserva_404_not_found(override_client, mock_db_session):
+    """Returns 404 when the reservation does not exist for the authenticated user."""
+    mock_db_session.execute = AsyncMock(return_value=_execute_result_no_conflict())
+    mock_db_session.delete = AsyncMock()
+
+    response = await override_client.delete(f"/reservas/{uuid.uuid4()}")
+
+    assert response.status_code == 404
+    assert response.json()["error"] == "not_found"
+    mock_db_session.delete.assert_not_called()
+    mock_db_session.commit.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_delete_reserva_409_confirmada(override_client, mock_db_session):
+    """Returns 409 when trying to delete a confirmed reservation."""
+    now = datetime.now(UTC)
+    reserva = _build_reserva(
+        estado="confirmada",
+        check_out=now + timedelta(days=5),
+        created_at=now,
+    )
+    mock_db_session.execute = AsyncMock(return_value=_execute_result_with_reserva(reserva))
+    mock_db_session.delete = AsyncMock()
+
+    response = await override_client.delete(f"/reservas/{reserva.id}")
+
+    assert response.status_code == 409
+    assert "pendientes o canceladas" in response.json()["detail"]
+    mock_db_session.delete.assert_not_called()
+    mock_db_session.commit.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_delete_reserva_401_missing_authorization(mock_db_session):
+    """Returns 401 when no Authorization header is present."""
+    async def override_get_db():
+        yield mock_db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    try:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.delete(f"/reservas/{uuid.uuid4()}")
+
+        assert response.status_code == 401
+    finally:
+        app.dependency_overrides.clear()

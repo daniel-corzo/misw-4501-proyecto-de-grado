@@ -586,6 +586,16 @@ async def modificar_reserva_service(
     if body.num_huespedes is not None:
         reserva.personas = body.num_huespedes
     if body.pago_id is not None:
+        if reserva.estado != EstadoReserva.pendiente.value:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Solo se puede asociar un pago a una reserva pendiente",
+            )
+        if reserva.pago_id is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="La reserva ya tiene un pago asociado",
+            )
         reserva.pago_id = body.pago_id
 
     await db.flush()
