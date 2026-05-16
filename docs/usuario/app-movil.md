@@ -18,7 +18,7 @@ Al abrir la app por primera vez verás la pantalla de bienvenida. Puedes:
 - **Iniciar sesión** si ya tienes cuenta
 - **Crear cuenta** si eres nuevo en TravelHub
 
-Una vez dentro, la sesión se mantiene activa automáticamente. La app renueva tu token de seguridad en segundo plano — no necesitas volver a ingresar tus credenciales salvo que cierres sesión manualmente.
+Una vez dentro, la app puede mantener tu sesión iniciada en el dispositivo durante un tiempo. Si la sesión expira, es posible que debas volver a ingresar tus credenciales. También deberás hacerlo si cierras sesión manualmente.
 
 ---
 
