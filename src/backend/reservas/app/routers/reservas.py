@@ -374,8 +374,10 @@ async def cancelar_reserva(
                 status.HTTP_503_SERVICE_UNAVAILABLE,
             ):
                 logger.exception(
-                    "No fue posible preparar el correo de cancelación para la reserva %s",
+                    "No fue posible preparar el correo de cancelación para la reserva %s (status=%s, detail=%s)",
                     reserva.id,
+                    exc.status_code,
+                    exc.detail,
                 )
             else:
                 raise
