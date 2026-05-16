@@ -41,3 +41,46 @@ Authorization: Bearer <your_access_token_here>
 ### Registration
 
 Sign-up is a single step: `POST /usuarios` creates the user record (credentials, role, profile fields such as traveler data) in one transaction.
+
+## Booking Emails
+
+TravelHub sends traveler-facing emails from the backend when a reservation is confirmed, cancelled, or paid successfully.
+
+### SMTP Configuration
+
+Configure the shared backend settings with the Amazon SES SMTP credentials generated for your SES SMTP user:
+
+```env
+SMTP_HOST=email-smtp.us-east-1.amazonaws.com
+SMTP_PORT=587
+SMTP_USER=<amazon_ses_smtp_username>
+SMTP_PASS=<amazon_ses_smtp_password>
+SMTP_FROM_EMAIL=<verified_sender_email>
+SMTP_SENDER_NAME=TravelHub
+SMTP_USE_TLS=true
+SMTP_TIMEOUT_SECONDS=30
+FRONTEND_BASE_URL=https://travel-hub.online
+```
+
+Notes:
+
+- Emails are sent as a best-effort side effect after the reservation or payment has already been committed.
+- If SMTP delivery fails, the reservation confirmation/cancellation or the payment itself is not rolled back.
+- Payment receipt emails are triggered when `POST /pagos/pagar` receives a `reserva_id` that can be used to fetch the reservation details shown in the email.
+
+### Email Content
+
+The booking emails are generated in Spanish only and include:
+
+- TravelHub branding and a link to `https://travel-hub.online`
+- A large visual status icon for confirmation, cancellation, or payment receipt
+- Reservation details such as ID, hotel, room, dates, and number of guests
+- Payment details in the receipt email when the payment is successful
+
+### Future Internationalization
+
+Internationalization is intentionally deferred for this feature. When localization is added later, prefer this approach:
+
+1. Move all visible subject/body strings into locale-specific dictionaries or templates keyed by notification type.
+2. Keep reservation and payment payload assembly language-neutral so the same data model can feed multiple locales.
+3. Select the locale from the traveler profile or request context and render the final subject/body from that locale-specific template set.

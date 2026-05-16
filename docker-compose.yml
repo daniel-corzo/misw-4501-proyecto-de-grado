@@ -6,6 +6,8 @@ services:
 
   postgres:
     image: postgres:16-alpine
+    env_file:
+      - .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -22,6 +24,8 @@ services:
 
   redis:
     image: redis:7-alpine
+    env_file:
+      - .env
     ports:
       - "6379:6379"
     healthcheck:
@@ -31,6 +35,8 @@ services:
 
   localstack:
     image: localstack/localstack
+    env_file:
+      - .env
     ports:
       - "4566:4566"
     environment:
@@ -43,6 +49,8 @@ services:
 
   gateway:
     image: nginx:alpine
+    env_file:
+      - .env
     ports:
       - "8080:8080"
     volumes:
@@ -62,6 +70,8 @@ services:
     build:
       context: ./src/backend
       dockerfile: usuarios/Dockerfile
+    env_file:
+      - .env
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8002:8000"
@@ -83,6 +93,8 @@ services:
     build:
       context: ./src/backend
       dockerfile: busquedas/Dockerfile
+    env_file:
+      - .env
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8003:8000"
@@ -106,6 +118,8 @@ services:
     build:
       context: ./src/backend
       dockerfile: hoteles/Dockerfile
+    env_file:
+      - .env
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8004:8000"
@@ -126,6 +140,8 @@ services:
     build:
       context: ./src/backend
       dockerfile: reservas/Dockerfile
+    env_file:
+      - .env
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8006:8000"
@@ -150,6 +166,8 @@ services:
     build:
       context: ./src/backend
       dockerfile: pagos/Dockerfile
+    env_file:
+      - .env
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8008:8000"
@@ -171,6 +189,8 @@ services:
     build:
       context: ./src/backend
       dockerfile: notificaciones/Dockerfile
+    env_file:
+      - .env
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8007:8000"

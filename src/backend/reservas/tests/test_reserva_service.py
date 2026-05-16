@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 import pytest
 from fastapi import HTTPException
+from travelhub_common.booking_email import BookingEmailEvent
 
 from app.models.reserva import Reserva
 from app.schemas.reserva import (
@@ -20,11 +21,13 @@ from app.schemas.reserva import (
     ReservaHotelResponse,
 )
 from app.services.reserva_service import (
+    build_reserva_email_payload,
     cancelar_reserva_service,
     construir_reservas_hotel_response,
     confirmar_reserva_service,
     crear_reserva_service,
     eliminar_reserva_service,
+    enviar_correo_estado_reserva,
     generar_reporte_ingresos_service,
     listar_reservas_usuario_service,
     listar_reservas_hotel_service,
@@ -200,6 +203,67 @@ def _hotel_reserva_response(reserva: Reserva) -> ReservaHotelResponse:
         monto_total=220,
         estado_pago="successful" if reserva.pago_id else None,
     )
+
+
+def test_build_reserva_email_payload_maps_reservation_data():
+    reserva = _reserva_modificable(estado="confirmada")
+
+    payload = build_reserva_email_payload(
+        event=BookingEmailEvent.confirmed,
+        reserva=reserva,
+        recipient_email="alice@example.com",
+        hotel_name="Hotel Demo",
+        room_name="Suite",
+        room_number="101",
+        traveler_name="Alice",
+        total_amount=220,
+    )
+
+    assert payload.event == BookingEmailEvent.confirmed
+    assert payload.recipient_email == "alice@example.com"
+    assert payload.hotel_name == "Hotel Demo"
+    assert payload.room_name == "Suite"
+    assert payload.room_number == "101"
+    assert payload.reservation_id == str(reserva.id)
+    assert payload.reservation_code.startswith("TH-")
+    assert payload.guest_count == reserva.personas
+    assert payload.total_amount == 220
+
+
+def test_enviar_correo_estado_reserva_calls_shared_sender():
+    reserva = _reserva_modificable(estado="confirmada")
+
+    with patch("app.services.reserva_service.send_booking_email") as mock_send:
+        enviar_correo_estado_reserva(
+            event=BookingEmailEvent.confirmed,
+            reserva=reserva,
+            recipient_email="alice@example.com",
+            hotel_name="Hotel Demo",
+            room_name="Suite",
+            room_number="101",
+            traveler_name="Alice",
+            total_amount=220,
+        )
+
+    mock_send.assert_called_once()
+    payload = mock_send.call_args.args[0]
+    assert payload.hotel_name == "Hotel Demo"
+    assert payload.recipient_email == "alice@example.com"
+
+
+def test_enviar_correo_estado_reserva_no_propagates_delivery_errors():
+    reserva = _reserva_modificable(estado="cancelada")
+
+    with patch(
+        "app.services.reserva_service.send_booking_email",
+        side_effect=RuntimeError("smtp down"),
+    ):
+        enviar_correo_estado_reserva(
+            event=BookingEmailEvent.cancelled,
+            reserva=reserva,
+            recipient_email="alice@example.com",
+            hotel_name="Hotel Demo",
+        )
 
 
 @pytest.mark.asyncio
