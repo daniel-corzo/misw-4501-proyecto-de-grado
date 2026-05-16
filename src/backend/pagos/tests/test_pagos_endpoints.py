@@ -198,7 +198,7 @@ async def test_post_pagar_201_successful(client_pagos, mock_db_session, rsa_keys
 
 
 @pytest.mark.asyncio
-async def test_post_pagar_201_successful_omite_correo_si_reserva_no_pertenece_usuario(
+async def test_post_pagar_skips_email_when_reservation_owned_by_different_user(
     client_pagos, rsa_keys
 ):
     _, pub = rsa_keys
