@@ -147,7 +147,7 @@ async def _enviar_correo_pago_exitoso(
         await asyncio.to_thread(send_booking_email, payload, settings)
     except ReservaDetallePagoError:
         logger.warning(
-            "No fue posible obtener detalle valido de la reserva %s para el comprobante del pago %s",
+            "No fue posible obtener detalle válido de la reserva %s para el comprobante del pago %s",
             body.reserva_id,
             pago.id,
         )
