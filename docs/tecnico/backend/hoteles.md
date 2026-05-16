@@ -19,8 +19,8 @@
 
 | Método | Ruta | Descripción | Auth requerida |
 |---|---|---|---|
-| `POST` | `/api/hoteles/{hotel_id}/habitaciones` | Crear habitación en un hotel | Sí (tipo: hotel) |
-| `GET` | `/api/hoteles/{hotel_id}/habitaciones` | Listar habitaciones de un hotel | Sí |
+| `POST` | `/api/hoteles/habitaciones` | Crear habitación en el hotel del hotelero autenticado | Sí (tipo: hotel) |
+| `GET` | `/api/hoteles/habitaciones` | Listar habitaciones del hotel del hotelero autenticado | Sí |
 | `GET` | `/api/hoteles/habitaciones/{habitacion_id}` | Obtener detalle de habitación | Sí |
 | `PUT` | `/api/hoteles/habitaciones/{habitacion_id}` | Actualizar habitación | Sí (tipo: hotel) |
 | `DELETE` | `/api/hoteles/habitaciones/{habitacion_id}` | Eliminar habitación | Sí (tipo: hotel) |
