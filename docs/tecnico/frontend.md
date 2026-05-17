@@ -23,7 +23,8 @@ src/frontend/src/app/
 │   │   ├── auth.interceptor.ts     ← adjunta Bearer token + maneja refresh
 │   │   ├── error.interceptor.ts    ← manejo global de errores HTTP
 │   │   └── language.interceptor.ts ← adjunta Accept-Language a peticiones
-│   └── services/               ← servicios de API
+│   ├── services/               ← servicios de API
+│   │   └── accessibility.service.ts ← modos de daltonismo y tamaño de fuente
 ├── features/               ← módulos de funcionalidad
 │   ├── auth/               ← login / registro
 │   ├── home/               ← landing / búsqueda principal
@@ -35,9 +36,9 @@ src/frontend/src/app/
 │   │   ├── booking-detail/
 │   │   └── bookings.component.ts   ← listado de reservas del usuario
 │   ├── partner/            ← panel para socios hoteleros
-│   │   ├── dashboard/      ← resumen de reservas del hotel
+│   │   ├── dashboard/      ← resumen de reservas + descarga de reporte PDF de ocupación
 │   │   └── hotel/          ← gestión de propiedades y habitaciones
-│   ├── settings/           ← perfil y configuración del usuario
+│   ├── settings/           ← ajustes de accesibilidad (daltonismo, tamaño de fuente)
 │   ├── payments/           ← flujo de pago con tarjeta (cifrado RSA en cliente)
 │   ├── health/             ← dashboard de salud de servicios
 │   ├── terms/              ← términos y condiciones
@@ -78,9 +79,9 @@ Captura errores HTTP globalmente y los normaliza para mostrar mensajes consisten
 
 Adjunta el header `Accept-Language` con el idioma activo de Transloco, permitiendo que el backend devuelva mensajes localizados.
 
-## Internacionalización
+## Internacionalización y accesibilidad
 
-El frontend usa **Transloco** para i18n. Los archivos de traducción viven en `src/frontend/src/assets/i18n/`. El `language.interceptor.ts` propaga el idioma seleccionado al backend en cada petición.
+El frontend usa **Transloco** para i18n (español e inglés). Para más detalle, ver [accesibilidad-i18n.md](accesibilidad-i18n.md).
 
 ## Seguridad en el cliente
 

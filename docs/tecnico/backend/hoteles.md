@@ -14,6 +14,7 @@
 | `POST` | `/api/hoteles/` | Crear un nuevo hotel | Sí (tipo: hotel) |
 | `GET` | `/api/hoteles/{hotel_id}` | Obtener detalle de un hotel | Sí |
 | `GET` | `/api/hoteles/paises` | Listar países disponibles | Sí |
+| `GET` | `/api/hoteles/mi-hotel` | Obtener el hotel del hotelero autenticado (id, nombre, fecha de registro) | Sí (tipo: hotel) |
 
 ### Habitaciones
 
