@@ -15,6 +15,8 @@
 | `PATCH` | `/api/reservas/{reserva_id}/cancelar` | Cancelar una reserva | Sí |
 | `GET` | `/api/reservas/hoteles` | Listar reservas del hotel del hotelero | Sí (tipo: hotel) |
 | `GET` | `/api/reservas/hoteles/{reserva_id}` | Ver detalle de reserva desde el lado del hotel | Sí (tipo: hotel) |
+| `GET` | `/api/reservas/hoteles/reporte-ingresos` | Reporte de ingresos del hotel por mes | Sí (tipo: hotel) |
+| `GET` | `/api/reservas/hoteles/reporte-ocupacion` | Reporte de ocupación por mes y por habitación | Sí (tipo: hotel) |
 | `PATCH` | `/api/reservas/{reserva_id}/confirmar` | Confirmar una reserva (hotelero) | Sí (tipo: hotel) |
 | `PATCH` | `/api/reservas/{reserva_id}/rechazar` | Rechazar una reserva (hotelero) | Sí (tipo: hotel) |
 | `GET` | `/api/reservas/usuario/{usuario_id}` | Listar reservas de un usuario específico | Sí |
@@ -62,6 +64,47 @@ Al llamar `GET /api/reservas/` se puede filtrar por:
 
 - `fecha_salida` debe ser posterior a `fecha_entrada` (validado con Pydantic).
 - `pago_id` es opcional en el momento de crear; el pago puede procesarse antes o después.
+
+## Reportes del hotelero
+
+### `GET /api/reservas/hoteles/reporte-ingresos`
+
+Devuelve un desglose de ingresos del hotel por mes:
+
+```json
+{
+  "nombre_hotel": "Hotel Dann Carlton",
+  "ingresos_por_mes": [
+    { "anio": 2025, "mes": 6, "total_ingresos": 1500000, "num_pagos": 3 }
+  ],
+  "total_general": 1500000,
+  "total_pagos": 3
+}
+```
+
+### `GET /api/reservas/hoteles/reporte-ocupacion`
+
+Devuelve la tasa de ocupación del hotel, desglosada por mes y por habitación:
+
+```json
+{
+  "nombre_hotel": "Hotel Dann Carlton",
+  "total_habitaciones": 5,
+  "tasa_ocupacion_global": 62.5,
+  "ocupacion_por_mes": [
+    { "anio": 2025, "mes": 6, "noches_ocupadas": 10, "noches_disponibles": 16, "tasa_ocupacion": 62.5 }
+  ],
+  "ocupacion_por_habitacion": [
+    { "habitacion_id": "uuid", "numero": "101", "capacidad": 2, "noches_ocupadas": 5, "noches_disponibles": 8, "tasa_ocupacion": 62.5 }
+  ],
+  "noches_ocupadas_totales": 10,
+  "noches_disponibles_totales": 16
+}
+```
+
+Estos datos son la fuente del **reporte PDF** que el hotelero puede descargar desde el panel de partner en el frontend.
+
+---
 
 ## Correos de estado de reserva
 
