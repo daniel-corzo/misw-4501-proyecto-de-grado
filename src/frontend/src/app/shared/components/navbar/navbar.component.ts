@@ -66,7 +66,6 @@ export class NavbarComponent {
 
   setCbMode(mode: CbMode): void {
     this.a11y.setMode(mode);
-    this.a11yMenuOpen = false;
   }
 
   setFontSize(size: FontSize): void {

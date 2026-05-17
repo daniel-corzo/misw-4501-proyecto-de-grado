@@ -3,8 +3,8 @@ import { Injectable, signal } from '@angular/core';
 export type CbMode = 'off' | 'protanopia' | 'deuteranopia' | 'tritanopia';
 export type FontSize = 'normal' | 'large' | 'xlarge';
 
-const VALID_CB_MODES: CbMode[] = ['protanopia', 'deuteranopia', 'tritanopia'];
-const VALID_FONT_SIZES: FontSize[] = ['large', 'xlarge'];
+const VALID_CB_MODES: CbMode[] = ['off', 'protanopia', 'deuteranopia', 'tritanopia'];
+const VALID_FONT_SIZES: FontSize[] = ['normal', 'large', 'xlarge'];
 
 @Injectable({ providedIn: 'root' })
 export class AccessibilityService {
