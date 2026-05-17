@@ -148,6 +148,34 @@ export interface ReporteIngresosResponse {
   total_pagos: number;
 }
 
+export interface OcupacionMensual {
+  anio: number;
+  mes: number;
+  noches_ocupadas: number;
+  noches_disponibles: number;
+  tasa_ocupacion: number;
+}
+
+export interface OcupacionHabitacion {
+  habitacion_id: string;
+  numero: string;
+  capacidad: number;
+  noches_ocupadas: number;
+  noches_disponibles: number;
+  tasa_ocupacion: number;
+}
+
+export interface ReporteOcupacionResponse {
+  nombre_hotel: string | null;
+  fecha_registro: string | null;
+  total_habitaciones: number;
+  ocupacion_por_mes: OcupacionMensual[];
+  ocupacion_por_habitacion: OcupacionHabitacion[];
+  noches_ocupadas_totales: number;
+  noches_disponibles_totales: number;
+  tasa_ocupacion_global: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class BookingService {
   private readonly api = inject(ApiService);
@@ -213,5 +241,9 @@ export class BookingService {
 
   getHotelRevenueReport(): Observable<ReporteIngresosResponse> {
     return this.api.get<ReporteIngresosResponse>('/reservas/hoteles/reporte-ingresos');
+  }
+
+  getHotelOccupationReport(): Observable<ReporteOcupacionResponse> {
+    return this.api.get<ReporteOcupacionResponse>('/reservas/hoteles/reporte-ocupacion');
   }
 }

@@ -29,6 +29,7 @@ from app.services.reserva_service import (
     eliminar_reserva_service,
     enviar_correo_estado_reserva,
     generar_reporte_ingresos_service,
+    generar_reporte_ocupacion_service,
     listar_reservas_usuario_service,
     listar_reservas_hotel_service,
     modificar_reserva_service,
@@ -1658,3 +1659,266 @@ async def test_generar_reporte_ingresos_orden_cronologico(mock_db):
     assert len(result.ingresos_por_mes) == 2
     assert result.ingresos_por_mes[0].mes == 1
     assert result.ingresos_por_mes[1].mes == 3
+
+
+# ---------------------------------------------------------------------------
+# generar_reporte_ocupacion_service
+# ---------------------------------------------------------------------------
+
+HAB2_ID = uuid.uuid4()
+
+
+def _mi_hotel_ns(nombre: str = "Hotel Test", created_at: datetime = None):
+    if created_at is None:
+        created_at = datetime(2026, 1, 1, tzinfo=UTC)
+    from app.schemas.reserva import MiHotelResponse
+    return MiHotelResponse(id=uuid.uuid4(), nombre=nombre, created_at=created_at)
+
+
+def _make_habitaciones_dos():
+    return [
+        HabitacionHotelResponse(
+            id=HAB_ID,
+            capacidad=2,
+            numero="101",
+            descripcion=None,
+            imagenes=[],
+            monto=100,
+            impuestos=10,
+            disponible=True,
+        ),
+        HabitacionHotelResponse(
+            id=HAB2_ID,
+            capacidad=4,
+            numero="201",
+            descripcion=None,
+            imagenes=[],
+            monto=200,
+            impuestos=20,
+            disponible=True,
+        ),
+    ]
+
+
+def _reserva_con_fechas(
+    estado: str,
+    check_in: datetime,
+    check_out: datetime,
+    hab_ids: list | None = None,
+) -> Reserva:
+    r = Reserva(
+        id=uuid.uuid4(),
+        check_in=check_in,
+        check_out=check_out,
+        estado=estado,
+        personas=2,
+        viajero_id=USER_ID,
+        habitaciones_ids=hab_ids if hab_ids is not None else [HAB_ID],
+        pago_id=None,
+        created_at=check_in,
+    )
+    return r
+
+
+def _dt(year: int, month: int, day: int) -> datetime:
+    return datetime(year, month, day, 12, 0, 0, tzinfo=UTC)
+
+
+@pytest.mark.asyncio
+async def test_generar_reporte_ocupacion_sin_habitaciones(mock_db):
+    """Returns empty report when the hotel has no rooms."""
+    with patch(
+        "app.services.reserva_service.obtener_habitaciones_hotel",
+        new=AsyncMock(return_value=[]),
+    ):
+        result = await generar_reporte_ocupacion_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+        )
+
+    assert result.total_habitaciones == 0
+    assert result.ocupacion_por_mes == []
+    assert result.tasa_ocupacion_global == 0.0
+    assert result.nombre_hotel is None
+
+
+@pytest.mark.asyncio
+async def test_generar_reporte_ocupacion_sin_reservas(mock_db):
+    """Returns zero occupation when no confirmed reservations exist."""
+    mock_db.execute = AsyncMock(return_value=_scalars_result([]))
+    hotel_created = datetime(2026, 3, 1, tzinfo=UTC)
+
+    with patch(
+        "app.services.reserva_service.obtener_habitaciones_hotel",
+        new=AsyncMock(return_value=_make_habitaciones()),
+    ), patch(
+        "app.services.reserva_service.obtener_mi_hotel",
+        new=AsyncMock(return_value=_mi_hotel_ns("Hotel Test", hotel_created)),
+    ):
+        result = await generar_reporte_ocupacion_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+        )
+
+    assert result.nombre_hotel == "Hotel Test"
+    assert result.total_habitaciones == 1
+    assert result.noches_ocupadas_totales == 0
+    assert result.tasa_ocupacion_global == 0.0
+    assert len(result.ocupacion_por_mes) >= 1
+    assert all(m.noches_ocupadas == 0 for m in result.ocupacion_por_mes)
+    assert all(m.noches_disponibles > 0 for m in result.ocupacion_por_mes)
+
+
+@pytest.mark.asyncio
+async def test_generar_reporte_ocupacion_happy_path(mock_db):
+    """Counts occupied nights correctly across two months."""
+    hotel_created = datetime(2026, 1, 1, tzinfo=UTC)
+
+    reserva1 = _reserva_con_fechas(
+        "confirmada", _dt(2026, 1, 10), _dt(2026, 1, 13)
+    )
+    reserva2 = _reserva_con_fechas(
+        "confirmada", _dt(2026, 2, 5), _dt(2026, 2, 7)
+    )
+
+    mock_db.execute = AsyncMock(return_value=_scalars_result([reserva1, reserva2]))
+
+    with patch(
+        "app.services.reserva_service.obtener_habitaciones_hotel",
+        new=AsyncMock(return_value=_make_habitaciones()),
+    ), patch(
+        "app.services.reserva_service.obtener_mi_hotel",
+        new=AsyncMock(return_value=_mi_hotel_ns("Hotel Test", hotel_created)),
+    ):
+        result = await generar_reporte_ocupacion_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+        )
+
+    jan = next((m for m in result.ocupacion_por_mes if m.mes == 1), None)
+    feb = next((m for m in result.ocupacion_por_mes if m.mes == 2), None)
+
+    assert jan is not None
+    assert jan.noches_ocupadas == 3  # Jan 10, 11, 12
+
+    assert feb is not None
+    assert feb.noches_ocupadas == 2  # Feb 5, 6
+
+    assert result.noches_ocupadas_totales == 5
+    assert result.tasa_ocupacion_global > 0.0
+
+
+@pytest.mark.asyncio
+async def test_generar_reporte_ocupacion_excluye_cancelada_y_pendiente(mock_db):
+    """Cancelled and pending reservations are not counted as occupied."""
+    hotel_created = datetime(2026, 1, 1, tzinfo=UTC)
+
+    reserva_confirmada = _reserva_con_fechas("confirmada", _dt(2026, 1, 5), _dt(2026, 1, 7))
+    reserva_cancelada = _reserva_con_fechas("cancelada", _dt(2026, 1, 10), _dt(2026, 1, 15))
+    reserva_pendiente = _reserva_con_fechas("pendiente", _dt(2026, 1, 20), _dt(2026, 1, 25))
+
+    mock_db.execute = AsyncMock(
+        return_value=_scalars_result([reserva_confirmada])
+    )
+
+    with patch(
+        "app.services.reserva_service.obtener_habitaciones_hotel",
+        new=AsyncMock(return_value=_make_habitaciones()),
+    ), patch(
+        "app.services.reserva_service.obtener_mi_hotel",
+        new=AsyncMock(return_value=_mi_hotel_ns("Hotel Test", hotel_created)),
+    ):
+        result = await generar_reporte_ocupacion_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+        )
+
+    jan = next((m for m in result.ocupacion_por_mes if m.mes == 1), None)
+    assert jan is not None
+    assert jan.noches_ocupadas == 2  # Only Jan 5 and 6
+
+
+@pytest.mark.asyncio
+async def test_generar_reporte_ocupacion_clamp_a_periodo_registro(mock_db):
+    """Nights before hotel registration date are not counted."""
+    hotel_created = datetime(2026, 1, 15, tzinfo=UTC)
+
+    reserva = _reserva_con_fechas("confirmada", _dt(2026, 1, 10), _dt(2026, 1, 20))
+
+    mock_db.execute = AsyncMock(return_value=_scalars_result([reserva]))
+
+    with patch(
+        "app.services.reserva_service.obtener_habitaciones_hotel",
+        new=AsyncMock(return_value=_make_habitaciones()),
+    ), patch(
+        "app.services.reserva_service.obtener_mi_hotel",
+        new=AsyncMock(return_value=_mi_hotel_ns("Hotel Test", hotel_created)),
+    ):
+        result = await generar_reporte_ocupacion_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+        )
+
+    jan = next((m for m in result.ocupacion_por_mes if m.mes == 1), None)
+    assert jan is not None
+    assert jan.noches_ocupadas == 5  # Jan 15, 16, 17, 18, 19
+
+
+@pytest.mark.asyncio
+async def test_generar_reporte_ocupacion_multi_habitacion_reserva(mock_db):
+    """A reservation covering 2 rooms counts nights for each room."""
+    hotel_created = datetime(2026, 1, 1, tzinfo=UTC)
+
+    reserva = _reserva_con_fechas(
+        "confirmada", _dt(2026, 1, 1), _dt(2026, 1, 4),
+        hab_ids=[HAB_ID, HAB2_ID],
+    )
+
+    mock_db.execute = AsyncMock(return_value=_scalars_result([reserva]))
+
+    with patch(
+        "app.services.reserva_service.obtener_habitaciones_hotel",
+        new=AsyncMock(return_value=_make_habitaciones_dos()),
+    ), patch(
+        "app.services.reserva_service.obtener_mi_hotel",
+        new=AsyncMock(return_value=_mi_hotel_ns("Hotel Test", hotel_created)),
+    ):
+        result = await generar_reporte_ocupacion_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+        )
+
+    jan = next((m for m in result.ocupacion_por_mes if m.mes == 1), None)
+    assert jan is not None
+    assert jan.noches_ocupadas == 6  # 3 nights × 2 rooms
+
+    hab101 = next((h for h in result.ocupacion_por_habitacion if h.numero == "101"), None)
+    hab201 = next((h for h in result.ocupacion_por_habitacion if h.numero == "201"), None)
+    assert hab101 is not None and hab101.noches_ocupadas == 3
+    assert hab201 is not None and hab201.noches_ocupadas == 3
+
+
+@pytest.mark.asyncio
+async def test_generar_reporte_ocupacion_orden_cronologico(mock_db):
+    """Months in ocupacion_por_mes are sorted chronologically."""
+    hotel_created = datetime(2026, 1, 1, tzinfo=UTC)
+
+    reserva_mar = _reserva_con_fechas("confirmada", _dt(2026, 3, 1), _dt(2026, 3, 3))
+    reserva_ene = _reserva_con_fechas("confirmada", _dt(2026, 1, 15), _dt(2026, 1, 17))
+
+    mock_db.execute = AsyncMock(return_value=_scalars_result([reserva_mar, reserva_ene]))
+
+    with patch(
+        "app.services.reserva_service.obtener_habitaciones_hotel",
+        new=AsyncMock(return_value=_make_habitaciones()),
+    ), patch(
+        "app.services.reserva_service.obtener_mi_hotel",
+        new=AsyncMock(return_value=_mi_hotel_ns("Hotel Test", hotel_created)),
+    ):
+        result = await generar_reporte_ocupacion_service(
+            db=mock_db,
+            authorization_header="Bearer token",
+        )
+
+    meses = [(m.anio, m.mes) for m in result.ocupacion_por_mes]
+    assert meses == sorted(meses)

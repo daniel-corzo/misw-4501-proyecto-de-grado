@@ -16,6 +16,7 @@ from app.schemas.reserva import (
     FiltroReservasUsuario,
     ModificarReservaRequest,
     ReporteIngresosResponse,
+    ReporteOcupacionResponse,
     ReservaResponse,
     ListaReservasHotelResponse,
     ListaReservasResponse,
@@ -33,6 +34,7 @@ from app.services.reserva_service import (
     enviar_correo_estado_reserva,
     eliminar_reserva_service,
     generar_reporte_ingresos_service,
+    generar_reporte_ocupacion_service,
     listar_reservas_hotel_service,
     rechazar_reserva_service,
     reserva_to_detalle_response,
@@ -166,6 +168,22 @@ async def generar_reporte_ingresos(
     _current_user: User = Depends(RoleChecker([RoleEnum.MANAGER, RoleEnum.USER])),
 ):
     return await generar_reporte_ingresos_service(
+        db=db,
+        authorization_header=request.headers.get("Authorization"),
+    )
+
+
+@router.get(
+    "/hoteles/reporte-ocupacion",
+    response_model=ReporteOcupacionResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def generar_reporte_ocupacion(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    _current_user: User = Depends(RoleChecker([RoleEnum.MANAGER, RoleEnum.USER])),
+):
+    return await generar_reporte_ocupacion_service(
         db=db,
         authorization_header=request.headers.get("Authorization"),
     )

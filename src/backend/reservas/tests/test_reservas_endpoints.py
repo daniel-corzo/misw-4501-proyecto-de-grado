@@ -15,8 +15,10 @@ from app.schemas.reserva import (
     HabitacionReservaDetalleResponse,
     IngresoMensualResponse,
     ListaReservasHotelResponse,
+    OcupacionMensualResponse,
     PagoReservaDetalleResponse,
     ReporteIngresosResponse,
+    ReporteOcupacionResponse,
     ReservaHabitacionDetalleCompletoResponse,
     ReservaHotelDetalleCompletoResponse,
     ReservaHotelDetalleResponse,
@@ -1636,6 +1638,85 @@ async def test_reporte_ingresos_401_sin_autenticacion(mock_db_session):
     try:
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get("/reservas/hoteles/reporte-ingresos")
+
+        assert response.status_code == 401
+    finally:
+        app.dependency_overrides.clear()
+
+
+# ---------------------------------------------------------------------------
+# GET /reservas/hoteles/reporte-ocupacion
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_reporte_ocupacion_200(override_manager_client, mock_db_session):
+    """Authenticated hotel manager receives a 200 with correct response shape."""
+    from datetime import UTC, datetime
+    reporte = ReporteOcupacionResponse(
+        nombre_hotel="Hotel Grand",
+        fecha_registro=datetime(2026, 1, 1, tzinfo=UTC),
+        total_habitaciones=2,
+        ocupacion_por_mes=[
+            OcupacionMensualResponse(
+                anio=2026, mes=1,
+                noches_ocupadas=10, noches_disponibles=62, tasa_ocupacion=16.13,
+            ),
+        ],
+        ocupacion_por_habitacion=[],
+        noches_ocupadas_totales=10,
+        noches_disponibles_totales=62,
+        tasa_ocupacion_global=16.13,
+    )
+    mock_service = AsyncMock(return_value=reporte)
+
+    with patch("app.routers.reservas.generar_reporte_ocupacion_service", new=mock_service):
+        response = await override_manager_client.get("/reservas/hoteles/reporte-ocupacion")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["nombre_hotel"] == "Hotel Grand"
+    assert body["total_habitaciones"] == 2
+    assert body["tasa_ocupacion_global"] == 16.13
+    assert len(body["ocupacion_por_mes"]) == 1
+    assert body["ocupacion_por_mes"][0]["anio"] == 2026
+    assert body["ocupacion_por_mes"][0]["noches_ocupadas"] == 10
+
+
+@pytest.mark.asyncio
+async def test_reporte_ocupacion_vacio_200(override_manager_client, mock_db_session):
+    """Returns 200 with empty lists when the hotel has no occupation history."""
+    reporte = ReporteOcupacionResponse(
+        nombre_hotel=None,
+        fecha_registro=None,
+        total_habitaciones=0,
+        ocupacion_por_mes=[],
+        ocupacion_por_habitacion=[],
+        noches_ocupadas_totales=0,
+        noches_disponibles_totales=0,
+        tasa_ocupacion_global=0.0,
+    )
+    mock_service = AsyncMock(return_value=reporte)
+
+    with patch("app.routers.reservas.generar_reporte_ocupacion_service", new=mock_service):
+        response = await override_manager_client.get("/reservas/hoteles/reporte-ocupacion")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ocupacion_por_mes"] == []
+    assert body["tasa_ocupacion_global"] == 0.0
+
+
+@pytest.mark.asyncio
+async def test_reporte_ocupacion_401_sin_autenticacion(mock_db_session):
+    """Unauthenticated request to reporte-ocupacion returns 401."""
+    async def override_get_db():
+        yield mock_db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    try:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.get("/reservas/hoteles/reporte-ocupacion")
 
         assert response.status_code == 401
     finally:

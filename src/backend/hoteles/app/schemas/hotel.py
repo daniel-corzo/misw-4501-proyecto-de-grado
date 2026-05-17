@@ -155,3 +155,9 @@ class HotelDetalleResponse(BaseModel):
     updated_at: datetime
     politicas: List[PoliticaDetalleResponse] = Field(default_factory=list)
     habitaciones: List[HabitacionDetalleResponse] = Field(default_factory=list)
+
+
+class MiHotelResumenResponse(BaseModel):
+    id: UUID
+    nombre: str
+    created_at: datetime

@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subject, switchMap, EMPTY, catchError } from 'rxjs';
 import { generateRevenuePdf } from './generate-revenue-pdf';
+import { generateOccupationPdf } from './generate-occupation-pdf';
 import {
   Chart,
   BarController,
@@ -23,6 +24,7 @@ import {
   HotelReservationsFilters,
   PaymentStatus,
   ReporteIngresosResponse,
+  ReporteOcupacionResponse,
 } from '../../../core/services/booking.service';
 import { ReservationDetailModalComponent } from '../components/reservation-detail-modal/reservation-detail-modal.component';
 import type { HabitacionDetalle } from '../../../core/services/hotel.service';
@@ -46,6 +48,7 @@ interface LoadReservationsParams {
 })
 export class PartnerDashboardComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('revenueChart') revenueChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('occupationChart') occupationChartRef!: ElementRef<HTMLCanvasElement>;
   reservations: HotelBookingResponse[] = [];
   habitaciones: HabitacionDetalle[] = [];
   totalReservations = 0;
@@ -61,6 +64,10 @@ export class PartnerDashboardComponent implements OnInit, OnDestroy, AfterViewIn
   isDownloadingReport = false;
   revenueReport: ReporteIngresosResponse | null = null;
   private revenueChartInstance: Chart | null = null;
+
+  isDownloadingOccupation = false;
+  occupationReport: ReporteOcupacionResponse | null = null;
+  private occupationChartInstance: Chart | null = null;
 
   // Filter state
   searchGuest = '';
@@ -118,18 +125,30 @@ export class PartnerDashboardComponent implements OnInit, OnDestroy, AfterViewIn
     return entry?.ingresos_totales ?? 0;
   }
 
+  get currentOccupationRate(): number | null {
+    if (!this.occupationReport) return null;
+    return this.occupationReport.tasa_ocupacion_global;
+  }
+
   ngOnInit(): void {
     this.loadReservations();
     this.loadRevenueReport();
+    this.loadOccupationReport();
 
     this.transloco.langChanges$
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.renderRevenueChart());
+      .subscribe(() => {
+        this.renderRevenueChart();
+        this.renderOccupationChart();
+      });
   }
 
   ngAfterViewInit(): void {
     if (this.revenueReport) {
       this.renderRevenueChart();
+    }
+    if (this.occupationReport) {
+      this.renderOccupationChart();
     }
   }
 
@@ -138,6 +157,7 @@ export class PartnerDashboardComponent implements OnInit, OnDestroy, AfterViewIn
       clearTimeout(this.searchDebounceTimer);
     }
     this.revenueChartInstance?.destroy();
+    this.occupationChartInstance?.destroy();
   }
 
   onSearchGuestChange(): void {
@@ -544,6 +564,116 @@ export class PartnerDashboardComponent implements OnInit, OnDestroy, AfterViewIn
 
   private generatePdf(data: ReporteIngresosResponse): void {
     generateRevenuePdf(data, this.transloco.getActiveLang());
+  }
+
+  private loadOccupationReport(): void {
+    this.bookingService.getHotelOccupationReport().subscribe({
+      next: (data) => {
+        this.occupationReport = data;
+        this.renderOccupationChart();
+      },
+      error: () => {
+        // Degrade gracefully — chart stays empty, rate shows null
+      },
+    });
+  }
+
+  private renderOccupationChart(): void {
+    if (!this.occupationChartRef?.nativeElement) {
+      return;
+    }
+
+    const lang = this.transloco.getActiveLang();
+    const isEs = lang === 'es';
+    const monthNames = isEs
+      ? ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
+      : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+
+    const dataByMonth = new Map<string, number>();
+    for (const entry of (this.occupationReport?.ocupacion_por_mes ?? [])) {
+      dataByMonth.set(`${entry.anio}-${entry.mes}`, entry.tasa_ocupacion);
+    }
+
+    const labels: string[] = [];
+    const values: number[] = [];
+    for (let m = 1; m <= 12; m++) {
+      labels.push(monthNames[m - 1]);
+      values.push(dataByMonth.get(`${currentYear}-${m}`) ?? 0);
+    }
+
+    this.occupationChartInstance?.destroy();
+    this.occupationChartInstance = new Chart(this.occupationChartRef.nativeElement, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            data: values,
+            backgroundColor: (ctx) => {
+              const isCurrent = ctx.dataIndex === currentMonth - 1;
+              return isCurrent ? 'rgb(30, 80, 180)' : 'rgba(30, 80, 180, 0.25)';
+            },
+            borderRadius: 3,
+            borderSkipped: false,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 600 },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const val = ctx.parsed.y as number;
+                return ' ' + val.toFixed(1) + '%';
+              },
+              title: (items) => items[0].label,
+            },
+          },
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            border: { display: false },
+            ticks: {
+              font: { size: 9 },
+              color: '#9ca3af',
+              maxRotation: 0,
+            },
+          },
+          y: {
+            display: false,
+            beginAtZero: true,
+            max: 100,
+          },
+        },
+      },
+    });
+  }
+
+  downloadOccupationReport(): void {
+    if (this.isDownloadingOccupation) {
+      return;
+    }
+    this.isDownloadingOccupation = true;
+    this.bookingService.getHotelOccupationReport().subscribe({
+      next: (data) => {
+        generateOccupationPdf(data, this.transloco.getActiveLang());
+        this.isDownloadingOccupation = false;
+      },
+      error: () => {
+        this.toast.danger(
+          this.transloco.translate('partner.dashboard.stats.downloadError')
+        );
+        this.isDownloadingOccupation = false;
+      },
+    });
   }
 
   private loadReservations(isRefresh = false): void {
