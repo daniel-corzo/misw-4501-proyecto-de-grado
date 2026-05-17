@@ -219,3 +219,37 @@ class ReporteIngresosResponse(BaseModel):
     ingresos_por_mes: List[IngresoMensualResponse]
     total_general: int
     total_pagos: int
+
+
+class MiHotelResponse(BaseModel):
+    id: UUID
+    nombre: str
+    created_at: datetime
+
+
+class OcupacionMensualResponse(BaseModel):
+    anio: int
+    mes: int
+    noches_ocupadas: int
+    noches_disponibles: int
+    tasa_ocupacion: float
+
+
+class OcupacionHabitacionResponse(BaseModel):
+    habitacion_id: UUID
+    numero: str
+    capacidad: int
+    noches_ocupadas: int
+    noches_disponibles: int
+    tasa_ocupacion: float
+
+
+class ReporteOcupacionResponse(BaseModel):
+    nombre_hotel: Optional[str]
+    fecha_registro: Optional[datetime]
+    total_habitaciones: int
+    ocupacion_por_mes: List[OcupacionMensualResponse]
+    ocupacion_por_habitacion: List[OcupacionHabitacionResponse]
+    noches_ocupadas_totales: int
+    noches_disponibles_totales: int
+    tasa_ocupacion_global: float

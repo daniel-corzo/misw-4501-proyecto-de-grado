@@ -18,9 +18,13 @@ from app.schemas.reserva import (
     HabitacionReservaDetalleResponse,
     IngresoMensualResponse,
     ListaReservasHotelResponse,
+    MiHotelResponse,
     ModificarReservaRequest,
+    OcupacionHabitacionResponse,
+    OcupacionMensualResponse,
     PagoReservaDetalleResponse,
     ReporteIngresosResponse,
+    ReporteOcupacionResponse,
     ReservaDetalleResponse,
     ReservaHabitacionDetalleCompletoResponse,
     ReservaHotelDetalleCompletoResponse,
@@ -33,6 +37,7 @@ from app.schemas.reserva import (
 from app.services.hotel_service import (
     obtener_detalles_habitaciones_por_ids,
     obtener_habitaciones_hotel,
+    obtener_mi_hotel,
 )
 from app.services.pago_service import obtener_pagos_por_ids
 from app.services.usuario_service import obtener_usuarios_resumen_por_ids
@@ -878,4 +883,147 @@ async def listar_reservas_usuario_service(
     return ListaReservasResponse(
         total=total,
         reservas=[reserva_to_response(r) for r in reservas]
+    )
+
+
+async def generar_reporte_ocupacion_service(
+    db: AsyncSession,
+    authorization_header: str | None,
+) -> ReporteOcupacionResponse:
+    habitaciones = await obtener_habitaciones_hotel(authorization_header)
+    habitacion_ids = [h.id for h in habitaciones]
+
+    empty = ReporteOcupacionResponse(
+        nombre_hotel=None,
+        fecha_registro=None,
+        total_habitaciones=0,
+        ocupacion_por_mes=[],
+        ocupacion_por_habitacion=[],
+        noches_ocupadas_totales=0,
+        noches_disponibles_totales=0,
+        tasa_ocupacion_global=0.0,
+    )
+
+    if not habitacion_ids:
+        return empty
+
+    mi_hotel: MiHotelResponse = await obtener_mi_hotel(authorization_header)
+    habitacion_ids_set = set(habitacion_ids)
+
+    # Query confirmed/completed reservations that overlap with any hotel room
+    stmt = select(Reserva).where(
+        and_(
+            Reserva.habitaciones_ids.overlap(habitacion_ids),
+            Reserva.estado.in_(["confirmada", "completada"]),
+        )
+    )
+    result = await db.execute(stmt)
+    reservas_db = list(result.scalars().all())
+
+    # Build month-based calendar from hotel registration to today
+    start_date = mi_hotel.created_at.date() if mi_hotel.created_at else date.today()
+    end_date = date.today()
+
+    if start_date > end_date:
+        start_date = end_date
+
+    total_days = (end_date - start_date).days + 1
+    total_habitaciones = len(habitaciones)
+
+    # Build per-month day ranges within [start_date, end_date]
+    months: list[tuple[int, int]] = []
+    cur = date(start_date.year, start_date.month, 1)
+    while cur <= end_date:
+        months.append((cur.year, cur.month))
+        if cur.month == 12:
+            cur = date(cur.year + 1, 1, 1)
+        else:
+            cur = date(cur.year, cur.month + 1, 1)
+
+    import calendar as _cal
+    noches_por_mes: dict[tuple[int, int], int] = {m: 0 for m in months}
+    noches_por_hab: dict[uuid.UUID, int] = {hid: 0 for hid in habitacion_ids}
+
+    for reserva in reservas_db:
+        ci = reserva.check_in.date() if hasattr(reserva.check_in, 'date') else reserva.check_in
+        co = reserva.check_out.date() if hasattr(reserva.check_out, 'date') else reserva.check_out
+
+        # Only rooms that belong to this hotel
+        hab_ids_in_reserva = [
+            uid for uid in (reserva.habitaciones_ids or [])
+            if uid in habitacion_ids_set
+        ]
+        if not hab_ids_in_reserva:
+            continue
+
+        # Iterate each night in [check_in, check_out)
+        night = ci
+        while night < co:
+            if start_date <= night <= end_date:
+                key = (night.year, night.month)
+                if key in noches_por_mes:
+                    noches_por_mes[key] += len(hab_ids_in_reserva)
+                for hid in hab_ids_in_reserva:
+                    if hid in noches_por_hab:
+                        noches_por_hab[hid] += 1
+            night += timedelta(days=1)
+
+    # Build monthly response with denominators
+    hab_info = {h.id: h for h in habitaciones}
+    ocupacion_por_mes: list[OcupacionMensualResponse] = []
+    for (anio, mes) in sorted(months):
+        days_in_month = _cal.monthrange(anio, mes)[1]
+        month_start = date(anio, mes, 1)
+        month_end = date(anio, mes, days_in_month)
+        effective_start = max(month_start, start_date)
+        effective_end = min(month_end, end_date)
+        dias_efectivos = (effective_end - effective_start).days + 1
+        noches_disp = total_habitaciones * dias_efectivos
+        noches_ocup = noches_por_mes.get((anio, mes), 0)
+        tasa = round(noches_ocup / noches_disp * 100, 2) if noches_disp > 0 else 0.0
+        ocupacion_por_mes.append(
+            OcupacionMensualResponse(
+                anio=anio,
+                mes=mes,
+                noches_ocupadas=noches_ocup,
+                noches_disponibles=noches_disp,
+                tasa_ocupacion=tasa,
+            )
+        )
+
+    # Build per-room response
+    ocupacion_por_habitacion: list[OcupacionHabitacionResponse] = []
+    noches_disp_total = total_habitaciones * total_days
+    for hid in habitacion_ids:
+        h = hab_info[hid]
+        noches_ocup = noches_por_hab.get(hid, 0)
+        tasa = round(noches_ocup / total_days * 100, 2) if total_days > 0 else 0.0
+        ocupacion_por_habitacion.append(
+            OcupacionHabitacionResponse(
+                habitacion_id=hid,
+                numero=h.numero,
+                capacidad=h.capacidad,
+                noches_ocupadas=noches_ocup,
+                noches_disponibles=total_days,
+                tasa_ocupacion=tasa,
+            )
+        )
+    ocupacion_por_habitacion.sort(key=lambda x: x.numero)
+
+    noches_ocupadas_totales = sum(o.noches_ocupadas for o in ocupacion_por_mes)
+    tasa_global = (
+        round(noches_ocupadas_totales / noches_disp_total * 100, 2)
+        if noches_disp_total > 0
+        else 0.0
+    )
+
+    return ReporteOcupacionResponse(
+        nombre_hotel=mi_hotel.nombre,
+        fecha_registro=mi_hotel.created_at,
+        total_habitaciones=total_habitaciones,
+        ocupacion_por_mes=ocupacion_por_mes,
+        ocupacion_por_habitacion=ocupacion_por_habitacion,
+        noches_ocupadas_totales=noches_ocupadas_totales,
+        noches_disponibles_totales=noches_disp_total,
+        tasa_ocupacion_global=tasa_global,
     )

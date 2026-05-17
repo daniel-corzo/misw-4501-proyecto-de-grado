@@ -3,8 +3,13 @@
 Seed de reservas y pagos para desarrollo local.
 
 Descubre automáticamente los hoteles, habitaciones y viajeros existentes
-en la BD y les inserta pagos exitosos distribuidos mes a mes en el año
-actual. No elimina ni modifica ningún dato existente.
+en la BD y les inserta reservas distribuidas en los últimos ~9 meses.
+
+Las reservas confirmadas sirven para el reporte de ocupación y el de ingresos.
+Unas pocas reservas canceladas/pendientes permiten verificar que los reportes
+las excluyen correctamente.
+
+No elimina ni modifica ningún dato existente.
 
 Requisitos:
     pip install psycopg2-binary --index-url https://pypi.org/simple/
@@ -14,7 +19,7 @@ Uso:
 """
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import psycopg2
 
@@ -26,26 +31,49 @@ DB_NAME = "travelhub"
 DB_USER = "travelhub"
 DB_PASS = "travelhub"
 
-# Distribución de reservas por mes del año actual.
-# (mes, dia_pago, noches): se repite cíclicamente sobre las habitaciones
-# disponibles por hotel.
-PATRON_MENSUAL = [
-    (1,   8, 2),
-    (1,  20, 3),
-    (2,   5, 2),
-    (2,  18, 1),
-    (3,   3, 2),
-    (3,  14, 3),
-    (3,  25, 3),
-    (4,   9, 1),
-    (4,  22, 4),
-    (5,   2, 1),
-    (5,  14, 2),
-]
-
 
 def utc_dt(year: int, month: int, day: int, hour: int = 12) -> datetime:
     return datetime(year, month, day, hour, 0, 0, tzinfo=timezone.utc)
+
+
+def generate_patron(start: date, end: date) -> list[tuple[int, int, int, int]]:
+    """
+    Genera una lista de (año, mes, día, noches) cubriendo el rango [start, end].
+    Produce 2-3 reservas por mes con noches variadas para que cada habitación
+    tenga un perfil de ocupación diferente al asignarse cíclicamente.
+    """
+    patron: list[tuple[int, int, int, int]] = []
+    cur = date(start.year, start.month, 1)
+    month_index = 0
+    while cur <= end:
+        year, month = cur.year, cur.month
+        # 2-3 reservas por mes alternando
+        slots = [
+            (8,  2 + (month_index % 3)),     # noches 2, 3, 4, ciclo
+            (20, 1 + ((month_index + 1) % 4)),
+        ]
+        if month_index % 2 == 0:
+            slots.append((26, 3))
+
+        for dia, noches in slots:
+            # Evitar que check_in + noches supere el fin de mes
+            try:
+                check_in = date(year, month, dia + 1)
+            except ValueError:
+                continue
+            check_out = check_in + timedelta(days=noches)
+            # Solo si check_in está dentro del período [start, end]
+            if check_in >= start:
+                patron.append((year, month, dia, noches))
+
+        # Avanzar al siguiente mes
+        if month == 12:
+            cur = date(year + 1, 1, 1)
+        else:
+            cur = date(year, month + 1, 1)
+        month_index += 1
+
+    return patron
 
 
 def main() -> None:
@@ -56,7 +84,10 @@ def main() -> None:
     conn.autocommit = False
     cur = conn.cursor()
 
-    anio = datetime.now().year
+    # ── Período: desde 9 meses atrás hasta hoy ────────────────────────────────
+    today = date.today()
+    start = today - timedelta(days=270)  # ~9 meses
+    patron = generate_patron(start, today)
 
     # ── Lookup: viajero ───────────────────────────────────────────────────────
     cur.execute(
@@ -69,6 +100,7 @@ def main() -> None:
         return
     viajero_id, viajero_email = row
     print(f"Viajero: {viajero_email} ({viajero_id})")
+    print(f"Periodo: {start} -> {today}  ({len(patron)} reservas/hotel)")
 
     # ── Lookup: todos los hoteles con habitaciones ────────────────────────────
     cur.execute(
@@ -101,17 +133,21 @@ def main() -> None:
         for hab_id, numero, monto, impuestos in habitaciones:
             print(f"  Hab {numero}: id={hab_id}  monto=${monto:,}  imp=${impuestos:,}")
 
-        # Asigna habitaciones cíclicamente al patrón mensual
-        print(f"  Insertando {len(PATRON_MENSUAL)} reservas...")
-        for i, (mes, dia, noches) in enumerate(PATRON_MENSUAL):
-            hab_id, numero, monto, impuestos = habitaciones[i % len(habitaciones)]
+        # Asigna habitaciones cíclicamente al patrón mensual, con offset por mes
+        # para que las habitaciones tengan perfiles de ocupación distintos.
+        print(f"  Insertando {len(patron)} reservas confirmadas...")
+        for i, (anio, mes, dia, noches) in enumerate(patron):
+            # Offset por mes para variar la habitación asignada
+            mes_index = (anio * 12 + mes) % len(habitaciones)
+            hab_index = (i + mes_index) % len(habitaciones)
+            hab_id, numero, monto, impuestos = habitaciones[hab_index]
             monto_total = noches * (monto + impuestos)
 
-            pago_id   = uuid.uuid4()
+            pago_id    = uuid.uuid4()
             reserva_id = uuid.uuid4()
-            pago_ts   = utc_dt(anio, mes, dia)
-            check_in  = utc_dt(anio, mes, dia + 1, 15)
-            check_out = check_in + timedelta(days=noches)
+            pago_ts    = utc_dt(anio, mes, dia)
+            check_in   = utc_dt(anio, mes, dia + 1, 15)
+            check_out  = check_in + timedelta(days=noches)
 
             cur.execute(
                 """
@@ -137,19 +173,41 @@ def main() -> None:
                     str(pago_id),
                 ),
             )
-
-            print(
-                f"    {anio}-{mes:02d}-{dia:02d}  Hab {numero}  {noches}n"
-                f"  ${monto_total:,} COP"
-            )
             total_insertado += 1
+
+        # Insertar 2 reservas extra con estados cancelada/pendiente para verificar
+        # que los reportes las excluyan correctamente.
+        if habitaciones:
+            hab_id_extra, numero_extra, _, _ = habitaciones[0]
+            for estado_extra in ("cancelada", "pendiente"):
+                extra_id = uuid.uuid4()
+                # Fecha segura: 15 días atrás
+                extra_ts = utc_dt(today.year, today.month, max(1, today.day - 15))
+                cur.execute(
+                    """
+                    INSERT INTO reservas (
+                        id, created_at, updated_at,
+                        check_in, check_out, estado, personas,
+                        viajero_id, habitaciones_ids, pago_id
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::uuid[], %s)
+                    """,
+                    (
+                        str(extra_id), extra_ts, extra_ts,
+                        extra_ts, extra_ts + timedelta(days=2), estado_extra, 2,
+                        str(viajero_id),
+                        "{" + str(hab_id_extra) + "}",
+                        None,
+                    ),
+                )
+            print(f"  + 2 reservas extra (cancelada, pendiente) para verificacion de filtros")
 
     conn.commit()
     cur.close()
     conn.close()
 
-    print(f"\n✓ Seed completado: {total_insertado} reservas + pagos insertados.")
-    print(f"  Inicia sesión con el partner de cualquier hotel para ver el gráfico.")
+    print(f"\nSeed completado: {total_insertado} reservas confirmadas + pagos insertados.")
+    print(f"  + 2 reservas no-confirmadas por hotel (excluidas del reporte).")
+    print(f"  Inicia sesion con el partner de cualquier hotel para ver el reporte de ocupacion.")
 
 
 if __name__ == "__main__":

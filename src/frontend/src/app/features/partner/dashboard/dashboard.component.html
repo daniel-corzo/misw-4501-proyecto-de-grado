@@ -28,18 +28,23 @@
     <div class="stat-card">
       <div class="stat-header">
         <h2>{{ 'partner.dashboard.stats.occupancyRate' | transloco }}</h2>
-        <button class="btn-primary" type="button">
-          {{ 'partner.dashboard.stats.download' | transloco }}
+        <button
+          class="btn-primary"
+          type="button"
+          (click)="downloadOccupationReport()"
+          [disabled]="isDownloadingOccupation"
+        >
+          {{ isDownloadingOccupation
+              ? ('partner.dashboard.stats.downloading' | transloco)
+              : ('partner.dashboard.stats.download' | transloco) }}
         </button>
       </div>
       <div class="stat-value">
-        88.4%
+        {{ currentOccupationRate !== null ? (currentOccupationRate | number:'1.1-1') + '%' : '—' }}
         <span class="stat-subtitle">{{ 'partner.dashboard.stats.monthlyAverage' | transloco }}</span>
       </div>
-      <div class="stat-chart-wave">
-        <svg viewBox="0 0 500 150" preserveAspectRatio="none">
-          <path d="M0,150 L0,100 Q125,50 250,90 T500,30 L500,150 Z" fill="#dbeafe" opacity="0.6"></path>
-        </svg>
+      <div class="revenue-chart-container">
+        <canvas #occupationChart></canvas>
       </div>
     </div>
   </div>
