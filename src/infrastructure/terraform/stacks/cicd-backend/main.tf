@@ -5,6 +5,7 @@ locals {
     "hoteles",
     "reservas",
     "notificaciones",
+    "pagos",
   ])
 }
 

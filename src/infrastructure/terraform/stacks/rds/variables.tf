@@ -24,3 +24,8 @@ variable "jwt_public_key" {
   type      = string
   sensitive = true
 }
+
+variable "pago_rsa_private_key" {
+  type      = string
+  sensitive = true
+}

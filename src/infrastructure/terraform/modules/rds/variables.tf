@@ -47,3 +47,9 @@ variable "jwt_public_key" {
   description = "JWT public key in PEM format"
 }
 
+variable "pago_rsa_private_key" {
+  type        = string
+  sensitive   = true
+  description = "RSA private key (PEM) used by the pagos service to decrypt card payloads"
+}
+

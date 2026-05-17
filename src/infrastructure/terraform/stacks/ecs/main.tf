@@ -2,7 +2,7 @@ locals {
   # Overrides por servicio: exclude_secrets y extra_environment
   service_overrides = {
     usuarios = {
-      exclude_secrets   = []
+      exclude_secrets   = ["pago_rsa_private_key"]
       extra_environment = [
         {
           name  = "BACKEND_API_URL"
@@ -11,7 +11,7 @@ locals {
       ]
     }
     busquedas = {
-      exclude_secrets   = ["jwt_private_key"]
+      exclude_secrets   = ["jwt_private_key", "pago_rsa_private_key"]
       extra_environment = [
         {
           name  = "BACKEND_API_URL"
@@ -20,7 +20,7 @@ locals {
       ]
     }
     hoteles = {
-      exclude_secrets = ["jwt_private_key"]
+      exclude_secrets = ["jwt_private_key", "pago_rsa_private_key"]
       extra_environment = [
         {
           name  = "BACKEND_API_URL"
@@ -29,7 +29,7 @@ locals {
       ]
     }
     reservas = {
-      exclude_secrets   = ["jwt_private_key"]
+      exclude_secrets   = ["jwt_private_key", "pago_rsa_private_key"]
       extra_environment = [
         {
           name  = "BACKEND_API_URL"
@@ -38,7 +38,7 @@ locals {
       ]
     }
     notificaciones = {
-      exclude_secrets   = ["jwt_private_key", "db_url"]
+      exclude_secrets   = ["jwt_private_key", "db_url", "pago_rsa_private_key"]
       extra_environment = [
         {
           name  = "BACKEND_API_URL"
