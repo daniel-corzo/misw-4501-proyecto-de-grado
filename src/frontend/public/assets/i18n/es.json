@@ -12,7 +12,24 @@
     "notifications": "Notificaciones",
     "roleTraveler": "Viajero",
     "rolePartner": "Hotelero",
-    "changeLanguage": "Cambiar idioma"
+    "changeLanguage": "Cambiar idioma",
+    "accessibility": "Accesibilidad"
+  },
+  "settings": {
+    "title": "Configuración"
+  },
+  "accessibility": {
+    "title": "Accesibilidad",
+    "colorBlindMode": "Modo daltónico",
+    "off": "Sin filtro",
+    "protanopia": "Protanopia (rojo)",
+    "deuteranopia": "Deuteranopia (verde)",
+    "tritanopia": "Tritanopia (azul)",
+    "description": "Filtros de simulación para personas con deficiencia de visión cromática.",
+    "fontSize": "Tamaño de texto",
+    "fontNormal": "Normal",
+    "fontLarge": "Grande",
+    "fontXLarge": "Muy grande"
   },
   "auth": {
     "roleTraveler": "Viajero",

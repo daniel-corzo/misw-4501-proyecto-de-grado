@@ -72,3 +72,26 @@ button {
   border: none;
   background: none;
 }
+
+/* ── Color-blindness simulation filters ───────────────────────── */
+html.cb-protanopia   { filter: url(#cb-protanopia); }
+html.cb-deuteranopia { filter: url(#cb-deuteranopia); }
+html.cb-tritanopia   { filter: url(#cb-tritanopia); }
+
+/* ── Font-size accessibility scale ───────────────────────────── */
+html.fs-large {
+  --font-h1:      700 36px/1.2 var(--font-family);
+  --font-h2-bold: 700 20px/1.4 var(--font-family);
+  --font-h2:      300 20px/1.4 var(--font-family);
+  --font-body1:   300 18px/1.5 var(--font-family);
+  --font-body2:   300 16px/1.5 var(--font-family);
+  --font-body3:   300 14px/1.5 var(--font-family);
+}
+html.fs-xlarge {
+  --font-h1:      700 40px/1.2 var(--font-family);
+  --font-h2-bold: 700 22px/1.4 var(--font-family);
+  --font-h2:      300 22px/1.4 var(--font-family);
+  --font-body1:   300 20px/1.5 var(--font-family);
+  --font-body2:   300 18px/1.5 var(--font-family);
+  --font-body3:   300 16px/1.5 var(--font-family);
+}
