@@ -685,3 +685,77 @@ async def test_delete_habitacion_returns_401_when_unauthenticated(mock_db_sessio
         assert response.status_code == 401
     finally:
         app.dependency_overrides.clear()
+
+
+# ---------------------------------------------------------------------------
+# GET /hoteles/mi-hotel
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_mi_hotel_200(override_client, mock_db_session):
+    """Authenticated hotel manager gets their hotel summary."""
+    hotel_id = uuid.uuid4()
+    usuario_id = uuid.uuid4()
+    created_at = datetime.now(UTC)
+    updated_at = datetime.now(UTC)
+
+    hotel = SimpleNamespace(
+        id=hotel_id,
+        nombre="Hotel Test",
+        direccion="Calle 1",
+        pais="Colombia",
+        estado=None,
+        departamento="Cundinamarca",
+        ciudad="Bogota",
+        descripcion=None,
+        amenidades=[],
+        estrellas=4,
+        ranking=4.0,
+        contacto_celular=None,
+        contacto_email=None,
+        imagenes=[],
+        check_in=datetime.now(UTC).time(),
+        check_out=datetime.now(UTC).time(),
+        valor_minimo_modificacion=50000.0,
+        usuario_id=usuario_id,
+        created_at=created_at,
+        updated_at=updated_at,
+        politicas=[],
+        habitaciones=[],
+    )
+
+    mock_db_session.execute = AsyncMock(return_value=_ScalarResult(hotel))
+
+    response = await override_client.get("/hoteles/mi-hotel")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["nombre"] == "Hotel Test"
+    assert data["id"] == str(hotel_id)
+    assert "created_at" in data
+
+
+@pytest.mark.asyncio
+async def test_mi_hotel_401_sin_autenticacion(mock_db_session):
+    """Unauthenticated request to /mi-hotel returns 401."""
+    async def override_get_db():
+        yield mock_db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    try:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.get("/hoteles/mi-hotel")
+        assert response.status_code == 401
+    finally:
+        app.dependency_overrides.clear()
+
+
+@pytest.mark.asyncio
+async def test_mi_hotel_404_sin_hotel(override_client, mock_db_session):
+    """Hotel user with no hotel gets 404."""
+    mock_db_session.execute = AsyncMock(return_value=_ScalarResult(None))
+
+    response = await override_client.get("/hoteles/mi-hotel")
+
+    assert response.status_code == 404

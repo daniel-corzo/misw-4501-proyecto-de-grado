@@ -12,7 +12,7 @@ struct CapsuleTextField: View {
     let placeholder: LocalizedStringResource
     let textInputAutocapitalization: TextInputAutocapitalization?
     let isSecuredField: Bool
-    
+
     @Binding var text: String
     
     @State private var isHidingSecureText: Bool = true

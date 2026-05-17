@@ -13,6 +13,23 @@ class EstadoReserva(str, Enum):
     completada = "completada"
 
 
+class EstadoPagoReserva(str, Enum):
+    successful = "successful"
+    failed = "failed"
+
+
+class EstadoPagoDetalle(str, Enum):
+    successful = "successful"
+    failed = "failed"
+    pending = "pending"
+
+
+class EstadoPagoFiltro(str, Enum):
+    successful = "successful"
+    failed = "failed"
+    pending = "pending"
+
+
 class FiltroReservasUsuario(str, Enum):
     activas = "activas"
     canceladas = "canceladas"
@@ -38,6 +55,7 @@ class ModificarReservaRequest(BaseModel):
     fecha_salida: Optional[date] = None
     num_huespedes: Optional[int] = Field(default=None, ge=1)
     habitacion_id: Optional[UUID] = None
+    pago_id: Optional[UUID] = None
 
     @model_validator(mode="after")
     def al_menos_un_campo(self):
@@ -47,6 +65,7 @@ class ModificarReservaRequest(BaseModel):
                 self.fecha_salida is not None,
                 self.num_huespedes is not None,
                 self.habitacion_id is not None,
+                self.pago_id is not None,
             )
         ):
             raise ValueError("Debe indicar al menos un campo a modificar")
@@ -67,6 +86,30 @@ class ReservaResponse(BaseModel):
     estado: EstadoReserva
     pago_id: Optional[UUID] = None
     created_at: datetime
+
+
+class ReservaHotelResponse(ReservaResponse):
+    nombre_viajero: Optional[str] = None
+    email_viajero: Optional[str] = None
+    numero_habitacion: Optional[str] = None
+    total_noches: int = Field(default=0, ge=0)
+    monto_total: Optional[int] = None
+    estado_pago: Optional[EstadoPagoReserva] = None
+
+
+class ViajeroReservaDetalleResponse(BaseModel):
+    id: UUID
+    nombre: Optional[str] = None
+    email: Optional[str] = None
+
+
+class PagoReservaDetalleResponse(BaseModel):
+    id: Optional[UUID] = None
+    estado: EstadoPagoDetalle = EstadoPagoDetalle.pending
+    monto: Optional[int] = None
+    medio_de_pago: Optional[str] = None
+    created_at: Optional[datetime] = None
+    tarjeta_ultimos_4: Optional[str] = None
 
 
 class ReservaHotelDetalleResponse(BaseModel):
@@ -97,6 +140,7 @@ class ReservaHabitacionDetalleCompletoResponse(BaseModel):
 
 class ReservaDetalleResponse(BaseModel):
     id: UUID
+    viajero_id: UUID
     codigo_reserva: str
     estado: EstadoReserva
     fecha_entrada: date
@@ -107,6 +151,14 @@ class ReservaDetalleResponse(BaseModel):
     hotel: ReservaHotelDetalleResponse
     habitacion: ReservaHabitacionDetalleCompletoResponse
     amenidades_hotel: List[str] = Field(default_factory=list)
+
+
+class ReservaHotelDetalleCompletoResponse(ReservaDetalleResponse):
+    viajero: ViajeroReservaDetalleResponse
+    pago: PagoReservaDetalleResponse
+    total_noches: int = Field(default=0, ge=0)
+    monto_total: Optional[int] = None
+    qr_checkin_payload: str
 
 
 class ListaReservasResponse(BaseModel):
@@ -123,6 +175,7 @@ class HabitacionHotelResponse(BaseModel):
     monto: int
     impuestos: int
     disponible: bool
+    nombre_habitacion: Optional[str] = None
 
 
 class HabitacionReservaDetalleResponse(BaseModel):
@@ -151,5 +204,53 @@ class HabitacionReservaDetalleResponse(BaseModel):
 
 class ListaReservasHotelResponse(BaseModel):
     total: int
-    reservas: List[ReservaResponse]
+    reservas: List[ReservaHotelResponse]
     habitaciones: List[HabitacionHotelResponse]
+
+
+class IngresoMensualResponse(BaseModel):
+    anio: int
+    mes: int
+    total_pagos: int
+    ingresos_totales: int
+
+
+class ReporteIngresosResponse(BaseModel):
+    nombre_hotel: Optional[str]
+    ingresos_por_mes: List[IngresoMensualResponse]
+    total_general: int
+    total_pagos: int
+
+
+class MiHotelResponse(BaseModel):
+    id: UUID
+    nombre: str
+    created_at: datetime
+
+
+class OcupacionMensualResponse(BaseModel):
+    anio: int
+    mes: int
+    noches_ocupadas: int
+    noches_disponibles: int
+    tasa_ocupacion: float
+
+
+class OcupacionHabitacionResponse(BaseModel):
+    habitacion_id: UUID
+    numero: str
+    capacidad: int
+    noches_ocupadas: int
+    noches_disponibles: int
+    tasa_ocupacion: float
+
+
+class ReporteOcupacionResponse(BaseModel):
+    nombre_hotel: Optional[str]
+    fecha_registro: Optional[datetime]
+    total_habitaciones: int
+    ocupacion_por_mes: List[OcupacionMensualResponse]
+    ocupacion_por_habitacion: List[OcupacionHabitacionResponse]
+    noches_ocupadas_totales: int
+    noches_disponibles_totales: int
+    tasa_ocupacion_global: float

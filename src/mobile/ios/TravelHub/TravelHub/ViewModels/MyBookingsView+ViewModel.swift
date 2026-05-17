@@ -80,25 +80,25 @@ extension EstadoReserva {
 extension MyBookingsView {
     @Observable
     class ViewModel {
-        var reservationService: ReservationService = ReservationServiceKey.defaultValue
+        var bookingService: BookingService = BookingServiceKey.defaultValue
         var toastManager: ToastManager = ToastManagerKey.defaultValue
 
         var selectedTab: BookingTab = .active
-        var reservations: [ReservationListItemDTO] = []
+        var bookings: [BookingListItemDTO] = []
         var isLoading = false
         var hasError = false
 
         @MainActor
-        func fetchReservations() async {
+        func fetchBookings() async {
             isLoading = true
             hasError = false
             defer { isLoading = false }
 
             do {
-                let response = try await reservationService.fetchReservations(
+                let response = try await bookingService.fetchBookings(
                     estado: selectedTab.estadoQuery
                 )
-                reservations = response.reservas
+                bookings = response.reservas
             } catch is CancellationError {
                 return
             } catch let error as HttpError where error == .invalidCredentials {

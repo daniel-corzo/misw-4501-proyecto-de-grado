@@ -16,7 +16,7 @@ enum EstadoReserva: String, Codable {
 
 // MARK: - Utility Models
 
-struct NewReservation {
+struct NewBooking {
     var habitacionID: UUID
     var fechaEntrada: Date
     var fechaSalida: Date
@@ -24,7 +24,7 @@ struct NewReservation {
     var pagoID: UUID?
 }
 
-struct ModifyReservation: Hashable {
+struct ModifyBooking: Hashable {
     var id: UUID
     var habitacionID: UUID
     var fechaEntrada: Date

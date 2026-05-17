@@ -9,6 +9,8 @@ from sqlalchemy.orm import selectinload
 from app.schemas.usuario import (
     CrearUsuarioRequest,
     ActualizarUsuarioRequest,
+    ListaUsuariosResumenResponse,
+    UsuarioResumenResponse,
 )
 from app.models.usuario import Usuario
 from app.models.usuario import TipoUsuario
@@ -31,7 +33,10 @@ async def create_user(
             detail="Usuario ya existe con este email",
         )
 
-    role = body.role if body.role is not None else RoleEnum.USER
+    if body.tipo == TipoUsuario.HOTEL:
+        role = RoleEnum.MANAGER
+    else:
+        role = body.role if body.role is not None else RoleEnum.USER
     user = Usuario(
         id=uuid.uuid4(),
         email=body.email,
@@ -126,3 +131,28 @@ async def update_user_profile(
         .where(Usuario.id == usuario_id)
     )
     return result.scalars().first()
+
+
+async def get_users_summary(
+    usuario_ids: list[uuid.UUID],
+    db: AsyncSession,
+) -> ListaUsuariosResumenResponse:
+    if not usuario_ids:
+        return ListaUsuariosResumenResponse(usuarios=[])
+
+    result = await db.execute(
+        select(Usuario)
+        .options(selectinload(Usuario.viajero))
+        .where(Usuario.id.in_(usuario_ids))
+    )
+    usuarios = result.scalars().all()
+    return ListaUsuariosResumenResponse(
+        usuarios=[
+            UsuarioResumenResponse(
+                id=usuario.id,
+                nombre=usuario.viajero.nombre if usuario.viajero else None,
+                email=usuario.email,
+            )
+            for usuario in usuarios
+        ]
+    )

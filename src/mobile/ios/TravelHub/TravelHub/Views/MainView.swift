@@ -10,6 +10,8 @@ import SwiftUI
 struct MainView: View {
 
     @Environment(Router.self) private var router
+    @Environment(\.bookingService) private var bookingService
+    @Environment(\.bookingPoller) private var poller
 
     @Binding var isLoggedIn: Bool
 
@@ -46,12 +48,15 @@ struct MainView: View {
             .navigationDestination(for: Destination.self) { destination in
                 switch destination {
                     case .myBookings: MyBookingsView()
-                    case .createReservation(let hotel, let reservation):
-                        CreateReservationView(hotel: hotel, reservation: reservation)
+                    case .createBooking(let hotel, let booking):
+                        CreateBookingView(hotel: hotel, booking: booking)
                     case .hotelDetail(let id):
                         HotelDetailView(hotelId: id)
                 }
             }
+        }
+        .task {
+            await poller.start(bookingService: bookingService)
         }
     }
 

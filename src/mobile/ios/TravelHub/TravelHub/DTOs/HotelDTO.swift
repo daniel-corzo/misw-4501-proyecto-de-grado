@@ -13,6 +13,7 @@ struct HotelListDTO: Decodable {
     let ciudad: String
     let pais: String
     let estrellas: Int
+    let amenidades: [String]
     let imagenes: [String]
     let precioMinimo: Int
     let createdAt: String
@@ -23,6 +24,7 @@ struct HotelListDTO: Decodable {
         case ciudad
         case pais
         case estrellas
+        case amenidades
         case imagenes
         case precioMinimo = "precio_minimo"
         case createdAt = "created_at"

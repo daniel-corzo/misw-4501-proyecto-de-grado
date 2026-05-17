@@ -62,6 +62,9 @@
         <!-- Language Switcher -->
         <ng-container [ngTemplateOutlet]="langSwitcher"></ng-container>
 
+        <!-- Accessibility Switcher -->
+        <ng-container [ngTemplateOutlet]="a11ySwitcher"></ng-container>
+
       } @else {
         <!-- Unauthenticated state -->
         <div class="navbar__auth">
@@ -71,11 +74,55 @@
 
         <!-- Language Switcher -->
         <ng-container [ngTemplateOutlet]="langSwitcher"></ng-container>
+
+        <!-- Accessibility Switcher -->
+        <ng-container [ngTemplateOutlet]="a11ySwitcher"></ng-container>
       }
     </div>
 
   </div>
 </nav>
+
+<ng-template #a11ySwitcher>
+  <div class="navbar__avatar-wrap"
+       role="button"
+       tabindex="0"
+       [attr.aria-label]="'navbar.accessibility' | transloco"
+       (click)="toggleA11yMenu($event)"
+       (keydown.enter)="toggleA11yMenu($event)"
+       (keydown.space)="$event.preventDefault(); toggleA11yMenu($event)">
+    <div class="navbar__lang-btn">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M2 12s3-8 10-8 10 8 10 8-3 8-10 8-10-8-10-8z"/>
+      </svg>
+    </div>
+    @if (a11yMenuOpen) {
+      <div class="navbar__dropdown" (click)="$event.stopPropagation()">
+        <div class="navbar__dropdown-label">{{ 'accessibility.colorBlindMode' | transloco }}</div>
+        <button class="navbar__dropdown-item" type="button" (click)="setCbMode('off')">
+          <span [style.fontWeight]="a11y.mode() === 'off' ? 'bold' : 'normal'">{{ 'accessibility.off' | transloco }}</span>
+        </button>
+        <button class="navbar__dropdown-item" type="button" (click)="setCbMode('protanopia')">
+          <span [style.fontWeight]="a11y.mode() === 'protanopia' ? 'bold' : 'normal'">{{ 'accessibility.protanopia' | transloco }}</span>
+        </button>
+        <button class="navbar__dropdown-item" type="button" (click)="setCbMode('deuteranopia')">
+          <span [style.fontWeight]="a11y.mode() === 'deuteranopia' ? 'bold' : 'normal'">{{ 'accessibility.deuteranopia' | transloco }}</span>
+        </button>
+        <button class="navbar__dropdown-item" type="button" (click)="setCbMode('tritanopia')">
+          <span [style.fontWeight]="a11y.mode() === 'tritanopia' ? 'bold' : 'normal'">{{ 'accessibility.tritanopia' | transloco }}</span>
+        </button>
+        <div class="navbar__dropdown-divider"></div>
+        <div class="navbar__dropdown-label">{{ 'accessibility.fontSize' | transloco }}</div>
+        <div class="navbar__font-size-row">
+          <button class="navbar__font-size-btn" [class.navbar__font-size-btn--active]="a11y.fontSize() === 'normal'" type="button" (click)="setFontSize('normal')">A</button>
+          <button class="navbar__font-size-btn" [class.navbar__font-size-btn--active]="a11y.fontSize() === 'large'" type="button" (click)="setFontSize('large')">AA</button>
+          <button class="navbar__font-size-btn" [class.navbar__font-size-btn--active]="a11y.fontSize() === 'xlarge'" type="button" (click)="setFontSize('xlarge')">AAA</button>
+        </div>
+      </div>
+    }
+  </div>
+</ng-template>
 
 <ng-template #langSwitcher>
   <div class="navbar__avatar-wrap"

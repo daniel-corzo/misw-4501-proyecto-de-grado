@@ -37,11 +37,13 @@ jobs:
               - 'src/backend/reservas/**'
             notificaciones:
               - 'src/backend/notificaciones/**'
+            pagos:
+              - 'src/backend/pagos/**'
 
       - name: Build service matrix
         id: build-matrix
         run: |
-          ALL_SERVICES=(usuarios busquedas hoteles reservas notificaciones)
+          ALL_SERVICES=(usuarios busquedas hoteles reservas notificaciones pagos)
 
           if [ "${{ steps.filter.outputs.common }}" == "true" ]; then
             SERVICES=("common" "${ALL_SERVICES[@]}")
@@ -52,9 +54,14 @@ jobs:
             [ "${{ steps.filter.outputs.hoteles }}" == "true" ] && SERVICES+=(hoteles)
             [ "${{ steps.filter.outputs.reservas }}" == "true" ] && SERVICES+=(reservas)
             [ "${{ steps.filter.outputs.notificaciones }}" == "true" ] && SERVICES+=(notificaciones)
+            [ "${{ steps.filter.outputs.pagos }}" == "true" ] && SERVICES+=(pagos)
           fi
 
-          JSON=$(printf '%s\n' "${SERVICES[@]}" | jq -R . | jq -sc .)
+          if [ "${#SERVICES[@]}" -eq 0 ]; then
+            JSON='[]'
+          else
+            JSON=$(printf '%s\n' "${SERVICES[@]}" | jq -R . | jq -sc .)
+          fi
           echo "services=$JSON" >> "$GITHUB_OUTPUT"
           echo "Matrix: $JSON"
 

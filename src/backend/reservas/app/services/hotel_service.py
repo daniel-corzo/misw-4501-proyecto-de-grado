@@ -3,7 +3,7 @@ from fastapi import HTTPException, status
 from uuid import UUID
 
 from app.config import get_settings
-from app.schemas.reserva import HabitacionHotelResponse, HabitacionReservaDetalleResponse
+from app.schemas.reserva import HabitacionHotelResponse, HabitacionReservaDetalleResponse, MiHotelResponse
 
 
 async def obtener_habitaciones_hotel(authorization_header: str | None) -> list[HabitacionHotelResponse]:
@@ -99,6 +99,42 @@ async def obtener_detalles_habitaciones_por_ids(
                 detalle = HabitacionReservaDetalleResponse(**item)
                 detalles[detalle.id] = detalle
             return detalles
+    except httpx.RequestError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="No fue posible consultar el servicio de hoteles",
+        ) from exc
+
+
+async def obtener_mi_hotel(authorization_header: str | None) -> MiHotelResponse:
+    if not authorization_header:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No autorizado",
+        )
+
+    settings = get_settings()
+    headers = {"Authorization": authorization_header}
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(
+                f"{settings.backend_api_url}/hoteles/mi-hotel",
+                headers=headers,
+            )
+
+            if response.status_code == status.HTTP_404_NOT_FOUND:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Hotel no encontrado",
+                )
+            if response.status_code != status.HTTP_200_OK:
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="No fue posible obtener los datos del hotel",
+                )
+
+            return MiHotelResponse(**response.json())
     except httpx.RequestError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

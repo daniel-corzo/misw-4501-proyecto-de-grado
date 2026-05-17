@@ -1,9 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
+import type { HabitacionDetalle } from './hotel.service';
 
 export type BookingStatus = 'pendiente' | 'confirmada' | 'cancelada' | 'completada';
 export type BookingFilter = 'activas' | 'canceladas' | 'pasadas';
+export type PaymentStatus = 'successful' | 'failed';
+export type PaymentStatusFilter = PaymentStatus | 'pending';
 
 export interface BookingResponse {
   id: string;
@@ -24,6 +27,21 @@ export interface BookingResponse {
 export interface BookingListResponse {
   total: number;
   reservas: BookingResponse[];
+}
+
+export interface HotelBookingResponse extends BookingResponse {
+  nombre_viajero: string | null;
+  email_viajero: string | null;
+  numero_habitacion: string | null;
+  total_noches: number;
+  monto_total: number | null;
+  estado_pago: PaymentStatus | null;
+}
+
+export interface HotelBookingListResponse {
+  total: number;
+  reservas: HotelBookingResponse[];
+  habitaciones: HabitacionDetalle[];
 }
 
 export interface BookingDetailHotel {
@@ -66,6 +84,29 @@ export interface BookingDetailResponse {
   amenidades_hotel: string[];
 }
 
+export interface HotelBookingTravelerDetail {
+  id: string;
+  nombre: string | null;
+  email: string | null;
+}
+
+export interface HotelBookingPaymentDetail {
+  id: string | null;
+  estado: PaymentStatusFilter;
+  monto: number | null;
+  medio_de_pago: string | null;
+  created_at: string | null;
+  tarjeta_ultimos_4: string | null;
+}
+
+export interface HotelBookingDetailResponse extends BookingDetailResponse {
+  viajero: HotelBookingTravelerDetail;
+  pago: HotelBookingPaymentDetail;
+  total_noches: number;
+  monto_total: number | null;
+  qr_checkin_payload: string;
+}
+
 export interface CreateBookingRequest {
   habitacion_id: string;
   fecha_entrada: string;
@@ -80,6 +121,59 @@ export interface UpdateBookingRequest {
   fecha_salida?: string;
   num_huespedes?: number;
   habitacion_id?: string;
+  pago_id?: string | null;
+}
+
+export interface HotelReservationsFilters {
+  nombre_viajero?: string;
+  tipo_habitacion?: string;
+  estado?: BookingStatus;
+  fecha_inicio?: string;
+  fecha_fin?: string;
+  estado_pago?: PaymentStatusFilter;
+  num_huespedes?: number;
+}
+
+export interface IngresoMensual {
+  anio: number;
+  mes: number;
+  total_pagos: number;
+  ingresos_totales: number;
+}
+
+export interface ReporteIngresosResponse {
+  nombre_hotel: string | null;
+  ingresos_por_mes: IngresoMensual[];
+  total_general: number;
+  total_pagos: number;
+}
+
+export interface OcupacionMensual {
+  anio: number;
+  mes: number;
+  noches_ocupadas: number;
+  noches_disponibles: number;
+  tasa_ocupacion: number;
+}
+
+export interface OcupacionHabitacion {
+  habitacion_id: string;
+  numero: string;
+  capacidad: number;
+  noches_ocupadas: number;
+  noches_disponibles: number;
+  tasa_ocupacion: number;
+}
+
+export interface ReporteOcupacionResponse {
+  nombre_hotel: string | null;
+  fecha_registro: string | null;
+  total_habitaciones: number;
+  ocupacion_por_mes: OcupacionMensual[];
+  ocupacion_por_habitacion: OcupacionHabitacion[];
+  noches_ocupadas_totales: number;
+  noches_disponibles_totales: number;
+  tasa_ocupacion_global: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -107,11 +201,49 @@ export class BookingService {
     return this.api.get<BookingListResponse>('/reservas', { estado: status });
   }
 
+  getHotelReservations(skip = 0, limit = 10, filters?: HotelReservationsFilters): Observable<HotelBookingListResponse> {
+    const params: Record<string, string | number> = { skip, limit };
+    if (filters) {
+      if (filters.nombre_viajero) params['nombre_viajero'] = filters.nombre_viajero;
+      if (filters.tipo_habitacion) params['tipo_habitacion'] = filters.tipo_habitacion;
+      if (filters.estado) params['estado'] = filters.estado;
+      if (filters.fecha_inicio) params['fecha_inicio'] = filters.fecha_inicio;
+      if (filters.fecha_fin) params['fecha_fin'] = filters.fecha_fin;
+      if (filters.estado_pago) params['estado_pago'] = filters.estado_pago;
+      if (filters.num_huespedes !== undefined) params['num_huespedes'] = filters.num_huespedes;
+    }
+    return this.api.get<HotelBookingListResponse>('/reservas/hoteles', params);
+  }
+
   getBookingById(bookingId: string): Observable<BookingDetailResponse> {
     return this.api.get<BookingDetailResponse>(`/reservas/${bookingId}`);
   }
 
+  getHotelBookingById(bookingId: string): Observable<HotelBookingDetailResponse> {
+    return this.api.get<HotelBookingDetailResponse>(`/reservas/hoteles/${bookingId}`);
+  }
+
   cancelReservation(bookingId: string): Observable<BookingResponse> {
     return this.api.patch<BookingResponse>(`/reservas/${bookingId}/cancelar`, {});
+  }
+
+  deleteReservation(bookingId: string): Observable<void> {
+    return this.api.delete<void>(`/reservas/${bookingId}`);
+  }
+
+  confirmHotelReservation(bookingId: string): Observable<HotelBookingResponse> {
+    return this.api.patch<HotelBookingResponse>(`/reservas/${bookingId}/confirmar`, {});
+  }
+
+  rejectHotelReservation(bookingId: string): Observable<HotelBookingResponse> {
+    return this.api.patch<HotelBookingResponse>(`/reservas/${bookingId}/rechazar`, {});
+  }
+
+  getHotelRevenueReport(): Observable<ReporteIngresosResponse> {
+    return this.api.get<ReporteIngresosResponse>('/reservas/hoteles/reporte-ingresos');
+  }
+
+  getHotelOccupationReport(): Observable<ReporteOcupacionResponse> {
+    return this.api.get<ReporteOcupacionResponse>('/reservas/hoteles/reporte-ocupacion');
   }
 }

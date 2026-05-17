@@ -3,11 +3,21 @@ locals {
   service_overrides = {
     usuarios = {
       exclude_secrets   = []
-      extra_environment = []
+      extra_environment = [
+        {
+          name  = "BACKEND_API_URL"
+          value = "http://${data.terraform_remote_state.alb.outputs.load_balancer_dns}"
+        }
+      ]
     }
     busquedas = {
       exclude_secrets   = ["jwt_private_key"]
-      extra_environment = []
+      extra_environment = [
+        {
+          name  = "BACKEND_API_URL"
+          value = "http://${data.terraform_remote_state.alb.outputs.load_balancer_dns}"
+        }
+      ]
     }
     hoteles = {
       exclude_secrets = ["jwt_private_key"]
@@ -29,7 +39,21 @@ locals {
     }
     notificaciones = {
       exclude_secrets   = ["jwt_private_key", "db_url"]
-      extra_environment = []
+      extra_environment = [
+        {
+          name  = "BACKEND_API_URL"
+          value = "http://${data.terraform_remote_state.alb.outputs.load_balancer_dns}"
+        }
+      ]
+    }
+    pagos = {
+      exclude_secrets   = ["jwt_private_key"]
+      extra_environment = [
+        {
+          name  = "BACKEND_API_URL"
+          value = "http://${data.terraform_remote_state.alb.outputs.load_balancer_dns}"
+        }
+      ]
     }
   }
 

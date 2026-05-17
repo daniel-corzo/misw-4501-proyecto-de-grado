@@ -27,13 +27,50 @@ import Foundation
 func formatPhone(_ number: String) -> String {
     let digits = number.filter { $0.isNumber }
     let limited = String(digits.prefix(10))
-    
+
     switch limited.count {
     case 0...3:
         return limited.isEmpty ? "" : "(\(limited)"
     case 4...6:
         return "(\(limited.prefix(3))) \(limited.dropFirst(3))"
     default:
-        return "(\(limited.prefix(3))) \(limited.dropFirst(3).prefix(3))-\(limited.dropFirst(6))"
+        return
+            "(\(limited.prefix(3))) \(limited.dropFirst(3).prefix(3))-\(limited.dropFirst(6))"
     }
+}
+
+func formatCreditCardNumber(_ number: String) -> String {
+    let digits = number.filter { $0.isNumber }
+    let limited = String(digits.prefix(16))
+
+    switch limited.count {
+        case 0...4:
+            return limited.isEmpty ? "" : "\(limited)"
+        case 5...8:
+            return "\(limited.prefix(4)) \(limited.dropFirst(4))"
+        case 9...12:
+            return "\(limited.prefix(4)) \(limited.dropFirst(4).prefix(4)) \(limited.dropFirst(8))"
+        default:
+            return "\(limited.prefix(4)) \(limited.dropFirst(4).prefix(4)) \(limited.dropFirst(8).prefix(4)) \(limited.dropFirst(12))"
+    }
+}
+
+func formatExpirationDate(_ date: String) -> String {
+    let dateDigits = date.filter { $0.isNumber }
+    let limited = String(dateDigits.prefix(4))
+
+    switch limited.count {
+        case 0...2:
+            return "\(limited)"
+
+        default:
+            return "\(limited.prefix(2))/\(limited.dropFirst(2))"
+    }
+}
+
+func formatCvv(_ cvv: String) -> String {
+    let cvvDigits = cvv.filter { $0.isNumber }
+    let limited = String(cvvDigits.prefix(3))
+    
+    return limited
 }

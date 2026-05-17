@@ -12,6 +12,11 @@ def test_base_app_settings_defaults():
     assert settings.aws_region == "us-east-1"
     assert settings.jwt_public_key == ""
     assert settings.jwt_private_key == ""
+    assert settings.smtp_host == ""
+    assert settings.smtp_port == 587
+    assert settings.smtp_sender_name == "TravelHub"
+    assert settings.smtp_use_tls is True
+    assert settings.frontend_base_url == "https://travel-hub.online"
 
 
 def test_base_app_settings_custom_values():
@@ -20,11 +25,19 @@ def test_base_app_settings_custom_values():
         service_name="auth-service",
         jwt_algorithm="HS256",
         jwt_public_key="my-key",
+        smtp_host="email-smtp.us-east-1.amazonaws.com",
+        smtp_port=465,
+        smtp_from_email="no-reply@travel-hub.online",
+        frontend_base_url="https://travelhub.example.com",
     )
     assert settings.environment == "production"
     assert settings.service_name == "auth-service"
     assert settings.jwt_algorithm == "HS256"
     assert settings.jwt_public_key == "my-key"
+    assert settings.smtp_host == "email-smtp.us-east-1.amazonaws.com"
+    assert settings.smtp_port == 465
+    assert settings.smtp_from_email == "no-reply@travel-hub.online"
+    assert settings.frontend_base_url == "https://travelhub.example.com"
 
 
 def test_get_secret_calls_boto3():

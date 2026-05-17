@@ -291,7 +291,7 @@ struct HotelDetailView: View {
 
                 if let hotel = self.viewModel.hotel {
                     Button {
-                        router.navigate(to: .createReservation(hotel, nil))
+                        router.navigate(to: .createBooking(hotel, nil))
                     } label: {
                         Text(LocalizedStringResource.HotelDetail.bookNow)
                             .bold()

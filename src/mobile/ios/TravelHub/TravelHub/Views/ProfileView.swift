@@ -4,12 +4,14 @@
 //
 
 import SwiftUI
+import UserNotifications
 
 struct ProfileView: View {
 
     @Environment(\.userService) private var userService: UserService
     @Environment(\.authService) private var authService: AuthService
     @Environment(\.toastManager) private var toastManager: ToastManager
+    @Environment(Router.self) private var router
 
     @State private var viewModel = ViewModel()
 
@@ -41,13 +43,19 @@ struct ProfileView: View {
                     // MARK: - Account Overview
                     Section(LocalizedStringResource.Profile.accountOverview) {
                         Label(LocalizedStringResource.Profile.personalInformation, systemImage: "person")
-                        HStack {
-                            Label(LocalizedStringResource.Profile.bookingHistory, systemImage: "clock.arrow.circlepath")
-                            Spacer()
-                            Text(LocalizedStringResource.Profile.viewYourPastStays)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                        Button {
+                            router.pendingBookingTab = .past
+                            router.switchTab(to: .bookings)
+                        } label: {
+                            HStack {
+                                Label(LocalizedStringResource.Profile.bookingHistory, systemImage: "clock.arrow.circlepath")
+                                Spacer()
+                                Text(LocalizedStringResource.Profile.viewYourPastStays)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
+                        .tint(.primary)
                         Label(LocalizedStringResource.Profile.paymentMethods, systemImage: "creditcard")
                     }
 
@@ -84,6 +92,36 @@ struct ProfileView: View {
                             )
                         }
                         .listRowBackground(Color.clear)
+                    }
+
+                    // MARK: - Debug
+                    Section("Debug") {
+                        Button("Test notification (3s)") {
+                            let content = UNMutableNotificationContent()
+                            content.title = "Reservation confirmed"
+                            content.body = "Your reservation at Hotel Test has been confirmed."
+                            content.sound = .default
+                            UNUserNotificationCenter.current().add(
+                                UNNotificationRequest(
+                                    identifier: UUID().uuidString,
+                                    content: content,
+                                    trigger: UNTimeIntervalNotificationTrigger(timeInterval: 3, repeats: false)
+                                )
+                            )
+                        }
+                        Button("Test notification (1s — foreground)") {
+                            let content = UNMutableNotificationContent()
+                            content.title = "Reservation confirmed"
+                            content.body = "Your reservation at Hotel Test has been confirmed."
+                            content.sound = .default
+                            UNUserNotificationCenter.current().add(
+                                UNNotificationRequest(
+                                    identifier: UUID().uuidString,
+                                    content: content,
+                                    trigger: UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+                                )
+                            )
+                        }
                     }
 
                     // MARK: - Footer

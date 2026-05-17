@@ -6,6 +6,7 @@ locals {
     hoteles        = "hoteles"
     reservas       = "reservas"
     notificaciones = "notificaciones"
+    pagos          = "pagos"
   }
 }
 

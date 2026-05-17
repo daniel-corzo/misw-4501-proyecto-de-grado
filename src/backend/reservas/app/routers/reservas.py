@@ -1,5 +1,7 @@
 import uuid
-from datetime import UTC, datetime
+import logging
+from datetime import UTC, date, datetime
+from typing import Optional
 
 from fastapi import APIRouter, status, Depends, Request, HTTPException, Query
 from sqlalchemy import select
@@ -9,27 +11,43 @@ from app.database import get_db
 from app.models.reserva import Reserva
 from app.schemas.reserva import (
     CrearReservaRequest,
+    EstadoReserva,
+    EstadoPagoFiltro,
     FiltroReservasUsuario,
     ModificarReservaRequest,
+    ReporteIngresosResponse,
+    ReporteOcupacionResponse,
     ReservaResponse,
-    EstadoReserva,
     ListaReservasHotelResponse,
     ListaReservasResponse,
     ReservaDetalleResponse,
+    ReservaHotelDetalleCompletoResponse,
+    ReservaHotelResponse,
 )
 from app.services.hotel_service import obtener_habitaciones_hotel
 from app.services.hotel_service import obtener_detalles_habitaciones_por_ids
 from app.services.reserva_service import (
     cancelar_reserva_service,
+    construir_reservas_hotel_response,
+    confirmar_reserva_service,
     crear_reserva_service,
+    enviar_correo_estado_reserva,
+    eliminar_reserva_service,
+    generar_reporte_ingresos_service,
+    generar_reporte_ocupacion_service,
+    listar_reservas_hotel_service,
+    rechazar_reserva_service,
     reserva_to_detalle_response,
     reserva_to_response,
     modificar_reserva_service,
     listar_reservas_usuario_service,
+    obtener_reserva_hotel_detalle_service,
 )
-from travelhub_common.security import get_current_user, User, RoleEnum
+from travelhub_common.booking_email import BookingEmailEvent
+from travelhub_common.security import RoleChecker, RoleEnum, User, get_current_user
 
 router = APIRouter(prefix="/reservas", tags=["reservas"])
+logger = logging.getLogger(__name__)
 
 
 @router.post("", response_model=ReservaResponse, status_code=status.HTTP_201_CREATED)
@@ -112,24 +130,83 @@ async def listar_reservas_por_estado(
 @router.get("/hoteles", response_model=ListaReservasHotelResponse, status_code=status.HTTP_200_OK)
 async def listar_reservas_hotel(
     request: Request,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1, le=100),
+    nombre_viajero: Optional[str] = Query(None),
+    tipo_habitacion: Optional[str] = Query(None),
+    estado: Optional[EstadoReserva] = Query(None),
+    fecha_inicio: Optional[date] = Query(None),
+    fecha_fin: Optional[date] = Query(None),
+    estado_pago: Optional[EstadoPagoFiltro] = Query(None),
+    num_huespedes: Optional[int] = Query(None, ge=1),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    habitaciones = await obtener_habitaciones_hotel(request.headers.get("Authorization"))
-    habitacion_ids = [habitacion.id for habitacion in habitaciones]
+    return await listar_reservas_hotel_service(
+        db=db,
+        authorization_header=request.headers.get("Authorization"),
+        skip=skip,
+        limit=limit,
+        nombre_viajero=nombre_viajero,
+        tipo_habitacion=tipo_habitacion,
+        estado=estado,
+        fecha_inicio=fecha_inicio,
+        fecha_fin=fecha_fin,
+        estado_pago=estado_pago,
+        num_huespedes=num_huespedes,
+    )
 
-    if not habitacion_ids:
-        return ListaReservasHotelResponse(total=0, reservas=[], habitaciones=[])
 
-    stmt = select(Reserva).where(Reserva.habitaciones_ids.overlap(habitacion_ids))
+@router.get(
+    "/hoteles/reporte-ingresos",
+    response_model=ReporteIngresosResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def generar_reporte_ingresos(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    _current_user: User = Depends(RoleChecker([RoleEnum.MANAGER, RoleEnum.USER])),
+):
+    return await generar_reporte_ingresos_service(
+        db=db,
+        authorization_header=request.headers.get("Authorization"),
+    )
 
-    stmt = stmt.order_by(Reserva.created_at.desc())
-    result = await db.execute(stmt)
-    reservas = [reserva_to_response(r) for r in result.scalars().all()]
-    return ListaReservasHotelResponse(
-        total=len(reservas),
-        reservas=reservas,
-        habitaciones=habitaciones,
+
+@router.get(
+    "/hoteles/reporte-ocupacion",
+    response_model=ReporteOcupacionResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def generar_reporte_ocupacion(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    _current_user: User = Depends(RoleChecker([RoleEnum.MANAGER, RoleEnum.USER])),
+):
+    return await generar_reporte_ocupacion_service(
+        db=db,
+        authorization_header=request.headers.get("Authorization"),
+    )
+
+
+@router.get(
+    "/hoteles/{reserva_id}",
+    response_model=ReservaHotelDetalleCompletoResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def obtener_reserva_hotel(
+    reserva_id: uuid.UUID,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    _current_user: User = Depends(RoleChecker([RoleEnum.MANAGER, RoleEnum.USER])),
+):
+    authorization_header = request.headers.get("Authorization")
+    habitaciones = await obtener_habitaciones_hotel(authorization_header)
+    return await obtener_reserva_hotel_detalle_service(
+        db=db,
+        authorization_header=authorization_header,
+        reserva_id=reserva_id,
+        habitacion_ids_hotel=[habitacion.id for habitacion in habitaciones],
     )
 
 
@@ -210,17 +287,119 @@ async def modificar_reserva(
     )
 
 
-@router.patch("/{reserva_id}/cancelar", response_model=ReservaResponse, status_code=status.HTTP_200_OK)
-async def cancelar_reserva(
+@router.patch("/{reserva_id}/confirmar", response_model=ReservaHotelResponse, status_code=status.HTTP_200_OK)
+async def confirmar_reserva(
+    reserva_id: uuid.UUID,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    _current_user: User = Depends(RoleChecker([RoleEnum.MANAGER, RoleEnum.USER])),
+):
+    authorization_header = request.headers.get("Authorization")
+    habitaciones = await obtener_habitaciones_hotel(authorization_header)
+    reserva = await confirmar_reserva_service(
+        db=db,
+        reserva_id=reserva_id,
+        habitacion_ids_hotel=[habitacion.id for habitacion in habitaciones],
+    )
+    reservas = await construir_reservas_hotel_response(authorization_header, [reserva])
+    reserva_response = reservas[0]
+    enviar_correo_estado_reserva(
+        event=BookingEmailEvent.confirmed,
+        reserva=reserva,
+        recipient_email=reserva_response.email_viajero,
+        hotel_name=reserva_response.nombre_hotel,
+        room_name=reserva_response.nombre_habitacion,
+        room_number=reserva_response.numero_habitacion,
+        traveler_name=reserva_response.nombre_viajero,
+        total_nights=reserva_response.total_noches,
+        total_amount=reserva_response.monto_total,
+    )
+    return reserva_response
+
+
+@router.patch("/{reserva_id}/rechazar", response_model=ReservaHotelResponse, status_code=status.HTTP_200_OK)
+async def rechazar_reserva(
+    reserva_id: uuid.UUID,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    _current_user: User = Depends(RoleChecker([RoleEnum.MANAGER, RoleEnum.USER])),
+):
+    authorization_header = request.headers.get("Authorization")
+    habitaciones = await obtener_habitaciones_hotel(authorization_header)
+    reserva = await rechazar_reserva_service(
+        db=db,
+        reserva_id=reserva_id,
+        habitacion_ids_hotel=[habitacion.id for habitacion in habitaciones],
+    )
+    reservas = await construir_reservas_hotel_response(authorization_header, [reserva])
+    reserva_response = reservas[0]
+    enviar_correo_estado_reserva(
+        event=BookingEmailEvent.cancelled,
+        reserva=reserva,
+        recipient_email=reserva_response.email_viajero,
+        hotel_name=reserva_response.nombre_hotel,
+        room_name=reserva_response.nombre_habitacion,
+        room_number=reserva_response.numero_habitacion,
+        traveler_name=reserva_response.nombre_viajero,
+        total_nights=reserva_response.total_noches,
+        total_amount=reserva_response.monto_total,
+    )
+    return reserva_response
+
+
+@router.delete("/{reserva_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def eliminar_reserva(
     reserva_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return await cancelar_reserva_service(
+    """Elimina permanentemente una reserva pendiente o cancelada del viajero."""
+    await eliminar_reserva_service(db=db, reserva_id=reserva_id, current_user=current_user)
+
+
+@router.patch("/{reserva_id}/cancelar", response_model=ReservaResponse, status_code=status.HTTP_200_OK)
+async def cancelar_reserva(
+    reserva_id: uuid.UUID,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    reserva = await cancelar_reserva_service(
         db=db,
         reserva_id=reserva_id,
         current_user=current_user,
     )
+    habitacion_id = reserva.habitacion_id
+    if habitacion_id is not None:
+        try:
+            detalles_por_habitacion = await obtener_detalles_habitaciones_por_ids(
+                request.headers.get("Authorization"),
+                [habitacion_id],
+            )
+            detalle = detalles_por_habitacion.get(habitacion_id)
+            if detalle is not None:
+                enviar_correo_estado_reserva(
+                    event=BookingEmailEvent.cancelled,
+                    reserva=reserva,
+                    recipient_email=current_user.email,
+                    hotel_name=detalle.nombre_hotel,
+                    room_name=detalle.nombre_habitacion,
+                    room_number=detalle.numero_habitacion,
+                )
+        except HTTPException as exc:
+            if exc.status_code in (
+                status.HTTP_502_BAD_GATEWAY,
+                status.HTTP_503_SERVICE_UNAVAILABLE,
+            ):
+                logger.exception(
+                    "No fue posible preparar el correo de cancelación para la reserva %s (status=%s, detail=%s)",
+                    reserva.id,
+                    exc.status_code,
+                    exc.detail,
+                )
+            else:
+                raise
+    return reserva
 
 
 @router.get("/usuario/{usuario_id}", response_model=ListaReservasResponse, status_code=status.HTTP_200_OK)

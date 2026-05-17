@@ -105,7 +105,7 @@ struct ListElementView: View {
                     Button {
                         Task {
                             if let hotel = await fetchHotelDetail() {
-                                router.navigate(to: .createReservation(hotel, nil))
+                                router.navigate(to: .createBooking(hotel, nil))
                             }
                         }
                     } label: {

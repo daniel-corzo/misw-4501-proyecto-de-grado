@@ -18,7 +18,7 @@ struct HotelHeaderCardView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(
                     String(
-                        localized: LocalizedStringResource.CreateReservation
+                        localized: LocalizedStringResource.CreateBooking
                             .selectedHotel
                     ).uppercased()
                 )

@@ -12,6 +12,7 @@ export interface HabitacionDetalle {
   monto: number;
   impuestos: number;
   disponible: boolean;
+  nombre_habitacion?: string | null;
 }
 
 export interface PoliticaDetalle {

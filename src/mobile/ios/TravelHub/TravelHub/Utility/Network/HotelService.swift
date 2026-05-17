@@ -8,10 +8,7 @@
 import Foundation
 
 protocol HotelService {
-    /// Obtiene la lista de hoteles desde el backend
-    func getHotels() async throws -> HotelsResponseDTO
-
-    /// Obtiene el detalle de un hotel por su ID
+    func getHotels(queryItems: [URLQueryItem]) async throws -> HotelsResponseDTO
     func getHotelDetail(id: UUID) async throws -> HotelDetailDTO
 }
 
@@ -24,9 +21,13 @@ final class HotelServiceImpl: HotelService {
         self.tokenStore = tokenStore
     }
 
-    func getHotels() async throws -> HotelsResponseDTO {
+    func getHotels(queryItems: [URLQueryItem] = []) async throws -> HotelsResponseDTO {
         let token = try tokenStore.readToken()
-        return try await httpService.get(url: HttpRoutes.hoteles.url, token: token)
+        var components = URLComponents(url: HttpRoutes.hoteles.url, resolvingAgainstBaseURL: false)!
+        if !queryItems.isEmpty {
+            components.queryItems = queryItems
+        }
+        return try await httpService.get(url: components.url!, token: token)
     }
 
     func getHotelDetail(id: UUID) async throws -> HotelDetailDTO {

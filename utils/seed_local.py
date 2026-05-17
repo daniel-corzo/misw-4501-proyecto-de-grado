@@ -30,7 +30,7 @@ Partners (1 por hotel, modelo 1-a-1):
 import uuid
 import bcrypt
 import psycopg2
-from datetime import datetime, time, timezone
+from datetime import datetime, time, timedelta, timezone
 
 # ── Configuracion ────────────────────────────────────────────────────────────
 
@@ -297,6 +297,10 @@ CHECK_IN = time(15, 0)
 CHECK_OUT = time(11, 0)
 VALOR_MINIMO_MODIFICACION = 50000.0
 
+# Cuántos días atrás se considera que los hoteles fueron registrados.
+# Esto permite que el reporte de ocupación cubra ~9 meses de historia.
+HOTEL_REGISTRADO_HACE_DIAS = 280
+
 POLITICAS = [
     {
         "nombre": "Cancelacion gratuita",
@@ -321,6 +325,10 @@ def hash_password(plain: str) -> str:
 
 def now():
     return datetime.now(timezone.utc)
+
+
+def hotel_ts():
+    return datetime.now(timezone.utc) - timedelta(days=HOTEL_REGISTRADO_HACE_DIAS)
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
@@ -392,7 +400,7 @@ def main():
     print("Insertando hoteles...")
     for h in HOTELES:
         hotel_id = uuid.uuid4()
-        ts = now()
+        h_ts = hotel_ts()   # backdated ~9 months for occupation report history
         owner_id = user_ids[h["partner_email"]]
 
         cur.execute(
@@ -414,7 +422,7 @@ def main():
             )
             """,
             (
-                str(hotel_id), ts, ts,
+                str(hotel_id), h_ts, h_ts,
                 h["nombre"], h["direccion"], h["pais"], h["estado"], h["departamento"], h["ciudad"],
                 h["descripcion"], h["amenidades"], h["estrellas"], h["ranking"],
                 "+57 300 000 0003", h["partner_email"], h["imagenes"],
@@ -434,7 +442,7 @@ def main():
                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
-                    str(uuid.uuid4()), ts, ts,
+                    str(uuid.uuid4()), h_ts, h_ts,
                     hab["numero"], hab["capacidad"], hab["descripcion"], [],
                     hab["monto"], hab["impuestos"], True, str(hotel_id),
                 ),
@@ -450,7 +458,7 @@ def main():
                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
-                    str(uuid.uuid4()), ts, ts,
+                    str(uuid.uuid4()), h_ts, h_ts,
                     pol["nombre"], pol["descripcion"], pol["tipo"],
                     pol["penalizacion"], pol["dias_antelacion"], str(hotel_id),
                 ),
