@@ -12,9 +12,12 @@ import { TranslocoHttpLoader } from './transloco-http.loader';
 export function getDefaultLang(): string {
   if (typeof window === 'undefined') return 'es';
   const savedLang = localStorage.getItem('appLang');
-  if (savedLang) return savedLang;
   const browserLang = navigator.language.split('-')[0];
-  return ['en', 'es'].includes(browserLang) ? browserLang : 'es';
+  const lang = savedLang ?? (['en', 'es'].includes(browserLang) ? browserLang : 'es');
+  if (typeof document !== 'undefined') {
+    document.documentElement.lang = lang;
+  }
+  return lang;
 }
 
 export const appConfig: ApplicationConfig = {

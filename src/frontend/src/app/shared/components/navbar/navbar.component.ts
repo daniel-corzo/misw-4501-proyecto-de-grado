@@ -5,6 +5,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
+import { AccessibilityService, CbMode, FontSize } from '../../../core/services/accessibility.service';
 
 @Component({
   selector: 'app-navbar',
@@ -15,12 +16,14 @@ import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 })
 export class NavbarComponent {
   readonly auth = inject(AuthService);
+  readonly a11y = inject(AccessibilityService);
   private readonly router = inject(Router);
   private readonly el = inject(ElementRef);
   readonly translocoService = inject(TranslocoService);
 
   menuOpen = false;
   langMenuOpen = false;
+  a11yMenuOpen = false;
 
   constructor() {
     this.router.events
@@ -28,6 +31,7 @@ export class NavbarComponent {
       .subscribe(() => {
         this.menuOpen = false;
         this.langMenuOpen = false;
+        this.a11yMenuOpen = false;
       });
   }
 
@@ -40,6 +44,9 @@ export class NavbarComponent {
     if (typeof window !== 'undefined') {
       localStorage.setItem('appLang', lang);
     }
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = lang;
+    }
     this.langMenuOpen = false;
   }
 
@@ -47,6 +54,23 @@ export class NavbarComponent {
     event.stopPropagation();
     this.langMenuOpen = !this.langMenuOpen;
     this.menuOpen = false;
+    this.a11yMenuOpen = false;
+  }
+
+  toggleA11yMenu(event: Event): void {
+    event.stopPropagation();
+    this.a11yMenuOpen = !this.a11yMenuOpen;
+    this.menuOpen = false;
+    this.langMenuOpen = false;
+  }
+
+  setCbMode(mode: CbMode): void {
+    this.a11y.setMode(mode);
+    this.a11yMenuOpen = false;
+  }
+
+  setFontSize(size: FontSize): void {
+    this.a11y.setFontSize(size);
   }
 
   private readonly roleTranslations: Record<string, string> = {
@@ -65,6 +89,7 @@ export class NavbarComponent {
     event.stopPropagation();
     this.menuOpen = !this.menuOpen;
     this.langMenuOpen = false;
+    this.a11yMenuOpen = false;
   }
 
   @HostListener('document:click', ['$event'])
@@ -72,6 +97,7 @@ export class NavbarComponent {
     if (!this.el.nativeElement.contains(event.target)) {
       this.menuOpen = false;
       this.langMenuOpen = false;
+      this.a11yMenuOpen = false;
     }
   }
 

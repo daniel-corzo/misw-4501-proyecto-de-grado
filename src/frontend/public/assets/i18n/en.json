@@ -12,7 +12,24 @@
     "notifications": "Notifications",
     "roleTraveler": "Traveler",
     "rolePartner": "Hotel Partner",
-    "changeLanguage": "Change language"
+    "changeLanguage": "Change language",
+    "accessibility": "Accessibility"
+  },
+  "settings": {
+    "title": "Settings"
+  },
+  "accessibility": {
+    "title": "Accessibility",
+    "colorBlindMode": "Color blind mode",
+    "off": "No filter",
+    "protanopia": "Protanopia (red)",
+    "deuteranopia": "Deuteranopia (green)",
+    "tritanopia": "Tritanopia (blue)",
+    "description": "Simulation filters for users with color vision deficiency.",
+    "fontSize": "Text size",
+    "fontNormal": "Normal",
+    "fontLarge": "Large",
+    "fontXLarge": "Extra large"
   },
   "auth": {
     "roleTraveler": "Traveler",
