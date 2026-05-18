@@ -44,4 +44,4 @@ Cada microservicio instala `common` como dependencia local.
 - **Pydantic v2** para validación de request/response
 - **Dependency injection** de FastAPI para base de datos y usuario autenticado
 - Esquema de base de datos creado automáticamente al arrancar con `Base.metadata.create_all` (SQLAlchemy)
-- Documentación automática con **Swagger UI** — disponible en `http://localhost:8080/docs` (local) y en `https://www.travel-hub.online/docs` (producción)
+- Documentación automática con **Swagger UI** — disponible en `http://localhost:8080/docs` (local) y en [https://www.travel-hub.online/docs.html](https://www.travel-hub.online/docs.html) (producción)

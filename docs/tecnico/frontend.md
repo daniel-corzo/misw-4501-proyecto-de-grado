@@ -39,7 +39,7 @@ src/frontend/src/app/
 │   │   ├── dashboard/      ← resumen de reservas + descarga de reporte PDF de ocupación
 │   │   └── hotel/          ← gestión de propiedades y habitaciones
 │   ├── settings/           ← ajustes de accesibilidad (daltonismo, tamaño de fuente)
-│   ├── payments/           ← flujo de pago con tarjeta (cifrado RSA en cliente)
+│   ├── payments/           ← flujo de pago con tarjeta
 │   ├── health/             ← dashboard de salud de servicios
 │   ├── terms/              ← términos y condiciones
 │   └── not-found/          ← página 404
@@ -83,6 +83,3 @@ Adjunta el header `Accept-Language` con el idioma activo de Transloco, permitien
 
 El frontend usa **Transloco** para i18n (español e inglés). Para más detalle, ver [accesibilidad-i18n.md](accesibilidad-i18n.md).
 
-## Seguridad en el cliente
-
-El cifrado RSA-OAEP del payload de tarjeta se ejecuta en el navegador antes de enviar al servidor. La clave pública RSA se configura en el entorno de Angular (`environment.ts`). El número completo de tarjeta nunca llega al servidor en texto plano.
