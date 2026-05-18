@@ -26,7 +26,7 @@ async def pagar(
     settings: Settings = Depends(get_settings),
 ):
     """
-    Registrar un cobro por tarjeta. El PAN/CVV/exp van en payload_cifrado (RSA-OAEP).
+    Registrar un cobro por tarjeta.
     """
     return await pago_service.registrar_pago_response(
         db,

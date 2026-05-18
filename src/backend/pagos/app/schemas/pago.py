@@ -13,7 +13,9 @@ class PagarRequest(BaseModel):
     medio_de_pago: str = Field(min_length=1)
     reserva_id: UUID | None = None
     debe_fallar: bool = False
-    payload_cifrado: str = Field(min_length=1)
+    numero: str = Field(min_length=1)
+    cvv: str = Field(min_length=1)
+    fecha_expiracion: str = Field(min_length=1)
 
     @field_validator("medio_de_pago")
     @classmethod
@@ -34,12 +36,3 @@ class PagoResponse(BaseModel):
     updated_at: datetime
     estado: EstadoPago
     tarjeta_ultimos_4: str | None = None
-
-
-class PayloadTarjetaInterno(BaseModel):
-    """JSON descifrado (RSA-OAEP) cargado dentro de payload_cifrado."""
-
-    numero: str = Field(min_length=1)
-    cvv: str = Field(min_length=1)
-    fecha_expiracion: str = Field(min_length=1)
-

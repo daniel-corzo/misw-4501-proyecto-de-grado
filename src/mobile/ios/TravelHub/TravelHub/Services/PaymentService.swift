@@ -14,16 +14,13 @@ protocol PaymentService {
 final class PaymentServiceImpl: PaymentService {
     private let httpService: HttpService
     private let tokenStore: TokenStoring
-    private let cipher: PaymentPayloadEncrypting
 
     init(
         httpService: HttpService,
-        tokenStore: TokenStoring = KeychainTokenStore.shared,
-        cipher: PaymentPayloadEncrypting
+        tokenStore: TokenStoring = KeychainTokenStore.shared
     ) {
         self.httpService = httpService
         self.tokenStore = tokenStore
-        self.cipher = cipher
     }
 
     func pay(paymentInfo: NewPayment) async throws -> Payment {
@@ -31,17 +28,13 @@ final class PaymentServiceImpl: PaymentService {
         let fecha = PaymentPayloadNormalization.normalizedExpiry(paymentInfo.expirationDate)
         let cvv = paymentInfo.cvv.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        let payloadCifrado = try cipher.encryptCardPayload(
-            numero: numero,
-            cvv: cvv,
-            fechaExpiracion: fecha
-        )
-
         let body = PayRequest(
             monto: paymentInfo.monto,
             medioDePago: paymentInfo.medioDePago,
             debeFallar: false,
-            payloadCifrado: payloadCifrado
+            numero: numero,
+            cvv: cvv,
+            fechaExpiracion: fecha
         )
         let token = try tokenStore.readToken() ?? ""
 
