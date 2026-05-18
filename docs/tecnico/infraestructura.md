@@ -39,7 +39,7 @@ Hay 6 servicios ECS, uno por microservicio: `usuarios`, `busquedas`, `hoteles`, 
 |---|---|
 | RDS Aurora PostgreSQL 15 | `db.t3.micro`, Multi-AZ |
 | ElastiCache Redis | Para caché de búsquedas |
-| Secrets Manager | JWT keys, RSA keys, DB URL |
+| Secrets Manager | JWT keys, DB URL |
 
 ## CI/CD
 

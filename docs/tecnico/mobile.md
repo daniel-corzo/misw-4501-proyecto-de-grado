@@ -55,7 +55,7 @@ Pantalla de búsqueda
   → Detalle de hotel
   → Selección de habitación
   → Formulario de reserva
-  → Pantalla de pago (cifra tarjeta con RSA-OAEP)
+  → Pantalla de pago
   → Confirmación, redirige a pestaña Reservas
 ```
 
@@ -66,10 +66,6 @@ Mis reservas (activas / canceladas / pasadas)
   → Detalle de reserva
   → Cancelar reserva
 ```
-
-## Cifrado de pagos en el cliente
-
-Al igual que en el frontend web, los datos de tarjeta se cifran en el dispositivo con RSA-OAEP antes de enviarse. La clave pública RSA se almacena en la configuración del entorno (`Configuration/`). El número completo de tarjeta nunca sale del dispositivo sin cifrar.
 
 ## Builds y configuración
 

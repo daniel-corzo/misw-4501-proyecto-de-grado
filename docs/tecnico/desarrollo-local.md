@@ -9,21 +9,13 @@
 
 ## 1. Generar claves
 
-El proyecto necesita dos pares de claves RSA independientes: uno para JWT y otro para el cifrado de pagos.
+El proyecto necesita un par de claves RSA para JWT.
 
 ```bash
-# Par 1: JWT
 python utils/generate_keys.py
 # Copia PRIVATE_KEY → JWT_PRIVATE_KEY
 # Copia PUBLIC_KEY  → JWT_PUBLIC_KEY
-
-# Par 2: Pagos (ejecutar el script de nuevo — produce un par diferente)
-python utils/generate_keys.py
-# Copia PRIVATE_KEY → PAGO_RSA_PRIVATE_KEY_PEM
-# Guarda PUBLIC_KEY → para el cliente web/móvil (cifra el payload de tarjeta)
 ```
-
-> **Importante:** No reutilices el mismo par para JWT y pagos. Son contextos de seguridad distintos.
 
 ## 2. Crear el archivo `.env`
 
@@ -37,18 +29,13 @@ POSTGRES_USER=travelhub
 POSTGRES_PASSWORD=travelhub
 POSTGRES_DB=travelhub
 
-# JWT (par 1)
+# JWT
 JWT_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----
 ...contenido...
 -----END RSA PRIVATE KEY-----"
 JWT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----
 ...contenido...
 -----END PUBLIC KEY-----"
-
-# Pagos RSA (par 2)
-PAGO_RSA_PRIVATE_KEY_PEM="-----BEGIN RSA PRIVATE KEY-----
-...contenido...
------END RSA PRIVATE KEY-----"
 
 AWS_REGION=us-east-1
 REDIS_URL=redis://redis:6379
@@ -154,6 +141,5 @@ docker-compose exec usuarios pytest
 | Problema | Causa probable | Solución |
 |---|---|---|
 | `JWT decode error` | Claves JWT mal formateadas en `.env` | Verificar que los saltos de línea del PEM están correctos |
-| `Pago RSA error` | Clave de pagos no configurada | Revisar `PAGO_RSA_PRIVATE_KEY_PEM` en `.env` |
 | Servicio no inicia | Puerto ya en uso | `lsof -i :<puerto>` y matar el proceso |
 | Frontend no conecta | CORS o URL incorrecta | Verificar `environment.ts` en el frontend |
