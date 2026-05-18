@@ -190,6 +190,12 @@ resource "aws_lb_listener_rule" "service-http" {
       values = ["/${var.services[each.key]}", "/${var.services[each.key]}/*"]
     }
   }
+
+  # CodeDeploy blue/green swaps the target_group_arn on each deploy.
+  # Without this, terraform apply resets the rule to blue, breaking services on green.
+  lifecycle {
+    ignore_changes = [action]
+  }
 }
 
 resource "aws_lb_listener_rule" "service-https" {
@@ -207,6 +213,10 @@ resource "aws_lb_listener_rule" "service-https" {
     path_pattern {
       values = ["/${var.services[each.key]}", "/${var.services[each.key]}/*"]
     }
+  }
+
+  lifecycle {
+    ignore_changes = [action]
   }
 }
 
@@ -237,6 +247,10 @@ resource "aws_lb_listener_rule" "auth-http" {
       values = ["/${each.key}", "/${each.key}/*"]
     }
   }
+
+  lifecycle {
+    ignore_changes = [action]
+  }
 }
 
 resource "aws_lb_listener_rule" "auth-https" {
@@ -254,5 +268,9 @@ resource "aws_lb_listener_rule" "auth-https" {
     path_pattern {
       values = ["/${each.key}", "/${each.key}/*"]
     }
+  }
+
+  lifecycle {
+    ignore_changes = [action]
   }
 }

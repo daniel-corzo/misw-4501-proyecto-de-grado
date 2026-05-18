@@ -30,11 +30,7 @@ struct BookingServiceKey: EnvironmentKey {
 
 struct PaymentServiceKey: EnvironmentKey {
     static var defaultValue: PaymentService {
-        guard let cipher = try? RSAOAEPPaymentCipher(publicKeyPEM: AppConfig.paymentPublicKeyPEM)
-        else {
-            fatalError("Could not load payment RSA public key cipher.")
-        }
-        return PaymentServiceImpl(httpService: HttpServiceImpl.shared, cipher: cipher)
+        PaymentServiceImpl(httpService: HttpServiceImpl.shared)
     }
 }
 

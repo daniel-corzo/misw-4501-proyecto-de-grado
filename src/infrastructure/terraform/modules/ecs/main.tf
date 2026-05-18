@@ -48,10 +48,11 @@ resource "aws_ecs_task_definition" "task" {
       )
       secrets = [
         for s in [
-          { name = "DB_URL",          valueFrom = "${var.shared_secret_arn}:db_url::",          key = "db_url" },
-          { name = "JWT_SECRET",      valueFrom = "${var.shared_secret_arn}:jwt_secret::",      key = "jwt_secret" },
-          { name = "JWT_PRIVATE_KEY", valueFrom = "${var.shared_secret_arn}:jwt_private_key::", key = "jwt_private_key" },
-          { name = "JWT_PUBLIC_KEY",  valueFrom = "${var.shared_secret_arn}:jwt_public_key::",  key = "jwt_public_key" }
+          { name = "DB_URL",                   valueFrom = "${var.shared_secret_arn}:db_url::",               key = "db_url" },
+          { name = "JWT_SECRET",               valueFrom = "${var.shared_secret_arn}:jwt_secret::",           key = "jwt_secret" },
+          { name = "JWT_PRIVATE_KEY",          valueFrom = "${var.shared_secret_arn}:jwt_private_key::",      key = "jwt_private_key" },
+          { name = "JWT_PUBLIC_KEY",           valueFrom = "${var.shared_secret_arn}:jwt_public_key::",       key = "jwt_public_key" },
+          { name = "PAGO_RSA_PRIVATE_KEY_PEM", valueFrom = "${var.shared_secret_arn}:pago_rsa_private_key::", key = "pago_rsa_private_key" },
         ] : { name = s.name, valueFrom = s.valueFrom }
         if !contains(each.value.exclude_secrets, s.key)
       ]

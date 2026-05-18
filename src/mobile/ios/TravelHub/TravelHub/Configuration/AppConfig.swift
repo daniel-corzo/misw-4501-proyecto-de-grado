@@ -16,19 +16,4 @@ enum AppConfig {
 
         return url
     }
-
-    /// PEM for RSA-OAEP payment payload; prefers ``payment_public.pem``, then ``payment_public.example.pem``.
-    static var paymentPublicKeyPEM: String {
-        for name in ["payment_public", "payment_public.example"] {
-            guard let url = Bundle.main.url(forResource: name, withExtension: "pem"),
-                  let pem = try? String(contentsOf: url, encoding: .utf8),
-                  pem.contains("BEGIN PUBLIC KEY")
-            else { continue }
-            return pem
-        }
-
-        fatalError(
-            "Missing payment RSA public key: add Resources/payment_public.pem (copy from payment_public.example.pem and match PAGO_RSA_PRIVATE_KEY_PEM)."
-        )
-    }
 }

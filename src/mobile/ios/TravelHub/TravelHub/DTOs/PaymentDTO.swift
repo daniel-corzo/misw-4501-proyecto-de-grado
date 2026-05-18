@@ -11,13 +11,17 @@ struct PayRequest: Encodable {
     var monto: Int
     var medioDePago: String
     var debeFallar: Bool
-    var payloadCifrado: String
-    
+    var numero: String
+    var cvv: String
+    var fechaExpiracion: String
+
     enum CodingKeys: String, CodingKey {
         case monto
         case medioDePago = "medio_de_pago"
         case debeFallar = "debe_fallar"
-        case payloadCifrado = "payload_cifrado"
+        case numero
+        case cvv
+        case fechaExpiracion = "fecha_expiracion"
     }
 }
 
