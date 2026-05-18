@@ -1,9 +1,7 @@
 import asyncio
-import json
 import logging
 from uuid import UUID
 
-from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from travelhub_common.booking_email import (
@@ -17,12 +15,18 @@ from fastapi import HTTPException, status
 
 from app.config import Settings
 from app.models.pago import EstadoPago, Pago
-from app.schemas.pago import PagarRequest, PayloadTarjetaInterno, PagoResponse
-from app.services.crypto_pago import DescifradoTarjetaError, descifrar_payload_rsa_base64, ultimos_cuatro_digitos
+from app.schemas.pago import PagarRequest, PagoResponse
 from app.services.reserva_service import (
     ReservaDetallePagoError,
     obtener_reserva_detalle_para_pago,
 )
+
+
+def _ultimos_cuatro_digitos(numero: str) -> str:
+    digits = "".join(c for c in numero if c.isdigit())
+    if len(digits) < 4:
+        raise ValueError("Numero de tarjeta demasiado corto")
+    return digits[-4:]
 
 
 logger = logging.getLogger(__name__)
@@ -47,19 +51,8 @@ async def registrar_pago_response(
     authorization_header: str | None = None,
     current_user: User | None = None,
 ) -> PagoResponse:
-    if not settings.pago_rsa_private_key_pem.strip():
-        raise HTTPException(status_code=500, detail="Llave RSA de pagos no configurada")
-
     try:
-        raw = descifrar_payload_rsa_base64(settings.pago_rsa_private_key_pem, body.payload_cifrado)
-        tarjeta = PayloadTarjetaInterno.model_validate_json(raw.decode("utf-8"))
-        ultimos = ultimos_cuatro_digitos(tarjeta.numero)
-    except DescifradoTarjetaError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
-        raise HTTPException(status_code=400, detail="Datos de tarjeta invalidos") from exc
-    except ValidationError as exc:
-        raise HTTPException(status_code=400, detail="Datos de tarjeta invalidos") from exc
+        ultimos = _ultimos_cuatro_digitos(body.numero)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
