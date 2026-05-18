@@ -111,8 +111,9 @@ async def logout(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="La clave publica JWT no esta configurada",
             )
+        public_key = settings.jwt_public_key.replace("\\n", "\n")
         payload = jwt.decode(
-            token, settings.jwt_public_key, algorithms=[settings.jwt_algorithm]
+            token, public_key, algorithms=[settings.jwt_algorithm]
         )
     except JWTError:
         raise HTTPException(
