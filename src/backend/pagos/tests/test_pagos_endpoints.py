@@ -17,7 +17,7 @@ USER_ID = UUID("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
 
 CARD_FIELDS = {
     "numero": "4111111111111111",
-    "cvv": "123",
+    "cvv": "901",
     "fecha_expiracion": "12/2099",
 }
 
@@ -127,7 +127,7 @@ async def test_post_pagar_201_successful(client_pagos, mock_db_session):
     assert data["monto"] == 1000
     assert data["medio_de_pago"] == "tarjeta_credito"
     assert data["estado"] == "successful"
-    assert data["tarjeta_ultimos_4"] == "9999"
+    assert data["tarjeta_ultimos_4"] == "1111"
     assert mock_db_session.flush.await_count == 1
     assert mock_db_session.commit.await_count == 1
     mock_db_session.add.assert_called_once()
@@ -187,7 +187,7 @@ async def test_post_pagar_201_failed_flag(client_pagos):
     assert response.status_code == 201
     body = response.json()
     assert body["estado"] == "failed"
-    assert body["tarjeta_ultimos_4"] == "9999"
+    assert body["tarjeta_ultimos_4"] == "1111"
     mock_send_email.assert_not_called()
 
 
