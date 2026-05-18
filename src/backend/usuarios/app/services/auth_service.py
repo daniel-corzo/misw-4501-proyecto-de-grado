@@ -31,9 +31,10 @@ def create_access_token(data: dict, settings: BaseAppSettings):
     if not settings.jwt_private_key:
         raise ValueError("La clave privada JWT no esta configurada")
 
+    private_key = settings.jwt_private_key.replace("\\n", "\n")
     return jwt.encode(
         to_encode,
-        settings.jwt_private_key,
+        private_key,
         algorithm=settings.jwt_algorithm,
     )
 

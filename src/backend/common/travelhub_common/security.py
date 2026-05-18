@@ -39,7 +39,8 @@ async def get_current_user(
         if not settings.jwt_public_key:
             raise HTTPException(status_code=500, detail="La clave publica JWT no esta configurada")
 
-        payload = jwt.decode(token, settings.jwt_public_key, algorithms=[settings.jwt_algorithm])
+        public_key = settings.jwt_public_key.replace("\\n", "\n")
+        payload = jwt.decode(token, public_key, algorithms=[settings.jwt_algorithm])
         token_data = TokenPayload(**payload)
     except JWTError:
         raise HTTPException(status_code=401, detail="No se pudieron validar las credenciales")
