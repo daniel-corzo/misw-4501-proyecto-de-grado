@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TravelHub — Transformación Digital</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #05091a;
+  --navy2: #0a0f2e;
+  --cyan: #00d4ff;
+  --blue: #4a9eff;
+  --green: #00e5a0;
+  --amber: #ffb830;
+  --red: #ff5757;
+  --white: #f0f4ff;
+  --muted: #7a8aaa;
+  --glass: rgba(255,255,255,0.05);
+  --glass2: rgba(0,212,255,0.08);
+  --border: rgba(255,255,255,0.08);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--navy);
+  color: var(--white);
+  font-family: 'DM Sans', sans-serif;
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── SLIDE ENGINE ─── */
+#deck {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 52px 80px 88px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.42s ease, transform 0.42s ease;
+  transform: translateX(60px);
+}
+
+.slide.active {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateX(0);
+}
+
+/* ─── NAV BAR ─── */
+#nav-bar {
+  position: fixed;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 5px;
+  z-index: 200;
+  background: rgba(5,9,26,0.88);
+  padding: 7px 14px;
+  border-radius: 24px;
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  cursor: default;
+}
+
+.nav-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.nav-dot:hover { border-color: rgba(0,212,255,0.4); color: var(--cyan); }
+.nav-dot.active { background: rgba(0,212,255,0.15); border-color: var(--cyan); color: var(--cyan); }
+
+.nav-dot .nav-tooltip {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(5,9,26,0.95);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  white-space: nowrap;
+  font-size: 10px;
+  color: var(--white);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.nav-dot:hover .nav-tooltip { opacity: 1; }
+
+/* ─── UI CHROME ─── */
+#progress-bar {
+  position: fixed;
+  bottom: 0; left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--cyan), var(--blue));
+  transition: width 0.4s ease;
+  z-index: 300;
+  box-shadow: 0 0 10px var(--cyan);
+}
+
+#slide-counter {
+  position: fixed;
+  top: 22px; right: 28px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  z-index: 200;
+  letter-spacing: 2px;
+}
+
+/* ─── TYPOGRAPHY ─── */
+.slide-tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 18px;
+  opacity: 0.8;
+}
+
+h1 {
+  font-family: 'Sora', sans-serif;
+  font-weight: 800;
+  font-size: clamp(52px, 9vw, 100px);
+  line-height: 1;
+  letter-spacing: -3px;
+  background: linear-gradient(135deg, var(--white) 40%, var(--cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+h2 {
+  font-family: 'Sora', sans-serif;
+  font-weight: 700;
+  font-size: clamp(20px, 3.2vw, 34px);
+  letter-spacing: -0.5px;
+  margin-bottom: 28px;
+  color: var(--white);
+  align-self: flex-start;
+  width: 100%;
+}
+
+h2 .accent { color: var(--cyan); }
+
+.subtitle {
+  font-size: clamp(13px, 1.8vw, 18px);
+  color: var(--muted);
+  font-weight: 300;
+  margin-top: 12px;
+  max-width: 640px;
+  text-align: center;
+  line-height: 1.7;
+}
+
+.note { font-size: 12px; color: var(--muted); text-align: center; margin-top: 10px; }
+.note em { color: var(--cyan); font-style: normal; }
+
+/* ─── CARDS ─── */
+.card {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 22px;
+  backdrop-filter: blur(8px);
+}
+
+.card-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 7px;
+  opacity: 0.8;
+}
+
+.card-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+.stat-box {
+  background: var(--glass2);
+  border: 1px solid rgba(0,212,255,0.15);
+  border-radius: 12px;
+  padding: 18px;
+  text-align: center;
+}
+
+.stat-num {
+  font-family: 'Sora', sans-serif;
+  font-size: clamp(22px, 3vw, 34px);
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--cyan), var(--blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-label { font-size: 12px; color: var(--muted); margin-top: 5px; }
+
+/* ─── PAIN LIST ─── */
+.pain-list { list-style: none; width: 100%; display: flex; flex-direction: column; gap: 9px; }
+.pain-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: rgba(255,87,87,0.06);
+  border: 1px solid rgba(255,87,87,0.15);
+  border-radius: 10px;
+  padding: 11px 15px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.pain-list li .icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+
+/* ─── OBJ CARDS ─── */
+.obj-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; width: 100%; }
+.obj-card { border-radius: 14px; padding: 22px; }
+.obj-card.fin { background: linear-gradient(135deg, rgba(0,229,160,0.1), rgba(0,229,160,0.03)); border: 1px solid rgba(0,229,160,0.2); }
+.obj-card.ops { background: linear-gradient(135deg, rgba(74,158,255,0.1), rgba(74,158,255,0.03)); border: 1px solid rgba(74,158,255,0.2); }
+.obj-card.cmp { background: linear-gradient(135deg, rgba(255,184,48,0.1), rgba(255,184,48,0.03)); border: 1px solid rgba(255,184,48,0.2); }
+.obj-card .obj-icon { font-size: 26px; margin-bottom: 10px; }
+.obj-card .obj-title { font-family: 'Sora',sans-serif; font-weight: 700; font-size: 14px; margin-bottom: 7px; }
+.obj-card.fin .obj-title { color: var(--green); }
+.obj-card.ops .obj-title { color: var(--blue); }
+.obj-card.cmp .obj-title { color: var(--amber); }
+.obj-card .obj-body { font-size: 12px; color: var(--muted); line-height: 1.6; }
+.obj-card .obj-metric { font-family: 'Sora',sans-serif; font-size: 18px; font-weight: 800; margin-top: 10px; }
+.obj-card.fin .obj-metric { color: var(--green); }
+.obj-card.ops .obj-metric { color: var(--blue); }
+.obj-card.cmp .obj-metric { color: var(--amber); }
+
+/* ─── SPRINT CARDS ─── */
+.sprint-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; width: 100%; }
+.sprint-card {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px;
+  position: relative;
+  overflow: hidden;
+}
+.sprint-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--green), var(--cyan));
+}
+.sprint-num { font-family: 'DM Mono',monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--cyan); margin-bottom: 10px; }
+.sprint-stat { font-family: 'Sora',sans-serif; font-size: 30px; font-weight: 800; color: var(--white); }
+.sprint-ph { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+.badge {
+  font-family: 'DM Mono',monospace;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+.badge.green { background: rgba(0,229,160,0.15); color: var(--green); border: 1px solid rgba(0,229,160,0.25); }
+.badge.muted { background: var(--glass); color: var(--muted); border: 1px solid var(--border); }
+
+/* ─── TWO-COL ─── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; align-items: start; }
+
+/* ─── BQUOTE ─── */
+.bquote {
+  border-left: 3px solid var(--cyan);
+  padding: 14px 18px;
+  background: var(--glass2);
+  border-radius: 0 10px 10px 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--white);
+}
+.bquote .arrow { color: var(--cyan); font-weight: 700; }
+
+/* ─── TIMELINE ─── */
+.timeline { display: flex; align-items: center; width: 100%; margin-top: 18px; }
+.tl-block { flex: 1; background: var(--glass); border: 1px solid var(--border); border-radius: 8px; padding: 11px 14px; text-align: center; font-size: 12px; }
+.tl-block .tl-label { color: var(--cyan); font-weight: 600; font-size: 11px; margin-bottom: 3px; }
+.tl-block .tl-sub { color: var(--muted); font-size: 10px; }
+.tl-connector { height: 2px; background: linear-gradient(90deg, var(--cyan), var(--blue)); flex: 0 0 36px; }
+
+/* ─── PILL / CONSTRAINT ─── */
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.2);
+  border-radius: 20px; padding: 6px 16px; font-size: 12px; color: var(--cyan); margin-top: 10px;
+}
+
+.constraint-pill {
+  background: var(--glass); border: 1px solid var(--border);
+  border-radius: 30px; padding: 9px 20px; font-size: 14px; font-weight: 500; text-align: center;
+}
+
+/* ─── ARCHITECTURE ─── */
+.arch-wrap { width: 100%; display: flex; gap: 18px; align-items: flex-start; }
+.arch-main { flex: 1; display: flex; flex-direction: column; gap: 7px; }
+.arch-row { display: flex; justify-content: center; gap: 9px; }
+.arch-box {
+  background: var(--glass); border: 1px solid var(--border);
+  border-radius: 8px; padding: 7px 13px; font-size: 11px; font-weight: 500;
+  text-align: center; white-space: nowrap;
+}
+.arch-box.client { border-color: rgba(0,212,255,0.3); color: var(--cyan); }
+.arch-box.infra  { border-color: rgba(74,158,255,0.3); color: var(--blue); }
+.arch-box.svc    { border-color: rgba(0,229,160,0.25); color: var(--green); font-family: 'DM Mono',monospace; font-size: 10px; }
+.arch-box.db     { border-color: rgba(255,184,48,0.25); color: var(--amber); font-size: 10px; }
+.arch-box.deploy { border-color: rgba(255,87,87,0.2); color: #ff9a9a; font-size: 10px; }
+.arch-arrow { text-align: center; color: var(--muted); font-size: 13px; line-height: 1.2; }
+.arch-side { display: flex; flex-direction: column; gap: 7px; justify-content: center; align-items: center; min-width: 130px; }
+.arch-side-arrow { color: var(--muted); font-size: 11px; }
+.arch-legend { display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap; justify-content: center; }
+.legend-item { font-family: 'DM Mono',monospace; font-size: 10px; color: var(--muted); }
+
+/* ─── LOCAL NOTE ─── */
+.local-note {
+  width: 100%;
+  background: rgba(74,158,255,0.05);
+  border: 1px solid rgba(74,158,255,0.15);
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.local-note strong { color: var(--blue); }
+
+/* ─── CODE BOX ─── */
+.code-box {
+  background: rgba(0,0,0,0.4); border: 1px solid rgba(0,212,255,0.15);
+  border-radius: 10px; padding: 18px 22px;
+  font-family: 'DM Mono',monospace; font-size: 12px; line-height: 2;
+  color: var(--cyan); width: 100%;
+}
+.code-box span { color: var(--muted); }
+
+/* ─── FLOW ─── */
+.flow {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  flex-wrap: wrap; justify-content: center; margin: 14px 0;
+}
+.flow-box {
+  background: var(--glass); border: 1px solid var(--border);
+  border-radius: 8px; padding: 9px 14px; font-size: 12px;
+  text-align: center; line-height: 1.4;
+}
+.flow-box.highlight { border-color: rgba(0,212,255,0.4); color: var(--cyan); background: rgba(0,212,255,0.08); }
+.flow-box.key { border-color: rgba(74,158,255,0.4); color: var(--blue); }
+.flow-arrow { color: var(--muted); font-size: 16px; flex-shrink: 0; }
+
+/* ─── BLUE/GREEN ─── */
+.bg-visual { display: flex; align-items: center; gap: 20px; justify-content: center; width: 100%; margin: 14px 0; }
+.bg-box { border-radius: 12px; padding: 16px 24px; text-align: center; font-size: 13px; font-weight: 600; }
+.bg-box.blue { background: rgba(74,158,255,0.15); border: 2px solid var(--blue); color: var(--blue); }
+.bg-box.green { background: rgba(0,229,160,0.15); border: 2px solid var(--green); color: var(--green); }
+.bg-box.alb { background: var(--glass); border: 1px solid var(--border); color: var(--white); }
+.bg-arrow { font-size: 18px; color: var(--muted); }
+
+/* ─── PIPELINE ─── */
+.pipeline { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; font-family: 'DM Mono',monospace; font-size: 10px; width: 100%; }
+.pipe-step { background: var(--glass); border: 1px solid var(--border); border-radius: 6px; padding: 5px 9px; white-space: nowrap; }
+.pipe-step.ok { border-color: rgba(0,229,160,0.3); color: var(--green); }
+.pipe-step.warn { border-color: rgba(255,184,48,0.3); color: var(--amber); }
+.pipe-step.info { border-color: rgba(74,158,255,0.3); color: var(--blue); }
+.pipe-sep { color: var(--muted); }
+
+/* ─── BRANCH FLOW ─── */
+.branch-flow {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 18px;
+  font-family: 'DM Mono', monospace; font-size: 12px; width: 100%;
+  margin-top: 10px; justify-content: center;
+}
+.branch-name { color: var(--green); }
+.branch-main { color: var(--blue); }
+.branch-deploy { color: var(--amber); }
+.branch-arrow { color: var(--muted); }
+
+/* ─── METRIC GRID ─── */
+.metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; width: 100%; }
+.metric-box { background: var(--glass2); border: 1px solid rgba(0,212,255,0.12); border-radius: 12px; padding: 18px; text-align: center; }
+.metric-val { font-family: 'Sora',sans-serif; font-size: clamp(22px, 3vw, 38px); font-weight: 800; background: linear-gradient(135deg, var(--cyan), var(--blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.metric-lbl { font-size: 11px; color: var(--muted); margin-top: 5px; }
+
+/* ─── TEST COLS ─── */
+.test-cols { display: grid; grid-template-columns: repeat(3,1fr); gap: 13px; width: 100%; }
+.test-col { background: var(--glass); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+.test-col-title { font-family: 'Sora',sans-serif; font-size: 13px; font-weight: 700; margin-bottom: 11px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.test-col ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.test-col ul li { font-size: 12px; color: var(--muted); padding-left: 14px; position: relative; line-height: 1.4; }
+.test-col ul li::before { content: '·'; position: absolute; left: 0; color: var(--cyan); }
+
+/* ─── FEAT: WHAT WORKED ─── */
+.feat-wrap { display: flex; gap: 16px; width: 100%; align-items: flex-start; }
+.feat-platform { flex: 1; background: var(--glass); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.feat-platform-title {
+  font-family: 'Sora',sans-serif; font-size: 13px; font-weight: 700;
+  color: var(--cyan); margin-bottom: 12px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.feat-platform ul { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+.feat-platform ul li {
+  font-size: 11px; color: var(--muted);
+  display: flex; align-items: baseline; gap: 6px; line-height: 1.4;
+}
+.feat-platform ul li::before { content: '✓'; color: var(--green); font-size: 10px; flex-shrink: 0; }
+.scope-bar {
+  width: 100%; background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 18px; margin-top: 12px;
+}
+.scope-bar-title { font-family: 'DM Mono',monospace; font-size: 10px; letter-spacing: 2px; color: var(--muted); margin-bottom: 8px; }
+.scope-items { display: flex; flex-wrap: wrap; gap: 7px; }
+.scope-chip {
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 20px; padding: 4px 12px; font-size: 11px; color: var(--muted);
+}
+
+/* ─── GAP COLS ─── */
+.gap-col { background: var(--glass); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.gap-col-title { font-family: 'Sora',sans-serif; font-size: 13px; font-weight: 700; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.gap-col ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.gap-col ul li { font-size: 12px; color: var(--muted); padding-left: 18px; position: relative; line-height: 1.5; }
+.gap-col.out .gap-col-title { color: var(--muted); }
+.gap-col.out ul li::before { content: '—'; position: absolute; left: 0; color: rgba(255,255,255,0.2); }
+
+/* ─── LESSON CARDS ─── */
+.lesson-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; }
+.lesson-card { background: var(--glass); border: 1px solid var(--border); border-radius: 12px; padding: 20px; position: relative; overflow: hidden; }
+.lesson-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--cyan), var(--blue)); }
+.lesson-num { font-family: 'DM Mono',monospace; font-size: 10px; color: var(--cyan); letter-spacing: 2px; margin-bottom: 7px; }
+.lesson-title { font-family: 'Sora',sans-serif; font-weight: 700; font-size: 14px; color: var(--white); margin-bottom: 7px; }
+.lesson-body { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+/* ─── CLOSING ─── */
+.big-stats { display: flex; gap: 28px; justify-content: center; flex-wrap: wrap; margin: 18px 0; }
+.big-stat { text-align: center; }
+.big-stat .n { font-family: 'Sora',sans-serif; font-size: clamp(26px, 4vw, 46px); font-weight: 800; background: linear-gradient(135deg, var(--cyan), var(--blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.big-stat .l { font-size: 10px; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 1px; }
+
+.team-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
+.team-chip { background: var(--glass); border: 1px solid var(--border); border-radius: 20px; padding: 7px 16px; font-size: 13px; color: var(--muted); }
+
+/* ─── DEMO ─── */
+.demo-word {
+  font-family: 'Sora',sans-serif;
+  font-size: clamp(64px, 13vw, 128px);
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--cyan), var(--blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -5px;
+  line-height: 1;
+}
+
+/* ─── GLOWS ─── */
+@keyframes pulse-glow { 0%,100%{opacity:.25} 50%{opacity:.6} }
+.glow-orb { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; }
+.orb1 { width: 380px; height: 380px; background: rgba(0,212,255,0.1); top: -80px; right: -80px; animation: pulse-glow 4s ease-in-out infinite; }
+.orb2 { width: 280px; height: 280px; background: rgba(74,158,255,0.09); bottom: -40px; left: -40px; animation: pulse-glow 5s ease-in-out infinite 1.2s; }
+</style>
+</head>
+<body>
+
+<div id="deck">
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 1 — PORTADA
+══════════════════════════════════════════════ -->
+<div class="slide active">
+  <div class="glow-orb orb1"></div>
+  <div class="glow-orb orb2"></div>
+  <div class="slide-tag">MISW4501 / MISW4502 · Universidad de Los Andes</div>
+  <h1>TravelHub</h1>
+  <p class="subtitle">Transformación Digital de la Plataforma de Reservas Hoteleras</p>
+  <div class="team-row" style="margin-top:36px;">
+    <div class="team-chip">Daniel Corzo</div>
+    <div class="team-chip">Germán Martínez</div>
+    <div class="team-chip">Juan Avelino</div>
+    <div class="team-chip">Andrés Donoso</div>
+  </div>
+  <div class="note" style="margin-top:24px;">Maestría en Ingeniería de Software · Mayo 2026</div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 2 — EL PROBLEMA
+══════════════════════════════════════════════ -->
+<div class="slide">
+  <h2>El caso <span class="accent">TravelHub</span></h2>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;width:100%;margin-bottom:16px;">
+    <div class="stat-box"><div class="stat-num">1.200</div><div class="stat-label">hoteles · 6 países LATAM</div></div>
+    <div class="stat-box"><div class="stat-num">450K</div><div class="stat-label">viajeros activos</div></div>
+    <div class="stat-box"><div class="stat-num">$51.6M</div><div class="stat-label">ingresos anuales</div></div>
+    <div class="stat-box">
+      <div class="stat-num" style="background:linear-gradient(135deg,var(--red),var(--amber));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">25-30%</div>
+      <div class="stat-label">abandono de carrito</div>
+    </div>
+  </div>
+  <ul class="pain-list">
+    <li><span class="icon">⚠️</span><div><strong>Overbooking:</strong> sincronización con PMS cada 2-3h — no en tiempo real. Habitaciones vendidas que ya estaban ocupadas.</div></li>
+    <li><span class="icon">🔗</span><div><strong>Pagos acoplados:</strong> fallo en un proveedor afecta búsquedas, reservas y toda la plataforma.</div></li>
+    <li><span class="icon">🔓</span><div><strong>No cumple PCI-DSS:</strong> datos de tarjeta almacenados en texto plano. 3 incidentes de seguridad en 18 meses.</div></li>
+    <li><span class="icon">🛑</span><div><strong>Downtime de 2-4h</strong> por mantenimientos rutinarios. Sin estrategia de despliegue zero-downtime.</div></li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 3 — OBJETIVOS
+══════════════════════════════════════════════ -->
+<div class="slide">
+  <h2>¿Qué nos pidieron <span class="accent">lograr?</span></h2>
+  <div class="obj-cards">
+    <div class="obj-card fin">
+      <div class="obj-icon">📈</div>
+      <div class="obj-title">Financiero</div>
+      <div class="obj-body">Incrementar ingresos anuales en 25% durante 3 años, reduciendo costos operativos en 15% vía automatización.</div>
+      <div class="obj-metric">$51.6M → $100.7M</div>
+    </div>
+    <div class="obj-card ops">
+      <div class="obj-icon">🛒</div>
+      <div class="obj-title">Operacional</div>
+      <div class="obj-body">Reducir abandono de carrito del 25-30% al 8-10% mejorando tiempos de respuesta y experiencia de usuario.</div>
+      <div class="obj-metric">25-30% → 8-10%</div>
+    </div>
+    <div class="obj-card cmp">
+      <div class="obj-icon">🔒</div>
+      <div class="obj-title">Compliance</div>
+      <div class="obj-body">Alcanzar PCI-DSS 3.2.1, GDPR y normativas locales de los 6 países dentro de 12 meses.</div>
+      <div class="obj-metric">PCI-DSS · GDPR · LGPD</div>
+    </div>
+  </div>
+  <p class="note" style="margin-top:18px;font-style:italic;font-size:12px;">
+    "Nuestra apuesta: demostrar la <em>viabilidad arquitectónica</em> de la transformación, no replicar la plataforma completa."
+  </p>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 4 — RESTRICCIONES
+══════════════════════════════════════════════ -->
+<div class="slide">
+  <h2>El equipo y las <span class="accent">restricciones</span></h2>
+  <div class="two-col">
+    <div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Condiciones reales del proyecto</p>
+      <div style="display:flex;flex-direction:column;gap:9px;">
+        <div class="constraint-pill">👥 4 personas · part-time</div>
+        <div class="constraint-pill">⏱️ 16 semanas (MISW4501 + MISW4502)</div>
+        <div class="constraint-pill">☁️ AWS · presupuesto limitado</div>
+        <div class="constraint-pill">🔄 Sistema actual sigue operando</div>
+      </div>
+    </div>
+    <div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Decisión de alcance</p>
+      <div class="bquote">
+        Inventario del enunciado: <strong style="color:var(--red);">80+ HUs</strong><br>
+        <span class="arrow">↓ Negociación con tutor</span><br>
+        Scope acordado y completado: <strong style="color:var(--green);">47 HUs · 114 PH</strong>
+      </div>
+    </div>
+  </div>
+  <div class="timeline">
+    <div class="tl-block"><div class="tl-label">MISW4501</div><div class="tl-sub">Semanas 1-8</div></div>
+    <div class="tl-connector"></div>
+    <div class="tl-block"><div class="tl-label">Sprint 1</div><div class="tl-sub">14 HUs · 32 PH</div></div>
+    <div class="tl-connector"></div>
+    <div class="tl-block"><div class="tl-label">MISW4502</div><div class="tl-sub">Semanas 9-16</div></div>
+    <div class="tl-connector"></div>
+    <div class="tl-block"><div class="tl-label">Sprint 2</div><div class="tl-sub">15 HUs · 33 PH</div></div>
+    <div class="tl-connector"></div>
+    <div class="tl-block"><div class="tl-label">Sprint 3</div><div class="tl-sub">18 HUs · 49 PH</div></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 5 — SPRINTS
+══════════════════════════════════════════════ -->
+<div class="slide">
+  <h2>Planificación: <span class="accent">3 Sprints · 114 PH</span></h2>
+  <div class="sprint-cards">
+    <div class="sprint-card">
+      <div class="sprint-num">SPRINT 1</div>
+      <div class="sprint-stat">14</div>
+      <div class="sprint-ph">Historias de usuario · 32 PH</div>
+      <span class="badge green">14 ✓ completadas</span>
+      <p style="font-size:11px;color:var(--muted);margin-top:10px;">Auth · hoteles · búsqueda · móvil básico · tarifas</p>
+    </div>
+    <div class="sprint-card">
+      <div class="sprint-num">SPRINT 2</div>
+      <div class="sprint-stat">15</div>
+      <div class="sprint-ph">Historias de usuario · 33 PH</div>
+      <span class="badge green">15 ✓ completadas</span>
+      <p style="font-size:11px;color:var(--muted);margin-top:10px;">Reservas web/móvil · portal hotel · modificaciones</p>
+    </div>
+    <div class="sprint-card">
+      <div class="sprint-num">SPRINT 3</div>
+      <div class="sprint-stat">18</div>
+      <div class="sprint-ph">Historias de usuario · 49 PH</div>
+      <span class="badge green">18 ✓ completadas</span>
+      <p style="font-size:11px;color:var(--muted);margin-top:10px;">Pagos · filtros · dashboard hotel · observabilidad</p>
+    </div>
+  </div>
+  <div class="card" style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;padding:12px 22px;gap:20px;">
+    <span style="font-size:14px;font-weight:600;color:var(--white);">47 / 47 HUs entregadas ✓</span>
+    <span style="font-size:12px;color:var(--muted);">Elementos del enunciado original (80+ HUs) no incluidos en el scope → <span style="color:var(--amber);">decisiones conscientes de alcance</span>, no deuda.</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 6 — ARQUITECTURA AWS
+══════════════════════════════════════════════ -->
+<div class="slide" style="padding-top:42px;">
+  <h2>Arquitectura en <span class="accent">AWS</span></h2>
+  <div class="arch-wrap">
+    <div class="arch-main">
+      <div class="arch-row">
+        <div class="arch-box client">🌐 Web Angular 19</div>
+        <div class="arch-box client">📱 iOS SwiftUI</div>
+      </div>
+      <div class="arch-arrow">↓ HTTPS ↓</div>
+      <div class="arch-row">
+        <div class="arch-box infra">☁️ CloudFront + S3</div>
+        <div class="arch-box infra">⚖️ ALB + nginx Gateway</div>
+      </div>
+      <div class="arch-arrow">↓ ECS Fargate — /api/{svc}/... ↓</div>
+      <div class="arch-row" style="flex-wrap:wrap;gap:8px;justify-content:center;">
+        <div class="arch-box svc">usuarios</div>
+        <div class="arch-box svc">busquedas</div>
+        <div class="arch-box svc">hoteles</div>
+        <div class="arch-box svc">reservas</div>
+        <div class="arch-box svc">pagos</div>
+        <div class="arch-box svc">notificaciones</div>
+      </div>
+      <div class="arch-arrow">↓ asyncpg ↓</div>
+      <div class="arch-row">
+        <div class="arch-box db">🗄️ RDS PostgreSQL</div>
+        <div class="arch-box db">🔐 Secrets Manager</div>
+        <div class="arch-box db">📦 ECR</div>
+      </div>
+    </div>
+    <div class="arch-side">
+      <div class="arch-box deploy" style="width:100%;text-align:center;padding:8px;">🔵🟢 CodeDeploy</div>
+      <div class="arch-side-arrow">Blue/Green</div>
+      <div class="arch-box deploy" style="width:100%;text-align:center;padding:8px;">🚀 ECS Fargate</div>
+      <div class="arch-side-arrow">↑ build</div>
+      <div class="arch-box deploy" style="width:100%;text-align:center;padding:8px;">⚙️ GitHub Actions</div>
+      <div class="arch-side-arrow">↑ IaC</div>
+      <div class="arch-box deploy" style="width:100%;text-align:center;padding:8px;">🏗️ Terraform</div>
+    </div>
+  </div>
+  <div class="local-note">
+    <strong>🖥️ Local (docker-compose):</strong>
+    <span>Todos los servicios como contenedores · LocalStack para SQS · PostgreSQL local · Redis · No es réplica exacta de AWS, pero refleja el mismo modelo de microservicios.</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 7 — DECISIÓN 1
+══════════════════════════════════════════════ -->
+<div class="slide">
+  <h2>Decisión 1 · <span class="accent">Microservicios + travelhub_common</span></h2>
+  <div class="two-col">
+    <div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px;">¿Por qué?</p>
+      <div class="bquote">
+        "Cambiar pagos no debe romper<br>reservas ni búsquedas."<br><br>
+        <span style="font-size:11px;color:var(--muted);">Responde directamente al dolor del enunciado: el sistema de pagos acoplado afectaba toda la plataforma.</span>
+      </div>
+      <div class="pill" style="margin-top:14px;font-size:11px;">⚖️ Complejidad operacional ↔ Independencia de despliegue</div>
+    </div>
+    <div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px;">travelhub_common provee a todos los servicios</p>
+      <div class="code-box">
+        <span>factory.</span>create_app()<br>
+        <span>config.</span>BaseAppSettings<br>
+        <span>database.</span>make_get_db()<br>
+        <span>security.</span>get_current_user()<br>
+        <span>security.</span>RoleChecker()<br>
+        <span>logger.</span>get_logger()<br>
+        <span>models.</span>BaseModel
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 8 — DECISIÓN 2
+══════════════════════════════════════════════ -->
+<div class="slide">
+  <h2>Decisión 2 · <span class="accent">Autenticación JWT RS256</span></h2>
+  <div class="flow">
+    <div class="flow-box">👤 Cliente</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box highlight">POST /auth/login<br><small>usuarios svc</small><br><small style="color:var(--muted);">firma con PRIVATE KEY</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box key" style="padding:9px 12px;font-size:11px;">JWT<br><small>(RS256, 24h)</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">hoteles · reservas · pagos<br><small style="color:var(--muted);">validan con PUBLIC KEY</small><br><small style="color:var(--green);">sin hop de red</small></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;margin-top:10px;">
+    <div class="card">
+      <div class="card-label">Validación local</div>
+      <div style="font-size:12px;color:var(--white);margin-top:6px;line-height:1.5;">Cada servicio valida el token con la clave pública — sin llamada a <code style="color:var(--cyan)">usuarios</code> en cada request.</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Logout real</div>
+      <div style="font-size:12px;color:var(--white);margin-top:6px;line-height:1.5;">Tabla <code style="color:var(--cyan)">revoked_token</code> por servicio — tokens invalidados quedan bloqueados.</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Roles en payload</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+        <span class="badge green">ADMIN</span>
+        <span class="badge" style="background:rgba(255,184,48,0.15);color:var(--amber);border:1px solid rgba(255,184,48,0.25);">MANAGER</span>
+        <span class="badge" style="background:rgba(74,158,255,0.15);color:var(--blue);border:1px solid rgba(74,158,255,0.25);">USER</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 9 — DECISIÓN 3
+══════════════════════════════════════════════ -->
+<div class="slide">
+  <h2>Decisión 3 · <span class="accent">Pagos con RSA-OAEP</span></h2>
+  <div class="flow" style="margin:0 0 14px;">
+    <div class="flow-box highlight">🔑 Cliente<br><small>cifra con Public Key</small><br><small style="color:var(--muted);">WebCrypto API</small></div>
+    <div class="flow-arrow">→ HTTPS →</div>
+    <div class="flow-box key">pagos svc<br><small>descifra con Private Key</small><br><small style="color:var(--muted);">RSA-OAEP SHA-256</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Guarda solo<br><small style="color:var(--cyan);">últimos 4 dígitos</small><br><small style="color:var(--muted);">Pago simulado</small></div>
+  </div>
+  <div class="two-col" style="gap:14px;">
+    <div class="bquote">
+      <strong style="color:var(--cyan);">¿Por qué no Stripe?</strong><br>
+      Demostramos el <strong>patrón de tokenización</strong>: el cliente cifra con clave pública, el servidor nunca ve el número completo, y solo se persisten los últimos 4 dígitos.
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div class="card">
+        <div class="card-label">Datos almacenados</div>
+        <div style="font-size:12px;color:var(--white);margin-top:6px;">Últimos 4 dígitos · medio de pago · estado · monto</div>
+      </div>
+      <div class="pill" style="justify-content:center;font-size:11px;">Demuestra el patrón PCI-DSS del enunciado</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 10 — DECISIÓN 4
+══════════════════════════════════════════════ -->
+<div class="slide">
+  <h2>Decisión 4 · <span class="accent">Zero-Downtime Blue/Green</span></h2>
+  <div class="bg-visual">
+    <div class="bg-box blue">🔵 Blue<br><small>versión actual</small></div>
+    <div class="bg-arrow">↔</div>
+    <div class="bg-box alb">ALB<br><small style="color:var(--cyan);">CodeDeploy</small><br><small style="color:var(--muted);">switch de tráfico</small></div>
+    <div class="bg-arrow">↔</div>
+    <div class="bg-box green">🟢 Green<br><small>nueva versión</small></div>
+  </div>
+  <div class="pipeline" style="margin:8px 0;">
+    <div class="pipe-step">push main</div><div class="pipe-sep">→</div>
+    <div class="pipe-step ok">backend-build.yml</div><div class="pipe-sep">→</div>
+    <div class="pipe-step ok">Docker build</div><div class="pipe-sep">→</div>
+    <div class="pipe-step info">ECR push</div><div class="pipe-sep">→</div>
+    <div class="pipe-step info">ECS Task Def</div><div class="pipe-sep">→</div>
+    <div class="pipe-step warn">CodeDeploy B/G</div>
+  </div>
+  <div class="two-col" style="margin-top:10px;">
+    <div class="bquote">
+      <strong style="color:var(--cyan);">Responde al enunciado:</strong> "Downtime de 2-4h por mantenimientos sin estrategia de zero-downtime."
+    </div>
+    <div class="card">
+      <div class="card-label">Lección aprendida en producción</div>
+      <div style="font-size:12px;color:var(--white);margin-top:6px;line-height:1.5;"><code style="color:var(--cyan);">lifecycle ignore_changes</code> en listener rules de Terraform — los applies pisaban la config de CodeDeploy. Detectado y corregido en el tercer sprint.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 11 — GITHUB
+══════════════════════════════════════════════ -->
+<div class="slide">
+  <h2>GitHub como <span class="accent">columna vertebral</span></h2>
+  <div class="metric-grid" style="margin-bottom:14px;">
+    <div class="metric-box"><div class="metric-val">360+</div><div class="metric-lbl">commits</div></div>
+    <div class="metric-box"><div class="metric-val">80+</div><div class="metric-lbl">Pull Requests</div></div>
+    <div class="metric-box"><div class="metric-val">120+</div><div class="metric-lbl">Issues cerrados</div></div>
+    <div class="metric-box"><div class="metric-val">3</div><div class="metric-lbl">sprints en GitHub Projects</div></div>
+  </div>
+  <div class="branch-flow">
+    <span class="branch-name">feature/xxx</span>
+    <span class="branch-arrow">→</span>
+    <span class="branch-main">develop</span>
+    <span class="branch-arrow">→</span>
+    <span class="branch-main">main</span>
+    <span class="branch-arrow">→</span>
+    <span class="branch-deploy">🚀 deploy automático ECS</span>
+  </div>
+  <p class="note" style="margin-top:12px;">Monorepo: <em>backend</em> / <em>frontend</em> / <em>mobile</em> / <em>infra</em> · Cada PR requirió CI verde antes de merge</p>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 12 — CI/CD
+══════════════════════════════════════════════ -->
+<div class="slide">
+  <h2>Integración y Despliegue <span class="accent">Continuo</span></h2>
+  <div class="card" style="margin-bottom:11px;">
+    <div class="card-label">Backend Pipeline</div>
+    <div class="pipeline" style="margin-top:7px;">
+      <div class="pipe-step">PR abierto</div><div class="pipe-sep">→</div>
+      <div class="pipe-step ok">backend-ci.yml</div><div class="pipe-sep">→</div>
+      <div class="pipe-step ok">pytest + cov ≥80%</div><div class="pipe-sep">→</div>
+      <div class="pipe-step">merge develop</div><div class="pipe-sep">→</div>
+      <div class="pipe-step">merge main</div><div class="pipe-sep">→</div>
+      <div class="pipe-step warn">backend-build.yml</div><div class="pipe-sep">→</div>
+      <div class="pipe-step info">ECR → ECS → CodeDeploy</div>
+    </div>
+    <p style="font-size:10px;color:var(--muted);margin-top:7px;">Matrix: usuarios · busquedas · hoteles · reservas · notificaciones · pagos</p>
+  </div>
+  <div class="card">
+    <div class="card-label">Frontend Pipeline (AWS CodePipeline)</div>
+    <div class="pipeline" style="margin-top:7px;">
+      <div class="pipe-step">push rama</div><div class="pipe-sep">→</div>
+      <div class="pipe-step info">AWS CodePipeline</div><div class="pipe-sep">→</div>
+      <div class="pipe-step ok">CodeBuild (ng build --prod)</div><div class="pipe-sep">→</div>
+      <div class="pipe-step ok">S3 sync</div><div class="pipe-sep">→</div>
+      <div class="pipe-step warn">CloudFront invalidation</div>
+    </div>
+    <p style="font-size:10px;color:var(--muted);margin-top:7px;">Pipeline nativo de AWS — independiente de GitHub Actions, integrado con el repositorio vía webhooks.</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 13 — PRUEBAS
+══════════════════════════════════════════════ -->
+<div class="slide">
+  <h2>Estrategia de <span class="accent">Pruebas</span></h2>
+  <div class="test-cols">
+    <div class="test-col">
+      <div class="test-col-title"><span style="color:var(--green);">✓</span> Backend</div>
+      <ul>
+        <li>pytest con asyncio_mode=auto</li>
+        <li>Mocks de DB vía travelhub_common.testing</li>
+        <li>Cobertura ≥ 80% enforced en CI</li>
+        <li>~45 tests en reservas</li>
+        <li>Matrix por servicio en GitHub Actions</li>
+      </ul>
+    </div>
+    <div class="test-col">
+      <div class="test-col-title"><span style="color:var(--green);">✓</span> Frontend</div>
+      <ul>
+        <li>Angular strict mode + strictTemplates</li>
+        <li>Interceptors, guards y error handling</li>
+        <li>Cobertura funcional validada end-to-end</li>
+        <li>Tests unitarios Karma: no necesarios para el scope del proyecto</li>
+        <li>Colección Postman para validación de API</li>
+      </ul>
+    </div>
+    <div class="test-col">
+      <div class="test-col-title"><span style="color:var(--green);">✓</span> Infraestructura</div>
+      <ul>
+        <li>Terraform modular por stacks</li>
+        <li>Scripts apply.sh / destroy.sh</li>
+        <li>Reproducible desde cero en AWS</li>
+        <li>Entorno local con docker-compose</li>
+        <li>Scripts de carga Locust en research/</li>
+      </ul>
+    </div>
+  </div>
+  <p class="note" style="margin-top:12px;">Cobertura de pytest reportada en <em>GitHub Pages</em> · Umbral mínimo de <em>80%</em> por servicio como gate de CI</p>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 14 — QUÉ QUEDÓ FUNCIONANDO
+══════════════════════════════════════════════ -->
+<div class="slide" style="padding:42px 60px 80px;">
+  <h2>¿Qué quedó <span class="accent">implementado?</span></h2>
+  <div class="feat-wrap">
+    <div class="feat-platform">
+      <div class="feat-platform-title">🌐 Web Angular 19</div>
+      <ul>
+        <li>Login y registro viajero (JWT)</li>
+        <li>Búsqueda + filtros + ordenamiento</li>
+        <li>Detalle del hotel (imágenes, amenities)</li>
+        <li>Crear / modificar / cancelar reserva</li>
+        <li>Detección de conflictos de fechas</li>
+        <li>Pago con RSA-OAEP</li>
+        <li>Historial y reservas activas</li>
+        <li>Portal hotel: dashboard paginado</li>
+        <li>CRUD habitaciones + audit log</li>
+        <li>Confirmar / rechazar reservas</li>
+        <li>i18n Transloco</li>
+      </ul>
+    </div>
+    <div class="feat-platform">
+      <div class="feat-platform-title">📱 iOS SwiftUI</div>
+      <ul>
+        <li>Login viajero (JWT nativo)</li>
+        <li>Lista hoteles + filtros + sort</li>
+        <li>Detalle del hotel</li>
+        <li>Crear / modificar / cancelar reserva</li>
+        <li>Pago con RSA-OAEP</li>
+        <li>Historial y reservas activas</li>
+        <li>MVVM + Router navigation</li>
+        <li>i18n xcstrings (ES/EN)</li>
+      </ul>
+    </div>
+    <div class="feat-platform">
+      <div class="feat-platform-title">⚙️ Backend 7 svc</div>
+      <ul>
+        <li>JWT RS256 auth + logout real</li>
+        <li>RBAC USER / MANAGER / ADMIN</li>
+        <li>Conflict detection en reservas</li>
+        <li>Audit logging cross-servicio</li>
+        <li>Correlation IDs en logs</li>
+        <li>Blue/green deploy ECS</li>
+        <li>RSA-OAEP en pagos</li>
+        <li>Swagger unificado en gateway</li>
+      </ul>
+    </div>
+  </div>
+  <div class="scope-bar">
+    <div class="scope-bar-title">FUERA DE SCOPE — DECISIONES CONSCIENTES</div>
+    <div class="scope-items">
+      <span class="scope-chip">Integración PMS real</span>
+      <span class="scope-chip">Multi-gateway de pago</span>
+      <span class="scope-chip">Multi-currency</span>
+      <span class="scope-chip">Email/Push (SES/APNS)</span>
+      <span class="scope-chip">MFA + rate limiting</span>
+      <span class="scope-chip">Reportes PDF</span>
+      <span class="scope-chip">Reseñas de usuarios</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 15 — DEMO
+══════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="glow-orb orb1"></div>
+  <div class="glow-orb orb2"></div>
+  <div class="slide-tag">En vivo</div>
+  <div class="demo-word">Demo</div>
+  <p class="subtitle" style="margin-top:16px;">Web · iOS · Observabilidad</p>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 16 — GAPS
+══════════════════════════════════════════════ -->
+<div class="slide">
+  <h2>Scope: <span class="accent">decisiones conscientes</span></h2>
+  <p style="font-size:13px;color:var(--muted);margin-bottom:16px;align-self:flex-start;">El enunciado original contempla 80+ HUs. El equipo acordó con el tutor 47 HUs como scope del MVP — las siguientes quedaron fuera de manera deliberada:</p>
+  <div class="two-col">
+    <div class="gap-col out">
+      <div class="gap-col-title">Integraciones no implementadas</div>
+      <ul>
+        <li>Integración real con PMS vía webhooks → modelo de datos propio</li>
+        <li>Multi-gateway (Stripe / MercadoPago / PayPal) → demostramos el patrón</li>
+        <li>Sincronización de inventario en tiempo real</li>
+        <li>Multi-currency + impuestos locales por país</li>
+      </ul>
+    </div>
+    <div class="gap-col out">
+      <div class="gap-col-title">Funcionalidades diferidas</div>
+      <ul>
+        <li>Email / Push real (SES, SNS, APNS) → notificaciones diseñadas como stub extensible</li>
+        <li>MFA para administradores</li>
+        <li>Rate limiting (brute force)</li>
+        <li>Reportes financieros automatizados con PDF</li>
+        <li>Reseñas y opiniones de viajeros</li>
+        <li>Plan de recuperación ante desastres multi-región</li>
+      </ul>
+    </div>
+  </div>
+  <div class="pill" style="margin-top:16px;font-size:12px;">
+    Ninguno de estos ítems representa deuda — son decisiones de priorización del MVP académico.
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 17 — LECCIONES
+══════════════════════════════════════════════ -->
+<div class="slide">
+  <h2>Lo que <span class="accent">aprendimos</span></h2>
+  <div class="lesson-grid">
+    <div class="lesson-card">
+      <div class="lesson-num">LECCIÓN 01</div>
+      <div class="lesson-title">travelhub_common pagó dividendos</div>
+      <div class="lesson-body">Invertir temprano en la librería compartida redujo la deuda técnica en cada servicio nuevo. El patrón emergió al segundo servicio y escaló sin fricciones a siete.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">LECCIÓN 02</div>
+      <div class="lesson-title">Negociar el scope fue la decisión más importante</div>
+      <div class="lesson-body">Definir 47 HUs realistas en semana 2 — en lugar de los 80+ del enunciado — permitió entregar con calidad consistente en los tres sprints sin sacrificar cobertura de pruebas.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">LECCIÓN 03</div>
+      <div class="lesson-title">IaC desde el día 1</div>
+      <div class="lesson-body">Terraform modular con stacks independientes (network → ecr → rds → ecs → cicd) hizo reproducible el ambiente AWS completo en minutos y evitó configuración manual acumulada.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">LECCIÓN 04</div>
+      <div class="lesson-title">Blue/green tiene gotchas reales</div>
+      <div class="lesson-body"><code style="color:var(--cyan);font-size:11px;">lifecycle ignore_changes</code> en los listener rules de Terraform evitó que cada <code style="color:var(--cyan);font-size:11px;">terraform apply</code> reseteara la configuración de CodeDeploy. Detectado y corregido bajo presión de producción.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 18 — CIERRE
+══════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="glow-orb orb1" style="opacity:.5;"></div>
+  <div class="glow-orb orb2" style="opacity:.5;"></div>
+  <h2 style="text-align:center;align-self:center;margin-bottom:8px;">TravelHub en <span class="accent">números</span></h2>
+  <div class="big-stats">
+    <div class="big-stat"><div class="n">7</div><div class="l">microservicios</div></div>
+    <div class="big-stat"><div class="n">3</div><div class="l">plataformas</div></div>
+    <div class="big-stat"><div class="n">47</div><div class="l">HUs completadas</div></div>
+    <div class="big-stat"><div class="n">16</div><div class="l">semanas</div></div>
+  </div>
+  <div class="big-stats" style="margin-top:0;">
+    <div class="big-stat"><div class="n" style="font-size:clamp(20px,3vw,34px);">360+</div><div class="l">commits</div></div>
+    <div class="big-stat"><div class="n" style="font-size:clamp(20px,3vw,34px);">80+</div><div class="l">Pull Requests</div></div>
+    <div class="big-stat"><div class="n" style="font-size:clamp(20px,3vw,34px);">≥80%</div><div class="l">cobertura pytest</div></div>
+  </div>
+  <div class="bquote" style="max-width:560px;text-align:center;border-left:none;border:1px solid rgba(0,212,255,0.2);border-radius:10px;margin:14px auto 0;font-size:15px;">
+    "Demostramos que la arquitectura es viable.<br>El MVP está desplegado."
+  </div>
+  <div class="team-row" style="margin-top:16px;">
+    <div class="team-chip">Daniel Corzo</div>
+    <div class="team-chip">Germán Martínez</div>
+    <div class="team-chip">Juan Avelino</div>
+    <div class="team-chip">Andrés Donoso</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 19 — Q&A
+══════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="glow-orb orb1"></div>
+  <div class="glow-orb orb2"></div>
+  <div class="slide-tag">Gracias</div>
+  <div class="demo-word" style="font-size:clamp(50px,10vw,100px);">Q&A</div>
+  <p class="subtitle" style="margin-top:14px;">Quedamos disponibles para preguntas.</p>
+  <div class="note" style="margin-top:28px;font-size:11px;">
+    Repositorio: <span style="color:var(--cyan);">github.com/[org]/misw-4501-proyecto-de-grado</span>
+  </div>
+</div>
+
+</div><!-- /#deck -->
+
+<!-- ─── UI ─── -->
+<div id="progress-bar"></div>
+<div id="slide-counter">01 / 19</div>
+<div id="nav-bar"></div>
+
+<script>
+(function () {
+  const SLIDE_TITLES = [
+    'Portada', 'El Problema', 'Objetivos', 'Restricciones', 'Sprints',
+    'Arquitectura AWS', 'Decisión 1: Microservicios', 'Decisión 2: JWT',
+    'Decisión 3: Pagos', 'Decisión 4: Blue/Green', 'GitHub',
+    'CI/CD', 'Pruebas', 'Funcionalidades', 'Demo',
+    'Scope', 'Lecciones', 'Cierre', 'Q&A'
+  ];
+
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const total = slides.length;
+  let current = 0;
+  let busy = false;
+
+  const bar = document.getElementById('progress-bar');
+  const counter = document.getElementById('slide-counter');
+  const navBar = document.getElementById('nav-bar');
+
+  // Build nav dots
+  slides.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+    dot.textContent = String(i + 1).padStart(2, '0');
+    dot.title = SLIDE_TITLES[i] || '';
+    const tip = document.createElement('span');
+    tip.className = 'nav-tooltip';
+    tip.textContent = SLIDE_TITLES[i] || '';
+    dot.appendChild(tip);
+    dot.addEventListener('click', e => { e.stopPropagation(); jumpTo(i); });
+    navBar.appendChild(dot);
+  });
+
+  const dots = Array.from(navBar.querySelectorAll('.nav-dot'));
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function updateChrome() {
+    bar.style.width = ((current + 1) / total * 100) + '%';
+    counter.textContent = pad(current + 1) + ' / ' + pad(total);
+    dots.forEach((d, i) => d.classList.toggle('active', i === current));
+  }
+
+  function jumpTo(idx) {
+    if (busy || idx === current || idx < 0 || idx >= total) return;
+    busy = true;
+    const dir = idx > current ? 1 : -1;
+    transition(current, idx, dir, () => { busy = false; });
+  }
+
+  function navigate(dir) {
+    const target = current + dir;
+    if (busy || target < 0 || target >= total) return;
+    busy = true;
+    transition(current, target, dir, () => { busy = false; });
+  }
+
+  function transition(from, to, dir, done) {
+    const fromEl = slides[from];
+    const toEl   = slides[to];
+
+    fromEl.style.transition = 'opacity .4s ease, transform .4s ease';
+    fromEl.style.opacity    = '0';
+    fromEl.style.transform  = dir > 0 ? 'translateX(-55px)' : 'translateX(55px)';
+
+    toEl.style.transition = 'none';
+    toEl.style.opacity    = '0';
+    toEl.style.transform  = dir > 0 ? 'translateX(55px)' : 'translateX(-55px)';
+    toEl.classList.add('active');
+
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      toEl.style.transition = 'opacity .4s ease, transform .4s ease';
+      toEl.style.opacity    = '1';
+      toEl.style.transform  = 'translateX(0)';
+      current = to;
+      updateChrome();
+    }));
+
+    setTimeout(() => {
+      fromEl.style.cssText = '';
+      fromEl.classList.remove('active');
+      done();
+    }, 430);
+  }
+
+  // Initial state
+  slides[0].style.opacity = '1';
+  slides[0].style.transform = 'translateX(0)';
+  updateChrome();
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ')  { e.preventDefault(); navigate(1); }
+    if (e.key === 'ArrowLeft')                     { e.preventDefault(); navigate(-1); }
+    if (e.key === 'f' || e.key === 'F') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+      else document.exitFullscreen();
+    }
+  });
+
+  // Click on slide advances (but not on nav bar)
+  document.getElementById('deck').addEventListener('click', () => navigate(1));
+})();
+</script>
+</body>
+</html>
