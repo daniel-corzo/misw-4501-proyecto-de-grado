@@ -501,6 +501,51 @@ h2 .accent { color: var(--cyan); }
   line-height: 1;
 }
 
+/* ─── DASHBOARD BUTTON ─── */
+#dashboard-btn {
+  position: fixed;
+  top: 18px; left: 28px;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(0,229,160,0.08);
+  border: 1px solid rgba(0,229,160,0.25);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--green);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s;
+  letter-spacing: 0.5px;
+}
+#dashboard-btn:hover {
+  background: rgba(0,229,160,0.15);
+  border-color: rgba(0,229,160,0.45);
+}
+#dashboard-btn .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse-glow 1.8s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+/* ─── DASHBOARD SLIDE ─── */
+.dash-metrics { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; width: 100%; margin-bottom: 14px; }
+.dash-metric {
+  background: var(--glass2);
+  border: 1px solid rgba(0,212,255,0.15);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+.dash-metric .dm-icon { font-size: 20px; margin-bottom: 8px; }
+.dash-metric .dm-title { font-family: 'DM Mono',monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.dash-metric .dm-body { font-size: 11px; color: var(--muted); line-height: 1.5; }
+
 /* ─── GLOWS ─── */
 @keyframes pulse-glow { 0%,100%{opacity:.25} 50%{opacity:.6} }
 .glow-orb { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; }
@@ -846,7 +891,56 @@ h2 .accent { color: var(--cyan); }
 </div>
 
 <!-- ══════════════════════════════════════════════
-     SLIDE 12 — CI/CD
+     SLIDE 12 — SPRINT DASHBOARD
+══════════════════════════════════════════════ -->
+<div class="slide">
+  <h2>Sprint <span class="accent">Dashboard</span></h2>
+  <div class="dash-metrics">
+    <div class="dash-metric">
+      <div class="dm-icon">📉</div>
+      <div class="dm-title">Burndown</div>
+      <div class="dm-body">SP restantes por día vs. línea ideal. Vista por sprint o release completo.</div>
+    </div>
+    <div class="dash-metric">
+      <div class="dm-icon">⚡</div>
+      <div class="dm-title">Velocidad</div>
+      <div class="dm-body">SP entregados por semana — planeado vs. real. Promedio del equipo en las 8 semanas.</div>
+    </div>
+    <div class="dash-metric">
+      <div class="dm-icon">💎</div>
+      <div class="dm-title">Valor de negocio</div>
+      <div class="dm-body">Business value acumulado semana a semana — curva real vs. curva ideal del proyecto.</div>
+    </div>
+    <div class="dash-metric">
+      <div class="dm-icon">🧪</div>
+      <div class="dm-title">Coverage</div>
+      <div class="dm-body">Cobertura por microservicio leída en vivo desde artefactos de GitHub Actions. Umbral 80%.</div>
+    </div>
+  </div>
+  <div class="card" style="width:100%;padding:16px 20px;">
+    <div class="card-label">Fuente de datos</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:10px;">
+      <div style="font-size:12px;color:var(--muted);line-height:1.7;">
+        <span style="color:var(--cyan);">→</span> GitHub Projects v2 (GraphQL API)<br>
+        <span style="color:var(--cyan);">→</span> Issues con campo <code style="color:var(--green);">Estimate</code> (SP) y <code style="color:var(--green);">BusinessValue</code><br>
+        <span style="color:var(--cyan);">→</span> Campo de iteración por sprint (Sprint 1/2/3)<br>
+        <span style="color:var(--cyan);">→</span> <code>closedAt</code> real de cada issue para el burndown
+      </div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.7;">
+        <span style="color:var(--cyan);">→</span> GitHub Actions artifacts (<code style="color:var(--green);">coverage-{svc}</code>)<br>
+        <span style="color:var(--cyan);">→</span> Cobertura XML de pytest-cov<br>
+        <span style="color:var(--cyan);">→</span> 114 SP · 3 sprints · 7 microservicios<br>
+        <span style="color:var(--cyan);">→</span> Dashboard publicado en GitHub Pages
+      </div>
+    </div>
+  </div>
+  <a href="index.html" target="_blank" class="pill" style="margin-top:14px;font-size:12px;text-decoration:none;cursor:pointer;" onclick="event.stopPropagation();">
+    📊 Abrir dashboard en vivo →
+  </a>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SLIDE 13 — CI/CD (era 12)
 ══════════════════════════════════════════════ -->
 <div class="slide">
   <h2>Integración y Despliegue <span class="accent">Continuo</span></h2>
@@ -1099,8 +1193,11 @@ h2 .accent { color: var(--cyan); }
 
 <!-- ─── UI ─── -->
 <div id="progress-bar"></div>
-<div id="slide-counter">01 / 19</div>
+<div id="slide-counter">01 / 20</div>
 <div id="nav-bar"></div>
+<a id="dashboard-btn" href="index.html" target="_blank" onclick="event.stopPropagation();">
+  <span class="dot"></span>Dashboard en vivo
+</a>
 
 <script>
 (function () {
@@ -1108,7 +1205,7 @@ h2 .accent { color: var(--cyan); }
     'Portada', 'El Problema', 'Objetivos', 'Restricciones', 'Sprints',
     'Arquitectura AWS', 'Decisión 1: Microservicios', 'Decisión 2: JWT',
     'Decisión 3: Pagos', 'Decisión 4: Blue/Green', 'GitHub',
-    'CI/CD', 'Pruebas', 'Funcionalidades', 'Demo',
+    'Sprint Dashboard', 'CI/CD', 'Pruebas', 'Funcionalidades', 'Demo',
     'Scope', 'Lecciones', 'Cierre', 'Q&A'
   ];
 
